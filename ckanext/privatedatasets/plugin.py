@@ -64,6 +64,8 @@ def package_update(context, data_dict):
 
 def allowed_users_not_valid_on_public_datasets_or_organizations(key, data, errors, context):
 
+    # TODO: In some cases, we will need to retireve all the dataset information if it isn't present...
+
     private_val = data.get(('private',))
     owner_org = data.get(('owner_org',))
     private = private_val is True if isinstance(private_val, bool) else private_val == "True"
@@ -75,9 +77,11 @@ def allowed_users_not_valid_on_public_datasets_or_organizations(key, data, error
 
 
 class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
+
     p.implements(p.IDatasetForm)
     p.implements(p.IAuthFunctions)
     p.implements(p.IConfigurer)
+    p.implements(p.IRoutes, inherit=True)
 
     ######################################################################
     ############################ DATASET FORM ############################
@@ -149,3 +153,15 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
 
         # Register this plugin's fanstatic directory with CKAN.
         tk.add_resource('fanstatic', 'privatedatasets')
+
+    ######################################################################
+    ############################### ROUTES ###############################
+    ######################################################################
+
+    def after_map(self, m):
+        # DataSet adquired notification
+        m.connect('/dataset_adquired',
+                  controller='ckanext.privatedatasets.controller:AdquiredDatasetsController',
+                  action='add_user', conditions=dict(method=['POST']))
+
+        return m
