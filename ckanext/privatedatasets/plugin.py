@@ -64,14 +64,14 @@ def package_update(context, data_dict):
 
 def allowed_users_not_valid_on_public_datasets_or_organizations(key, data, errors, context):
 
-    # TODO: Check the owner_org and private value according to /usr/lib/ckan/default/src/ckan/ckan/logic/validatos
-    # to check if private or owner_org are defined even if they are not included in the request
-
+    private_val = data.get(('private',))
     owner_org = data.get(('owner_org',))
-    private = data.get(('private',)) is True
+    private = private_val is True if isinstance(private_val, bool) else private_val == "True"
+    allowed_users = data[key]
 
-    if not private or owner_org:
-        errors[key].append(_('The list of allowed users can only be set when you create a private dataset without of an organization'))
+    # If allowed users are included and the dataset is not private outside and organization, an error will be raised.
+    if allowed_users != '' and (not private or owner_org):
+        errors[key].append(_('The list of allowed users can only be set when you create a private dataset outside an organization'))
 
 
 class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
@@ -91,7 +91,7 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
         }
 
     def create_package_schema(self):
-        # let's grab the default schema in our plugin
+        # grab the default schema in our plugin
         schema = super(PrivateDatasets, self).create_package_schema()
         # remove datasets_with_no_organization_cannot_be_private validator
         schema.update({
@@ -102,6 +102,7 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
         return schema
 
     def update_package_schema(self):
+        # grab the default schema in our plugin
         schema = super(PrivateDatasets, self).update_package_schema()
         # remove datasets_with_no_organization_cannot_be_private validator
         schema.update({
@@ -147,8 +148,4 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
         tk.add_template_directory(config, 'templates')
 
         # Register this plugin's fanstatic directory with CKAN.
-        # Here, 'fanstatic' is the path to the fanstatic directory
-        # (relative to this plugin.py file), and 'example_theme' is the name
-        # that we'll use to refer to this fanstatic directory from CKAN
-        # templates.
         tk.add_resource('fanstatic', 'privatedatasets')
