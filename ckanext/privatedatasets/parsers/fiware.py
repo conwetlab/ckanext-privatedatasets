@@ -21,7 +21,7 @@ class FiWareNotificationParser(object):
         for resource in resources:
             if 'url' in resource:
                 parsed_url = urlparse(resource['url'])
-                dataset_name = re.findall('^/dataset/(.+)$', parsed_url.path)
+                dataset_name = re.findall('^/dataset/([^/]+).*$', parsed_url.path)
 
                 if len(dataset_name) == 1:
                     if parsed_url.netloc == my_host:

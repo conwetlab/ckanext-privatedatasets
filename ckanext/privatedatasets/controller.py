@@ -21,6 +21,8 @@ class AdquiredDatasetsController(base.BaseController):
 
     def add_user(self):
 
+        log.info('Notification Request received')
+
         # Get the parser from the configuration
         class_path = config.get(PARSER_CONFIG_PROP, '')
 
