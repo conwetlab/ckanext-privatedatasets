@@ -16,11 +16,15 @@ this.ckan.module('allowed-users', function ($, _) {
 
       if (ds_private == "True" && !organization) {
         $('#field-allowed_users').prop('disabled', false);  //Enable
+        $('#field-adquire_url').prop('disabled', false);    //Enable
       } else {
         $('#field-allowed_users').prop('disabled', true);   //Disable
+        $('#field-adquire_url').prop('disabled', true);     //Disable
+        
         //Remove previous values
         $('#s2id_field-allowed_users .select2-search-choice').remove();
         $('#field-allowed_users').val('');
+        $('#field-adquire_url').val('');
       }
     }
   };

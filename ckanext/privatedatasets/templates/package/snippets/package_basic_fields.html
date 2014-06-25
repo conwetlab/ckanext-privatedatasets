@@ -58,6 +58,8 @@
   {% set users_attrs = {'data-module': 'autocomplete', 'data-module-tags': '', 'data-module-source': '/api/2/util/user/autocomplete?q=?'} %}
   {{ form.input('allowed_users', label=_('Allowed Users'), id='field-allowed_users', placeholder=_('Allowed Users'), value=data.allowed_users, error=errors.custom_text, classes=['control-full'], attrs=users_attrs) }}
 
+  {{ form.input('adquire_url', label=_('Adquire URL'), id='field-adquire_url', placeholder=_('http://example.com/adquire/'), value=data.adquire_url, error=errors.custom_text, classes=['control-medium']) }}
+
   {% if data.id and h.check_access('package_delete', {'id': data.id}) and data.state != 'active' %}
     <div class="control-group">
       <label for="field-state" class="control-label">{{ _('State') }}</label>

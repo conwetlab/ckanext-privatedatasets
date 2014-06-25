@@ -1,9 +1,10 @@
+import ckan.lib.helpers as helpers
+import ckan.logic.auth as logic_auth
 import ckan.plugins as p
 import ckan.plugins.toolkit as tk
 import ckan.new_authz as new_authz
 
 from ckan.common import _
-import ckan.logic.auth as logic_auth
 
 
 @tk.auth_allow_anonymous_access
@@ -36,6 +37,10 @@ def package_show(context, data_dict):
                 authorized = True
 
     if not authorized:
+        if hasattr(package, 'extras') and 'adquire_url' in package.extras:
+            helpers.flash_notice(_('This private dataset can be adquired. To do so, please click ' +
+                                   '<a target="_blank" href="%s">here</a>') % package.extras['adquire_url'],
+                                 allow_html=True)
         return {'success': False, 'msg': _('User %s not authorized to read package %s') % (user, package.id)}
     else:
         return {'success': True}
@@ -63,18 +68,18 @@ def package_update(context, data_dict):
         return {'success': True}
 
 
-def allowed_users_not_valid_on_public_datasets_or_organizations(key, data, errors, context):
+def private_datasets_metadata_checker(key, data, errors, context):
 
     # TODO: In some cases, we will need to retireve all the dataset information if it isn't present...
 
     private_val = data.get(('private',))
     owner_org = data.get(('owner_org',))
     private = private_val is True if isinstance(private_val, bool) else private_val == "True"
-    allowed_users = data[key]
+    metadata_value = data[key]
 
     # If allowed users are included and the dataset is not private outside and organization, an error will be raised.
-    if allowed_users != '' and (not private or owner_org):
-        errors[key].append(_('The list of allowed users can only be set when you create a private dataset outside an organization'))
+    if metadata_value != '' and (not private or owner_org):
+        errors[key].append(_('This field is only valid when you create a private dataset outside an organization'))
 
 
 class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
@@ -91,8 +96,11 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
     def _modify_package_schema(self):
         return {
             'allowed_users': [tk.get_validator('ignore_missing'),
-                              allowed_users_not_valid_on_public_datasets_or_organizations,
-                              tk.get_converter('convert_to_extras')]
+                              private_datasets_metadata_checker,
+                              tk.get_converter('convert_to_extras')],
+            'adquire_url': [tk.get_validator('ignore_missing'),
+                            private_datasets_metadata_checker,
+                            tk.get_converter('convert_to_extras')]
         }
 
     def create_package_schema(self):
@@ -121,7 +129,9 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
         schema = super(PrivateDatasets, self).show_package_schema()
         schema.update({
             'allowed_users': [tk.get_converter('convert_from_extras'),
-                              tk.get_validator('ignore_missing')]
+                              tk.get_validator('ignore_missing')],
+            'adquire_url': [tk.get_converter('convert_from_extras'),
+                            tk.get_validator('ignore_missing')]
         })
         return schema
 
