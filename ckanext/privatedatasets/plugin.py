@@ -6,13 +6,14 @@ from ckan.common import _
 import ckan.logic.auth as logic_auth
 
 
+@tk.auth_allow_anonymous_access
 def package_show(context, data_dict):
     user = context.get('user')
     user_obj = context.get('auth_user_obj')
     package = logic_auth.get_package_object(context, data_dict)
 
     # datasets can be readed by it creator
-    if package and user and package.creator_user_id == user_obj.id:
+    if package and user_obj and package.creator_user_id == user_obj.id:
         return {'success': True}
 
     # anyone can see a public package
