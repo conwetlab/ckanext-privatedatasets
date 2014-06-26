@@ -21,39 +21,43 @@ def package_show(context, data_dict):
     if package and user_obj and package.creator_user_id == user_obj.id:
         return {'success': True}
 
-    # anyone can see a public package
-    if not package.private and package.state == 'active':
-        return {'success': True}
+    # Not active packages can only be seen by its owners
+    if package.state == 'active':
+        # anyone can see a public package
+        if not package.private:
+            return {'success': True}
 
-    # if the user has rights to read in the organization or in the group
-    if package.owner_org:
-        authorized = new_authz.has_user_permission_for_group_or_org(
-            package.owner_org, user, 'read')
+        # if the user has rights to read in the organization or in the group
+        if package.owner_org:
+            authorized = new_authz.has_user_permission_for_group_or_org(
+                package.owner_org, user, 'read')
+        else:
+            authorized = False
+
+        # if the user is not authorized yet, we should check if the
+        # user is in the allowed_users object
+        if not authorized:
+            if hasattr(package, 'extras') and 'allowed_users' in package.extras:
+                allowed_users = package.extras['allowed_users'].split(',')
+                if user in allowed_users:
+                    authorized = True
+
+        if not authorized:
+            # Show a flash message with the URL to adquire the dataset
+            # This message only can be shown when the user tries to access the dataset via its URL (/dataset/...)
+            # The message cannot be displayed in other pages that uses the package_show function such as
+            # the user profile page
+
+            if hasattr(package, 'extras') and 'adquire_url' in package.extras and request.path.startswith('/dataset/'):
+                helpers.flash_notice(_('This private dataset can be adquired. To do so, please click ' +
+                                       '<a target="_blank" href="%s">here</a>') % package.extras['adquire_url'],
+                                     allow_html=True)
+
+            return {'success': False, 'msg': _('User %s not authorized to read package %s') % (user, package.id)}
+        else:
+            return {'success': True}
     else:
-        authorized = False
-
-    # if the user is not authorized yet, we should check if the
-    # user is in the allowed_users object
-    if not authorized:
-        if hasattr(package, 'extras') and 'allowed_users' in package.extras:
-            allowed_users = package.extras['allowed_users'].split(',')
-            if user in allowed_users:
-                authorized = True
-
-    if not authorized:
-        # Show a flash message with the URL to adquire the dataset
-        # This message only can be shown when the user tries to access the dataset via its URL (/dataset/...)
-        # The message cannot be displayed in other pages that uses the package_show function such as
-        # the user profile page
-
-        if hasattr(package, 'extras') and 'adquire_url' in package.extras and request.path.startswith('/dataset/'):
-            helpers.flash_notice(_('This private dataset can be adquired. To do so, please click ' +
-                                   '<a target="_blank" href="%s">here</a>') % package.extras['adquire_url'],
-                                 allow_html=True)
-
         return {'success': False, 'msg': _('User %s not authorized to read package %s') % (user, package.id)}
-    else:
-        return {'success': True}
 
 
 def package_update(context, data_dict):
@@ -110,6 +114,9 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
 
     def _modify_package_schema(self):
         return {
+            # remove datasets_with_no_organization_cannot_be_private validator
+            'private': [tk.get_validator('ignore_missing'),
+                        tk.get_validator('boolean_validator')],
             'allowed_users': [tk.get_validator('ignore_missing'),
                               private_datasets_metadata_checker,
                               tk.get_converter('convert_to_extras')],
@@ -121,22 +128,12 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
     def create_package_schema(self):
         # grab the default schema in our plugin
         schema = super(PrivateDatasets, self).create_package_schema()
-        # remove datasets_with_no_organization_cannot_be_private validator
-        schema.update({
-            'private': [tk.get_validator('ignore_missing'),
-                        tk.get_validator('boolean_validator')]
-        })
         schema.update(self._modify_package_schema())
         return schema
 
     def update_package_schema(self):
         # grab the default schema in our plugin
         schema = super(PrivateDatasets, self).update_package_schema()
-        # remove datasets_with_no_organization_cannot_be_private validator
-        schema.update({
-            'private': [tk.get_validator('ignore_missing'),
-                        tk.get_validator('boolean_validator')]
-        })
         schema.update(self._modify_package_schema())
         return schema
 
