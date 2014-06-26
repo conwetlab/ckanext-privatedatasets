@@ -34,7 +34,7 @@ then
         fi
 
         # Unzip the folder
-        unzip -q "$CACHE_DIR/$FILE" -d "$CACHE_DIR/$SOLAR_UNZIP_FOLDER"
+        unzip -q "$CACHE_DIR/$FILE" -d "$CACHE_DIR"
     fi
     
     echo "Configuring and starting Solr..."
