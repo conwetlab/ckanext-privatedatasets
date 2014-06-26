@@ -7,6 +7,10 @@ import ckan.new_authz as new_authz
 from ckan.common import _, request
 
 
+######################################################################
+########################### AUTH FUNCTIONS ###########################
+######################################################################
+
 @tk.auth_allow_anonymous_access
 def package_show(context, data_dict):
     user = context.get('user')
@@ -46,7 +50,7 @@ def package_show(context, data_dict):
             helpers.flash_notice(_('This private dataset can be adquired. To do so, please click ' +
                                    '<a target="_blank" href="%s">here</a>') % package.extras['adquire_url'],
                                  allow_html=True)
-        
+
         return {'success': False, 'msg': _('User %s not authorized to read package %s') % (user, package.id)}
     else:
         return {'success': True}
@@ -74,6 +78,10 @@ def package_update(context, data_dict):
         return {'success': True}
 
 
+######################################################################
+############################### CHECKER ##############################
+######################################################################
+
 def private_datasets_metadata_checker(key, data, errors, context):
 
     # TODO: In some cases, we will need to retireve all the dataset information if it isn't present...
@@ -94,6 +102,7 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
     p.implements(p.IAuthFunctions)
     p.implements(p.IConfigurer)
     p.implements(p.IRoutes, inherit=True)
+    p.implements(p.IActions)
 
     ######################################################################
     ############################ DATASET FORM ############################
@@ -182,3 +191,23 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
                   action='add_user', conditions=dict(method=['POST']))
 
         return m
+
+    ######################################################################
+    ############################## IACTIONS ##############################
+    ######################################################################
+
+    def get_actions(self):
+        # Update package_show function. When the URL is the URL used to
+        # check the datasets, the context parameter will me modified and
+        # the field 'ignore_capacity_check' will be added in order to
+        # get both the private and the public datasets.
+
+        _old_package_search = tk.get_action('package_search')
+
+        def _new_package_search(context, data_dict):
+            if request.path == '/dataset':
+                context.update({'ignore_capacity_check': True})
+            return _old_package_search(context, data_dict)
+
+        # Modify the package_show function used across the system
+        return {'package_search': _new_package_search}
