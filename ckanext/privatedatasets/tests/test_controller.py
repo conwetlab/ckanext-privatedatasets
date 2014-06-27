@@ -89,7 +89,8 @@ class ControllerTest(unittest.TestCase):
 
         package_show = MagicMock(side_effect=controller.plugins.toolkit.ObjectNotFound if ds_not_found else None,
                                  return_value=dataset)
-        package_update = MagicMock(side_effect=controller.plugins.toolkit.ValidationError({'allowed_users': [ADD_USERS_ERROR]}) if error_update else None)
+        package_update = MagicMock(side_effect=controller.plugins.toolkit.ValidationError(
+                                   {'allowed_users': [ADD_USERS_ERROR]}) if error_update else None)
 
         def _get_action(action):
             if action == 'package_update':
@@ -120,10 +121,13 @@ class ControllerTest(unittest.TestCase):
         self.assertEquals(400, controller.response.status_int)
 
     @parameterized.expand([
+        ({'users_datasets': [{'user': 'user_name', 'datasets': ['ds1']}]}, False, False, None,                       'user_name'),
         ({'users_datasets': [{'user': 'user_name', 'datasets': ['ds1']}]}, False, False, '',                         'user_name'),
         ({'users_datasets': [{'user': 'user_name', 'datasets': ['ds1']}]}, False, False, 'another_user',             'another_user,user_name'),
         ({'users_datasets': [{'user': 'user_name', 'datasets': ['ds1']}]}, False, False, 'another_user,another_one', 'another_user,another_one,user_name'),
+        ({'users_datasets': [{'user': 'user_name', 'datasets': ['ds1']}]}, False, False, 'another_user,user_name',   'another_user,user_name'),
         ({'users_datasets': [{'user': 'user_name', 'datasets': ['ds1']}]}, True,  False),
+        ({'users_datasets': [{'user': 'user_name', 'datasets': ['ds1']}]}, False, True,  None,                       'user_name'),
         ({'users_datasets': [{'user': 'user_name', 'datasets': ['ds1']}]}, False, True,  '',                         'user_name'),
         ({'users_datasets': [{'user': 'user_name', 'datasets': ['ds1']}]}, False, True,  'another_user',             'another_user,user_name'),
         ({'users_datasets': [{'user': 'user_name', 'datasets': ['ds1']}]}, False, True,  'another_user,another_one', 'another_user,another_one,user_name'),
@@ -131,7 +135,9 @@ class ControllerTest(unittest.TestCase):
     def test_without_errors_one_user_one_ds(self, parse_result, ds_not_found, error_update, allowed_users=None, expected_allowed_users=None):
 
         dataset_id = parse_result['users_datasets'][0]['datasets'][0]
-        dataset = {'id': dataset_id, 'allowed_users': allowed_users}
+        dataset = {'id': dataset_id}
+        if allowed_users:
+            dataset['allowed_users'] = allowed_users
 
         package_show, package_update = self.configure_mocks(parse_result, ds_not_found, error_update, dataset)
 
@@ -148,8 +154,10 @@ class ControllerTest(unittest.TestCase):
 
         package_show.assert_called_once_with({'ignore_auth': True}, {'id': dataset_id})
 
-        if not ds_not_found:
+        if not ds_not_found and allowed_users != expected_allowed_users:
             new_allowed_users = package_update.call_args[0][1]['allowed_users']
             self.assertEquals(expected_allowed_users, new_allowed_users)
+        else:
+            self.assertEquals(0, package_update.call_count)
 
 
