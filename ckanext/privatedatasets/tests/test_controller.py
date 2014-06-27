@@ -121,20 +121,33 @@ class ControllerTest(unittest.TestCase):
         self.assertEquals(400, controller.response.status_int)
 
     @parameterized.expand([
-        ({'users_datasets': [{'user': 'user_name', 'datasets': ['ds1']}]}, False, False, None,                       'user_name'),
-        ({'users_datasets': [{'user': 'user_name', 'datasets': ['ds1']}]}, False, False, '',                         'user_name'),
-        ({'users_datasets': [{'user': 'user_name', 'datasets': ['ds1']}]}, False, False, 'another_user',             'another_user,user_name'),
-        ({'users_datasets': [{'user': 'user_name', 'datasets': ['ds1']}]}, False, False, 'another_user,another_one', 'another_user,another_one,user_name'),
-        ({'users_datasets': [{'user': 'user_name', 'datasets': ['ds1']}]}, False, False, 'another_user,user_name',   'another_user,user_name'),
-        ({'users_datasets': [{'user': 'user_name', 'datasets': ['ds1']}]}, True,  False),
-        ({'users_datasets': [{'user': 'user_name', 'datasets': ['ds1']}]}, False, True,  None,                       'user_name'),
-        ({'users_datasets': [{'user': 'user_name', 'datasets': ['ds1']}]}, False, True,  '',                         'user_name'),
-        ({'users_datasets': [{'user': 'user_name', 'datasets': ['ds1']}]}, False, True,  'another_user',             'another_user,user_name'),
-        ({'users_datasets': [{'user': 'user_name', 'datasets': ['ds1']}]}, False, True,  'another_user,another_one', 'another_user,another_one,user_name'),
+        (False, False, None),
+        (False, False, ''),
+        (False, False, 'another_user'),
+        (False, False, 'another_user,another_one'),
+        (False, False, 'another_user,user_name'),
+        (True,  False),
+        (False, True,  None),
+        (False, True,  ''),
+        (False, True,  'another_user'),
+        (False, True,  'another_user,another_one'),
     ])
-    def test_without_errors_one_user_one_ds(self, parse_result, ds_not_found, error_update, allowed_users=None, expected_allowed_users=None):
+    def test_without_errors_one_user_one_ds(self, ds_not_found, error_update, allowed_users=None):
 
-        dataset_id = parse_result['users_datasets'][0]['datasets'][0]
+        user_name = 'user_name'
+        dataset_id = 'ds1'
+        parse_result = {'users_datasets': [{'user': user_name, 'datasets': [dataset_id]}]}
+
+        # Expected allowed users: allowed_users + ',' + user_name
+        # If the user_name is in the list, it should not be included again
+        # If the list is empty, we should not a comma
+        expected_allowed_users = allowed_users if allowed_users else ''
+        if user_name not in expected_allowed_users:
+            if not allowed_users or allowed_users == '':
+                expected_allowed_users += user_name
+            else:
+                expected_allowed_users += ',' + user_name
+
         dataset = {'id': dataset_id}
         if allowed_users:
             dataset['allowed_users'] = allowed_users
@@ -144,7 +157,7 @@ class ControllerTest(unittest.TestCase):
         # Call the function
         result = self.instance.add_user()
 
-        # Check
+        # Check the result
         if not error_update and not ds_not_found:
             self.assertEquals(None, result)
         elif error_update:
@@ -152,8 +165,11 @@ class ControllerTest(unittest.TestCase):
         elif ds_not_found:
             self.assertEquals('{"warns": ["Dataset %s was not found in this instance"]}' % dataset_id, result)
 
+        # The show function is always called
         package_show.assert_called_once_with({'ignore_auth': True}, {'id': dataset_id})
 
+        # The update function is called only when the show function does not throw an exception and
+        # when it's needed to add the user (if the user is already in the list we mustn't add it)
         if not ds_not_found and allowed_users != expected_allowed_users:
             new_allowed_users = package_update.call_args[0][1]['allowed_users']
             self.assertEquals(expected_allowed_users, new_allowed_users)
