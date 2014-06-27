@@ -43,34 +43,34 @@ class PluginTest(unittest.TestCase):
 
     @parameterized.expand([
         # Anonymous user (public)
-        (None, None, None, False, 'active', None, None, None, None, None, True),
+        (None, None, None,   False, 'active', None,     None,  None,                      None,        None,              True),
         # Anonymous user (private)
-        (None, None, None, True, 'active', None, None, None, None, '/', False),
+        (None, None, None,   True,  'active', None,     None,  None,                      None,        '/',               False),
         # Anonymous user (private). Buy URL not shown
-        (None, None, None, True, 'active', None, None, None, 'google.es', '/', False),
+        (None, None, None,   True,  'active', None,     None,  None,                      'google.es', '/',               False),
         # Anonymous user (private). Buy URL shown
-        (None, None, None, True, 'active', None, None, None, 'google.es', '/dataset/testds', False),
+        (None, None, None,   True,  'active', None,     None,  None,                      'google.es', '/dataset/testds', False),
         # The creator can always see the dataset
-        (1, 1, None, False, 'active', None, None, None, None, None, True),
-        (1, 1, None, True, 'active', None, None, None, None, None, True),
-        (1, 1, None, False, 'draft', None, None, None, None, None, True),
+        (1,    1,    None,   False, 'active', None,     None,  None,                      None,        None,              True),
+        (1,    1,    None,   True,  'active', None,     None,  None,                      None,        None,              True),
+        (1,    1,    None,   False, 'draft',  None,     None,  None,                      None,        None,              True),
         # Other user (no organizations)
-        (1, 2, 'test', False, 'active', None, None, None, None, None, True),
-        (1, 2, 'test', True, 'active', None, None, None, 'google.es', '/', False),                # Buy MSG not shown
-        (1, 2, 'test', True, 'active', None, None, None, None, '/dataset/testds', False),         # Buy MSG not shown
-        (1, 2, 'test', True, 'active', None, None, None, 'google.es', '/dataset/testds', False),  # Buy MSG shown
-        (1, 2, 'test', False, 'draft', None, None, None, None, None, False),
+        (1,    2,    'test', False, 'active', None,     None,  None,                      None,        None,              True),
+        (1,    2,    'test', True,  'active', None,     None,  None,                      'google.es', '/',               False),  # Buy MSG not shown
+        (1,    2,    'test', True,  'active', None,     None,  None,                      None,        '/dataset/testds', False),  # Buy MSG not shown
+        (1,    2,    'test', True,  'active', None,     None,  None,                      'google.es', '/dataset/testds', False),  # Buy MSG shown
+        (1,    2,    'test', False, 'draft',  None,     None,  None,                      None,        None, False),
         # Other user but authorized in the list of authorized users
-        (1, 2, 'test', True, 'active', None, None, 'some,another,test,other', None, None, True),
-        (1, 2, 'test', True, 'active', None, None, 'test', None, None, True),
+        (1,    2,    'test', True,  'active', None,     None,  'some,another,test,other', None,        None,              True),
+        (1,    2,    'test', True,  'active', None,     None,  'test',                    None,        None,              True),
         # Other user and not authorized in the list of authorized users
-        (1, 2, 'test', True, 'active', None, None, 'some,another,other', 'google.es', '/', False),
-        (1, 2, 'test', True, 'active', None, None, 'some,another,other', 'google.es', '/dataset/testds', False),
+        (1,    2,    'test', True,  'active', None,     None,  'some,another,other',      'google.es', '/',               False),
+        (1,    2,    'test', True,  'active', None,     None,  'some,another,other',      'google.es', '/dataset/testds', False),
         # Other user with organizations
-        (1, 2, 'test', False, 'active', 'conwet', False, None, None, None, True),
-        (1, 2, 'test', True, 'active', 'conwet', False, None, None, None, False),
-        (1, 2, 'test', True, 'active', 'conwet', True, None, None, None, True),
-        (1, 2, 'test', True, 'draft', 'conwet', True, None, None, None, False)
+        (1,    2,    'test', False, 'active', 'conwet', False, None,                      None,        None,              True),
+        (1,    2,    'test', True,  'active', 'conwet', False, None,                      None,        None,              False),
+        (1,    2,    'test', True,  'active', 'conwet', True,  None,                      None,        None,              True),
+        (1,    2,    'test', True,  'draft',  'conwet', True,  None,                      None,        None,              False)
     ])
     def test_auth_package_show(self, creator_user_id, user_obj_id, user, private, state, owner_org,
                                owner_member, allowed_users, adquire_url, request_path, authorized):
@@ -116,11 +116,11 @@ class PluginTest(unittest.TestCase):
             plugin.helpers.flash_error.assert_called_once()
 
     @parameterized.expand([
-        (None, None, None, None, None, False),   # Anonymous user
-        (1, 1, None, None, None, True),          # A user can edit its dataset
-        (1, 2, None, None, None, False),         # A user cannot edit a dataset belonging to another user
-        (1, 2, 'test', 'conwet', False, False),  # User without rights to update a dataset
-        (1, 2, 'test', 'conwet', True, True),    # User with rights to update a dataset
+        (None, None, None,   None,     None,  False),   # Anonymous user
+        (1,    1,    None,   None,     None,  True),    # A user can edit its dataset
+        (1,    2,    None,   None,     None,  False),   # A user cannot edit a dataset belonging to another user
+        (1,    2,    'test', 'conwet', False, False),   # User without rights to update a dataset
+        (1,    2,    'test', 'conwet', True,  True),    # User with rights to update a dataset
     ])
     def test_auth_package_update(self, creator_user_id, user_obj_id, user, owner_org, owner_member, authorized):
 
@@ -156,9 +156,9 @@ class PluginTest(unittest.TestCase):
         self.assertEquals(auth_functions['package_update'], plugin.package_update)
 
     @parameterized.expand([
-        ('/dataset', True),             # Include ignore_capacity_check
-        ('/', False),                   # Not include ignore_capacity_check
-        ('/datasets', False),           # Not include ignore_capacity_check
+        ('/dataset',          True),    # Include ignore_capacity_check
+        ('/',                 False),   # Not include ignore_capacity_check
+        ('/datasets',         False),   # Not include ignore_capacity_check
         ('/api/rest/dataset', False)    # Not include ignore_capacity_check. TODO: Maybe in the future this must change
     ])
     def test_package_seach_modified(self, request_path, include_ignore_capacity):
@@ -240,24 +240,24 @@ class PluginTest(unittest.TestCase):
 
     @parameterized.expand([
         # When no data is present, no errors should be returned
-        (True, 'conwet', '', False),
-        ('True', 'conwet', '', False),
-        (False, 'conwet', '', False),
-        ('False', 'conwet', '', False),
-        (True, None, '', False),
-        ('True', None, '', False),
-        (False, None, '', False),
-        ('False', None, '', False),
+        (True,    'conwet', '',     False),
+        ('True',  'conwet', '',     False),
+        (False,   'conwet', '',     False),
+        ('False', 'conwet', '',     False),
+        (True,    None,     '',     False),
+        ('True',  None,     '',     False),
+        (False,   None,     '',     False),
+        ('False', None,     '',     False),
         # When data is present, the field is only valid when the
         # organization is not set and the private field is set to true
-        (True, 'conwet', 'test', True),
-        ('True', 'conwet', 'test', True),
-        (False, 'conwet', 'test', True),
+        (True,    'conwet', 'test', True),
+        ('True',  'conwet', 'test', True),
+        (False,   'conwet', 'test', True),
         ('False', 'conwet', 'test', True),
-        (True, None, 'test', False),
-        ('True', None, 'test', False),
-        (False, None, 'test', True),
-        ('False', None, 'test', True),
+        (True,    None,     'test', False),
+        ('True',  None,     'test', False),
+        (False,   None,     'test', True),
+        ('False', None,     'test', True),
     ])
     def test_metadata_checker(self, private, owner_org, metada_val, error_set):
 
@@ -278,3 +278,9 @@ class PluginTest(unittest.TestCase):
             self.assertEquals(1, len(errors[KEY]))
         else:
             self.assertEquals(0, len(errors[KEY]))
+
+    def test_fallback(self):
+        self.assertEquals(True, self.privateDatasets.is_fallback())
+
+    def test_package_types(self):
+        self.assertEquals([], self.privateDatasets.package_types())
