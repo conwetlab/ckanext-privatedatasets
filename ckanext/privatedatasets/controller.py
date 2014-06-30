@@ -34,7 +34,7 @@ class AdquiredDatasetsController(base.BaseController):
                 # Parse the result using the parser set in the configuration
                 result = parser().parse_notification()
             except Exception as e:
-                result = {'errors': [str(e)]}
+                result = {'errors': [type(e).__name__ + ': ' + str(e)]}
         else:
             result = {'errors': ['%s not configured' % PARSER_CONFIG_PROP]}
 

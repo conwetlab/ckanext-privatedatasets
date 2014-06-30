@@ -40,11 +40,11 @@ class ControllerTest(unittest.TestCase):
 
     @parameterized.expand([
         ('',              None,       False, False, '{"errors": ["%s not configured"]}' % PARSER_CONFIG_PROP),
-        ('INVALID_CLASS', None,       False, False, '{"errors": ["list index out of range"]}'),
-        ('INVALID.CLASS', None,       False, False, '{"errors": ["list index out of range"]}'),
-        ('valid.path',    CLASS_NAME, False, False, '{"errors": ["%s"]}' % IMPORT_ERROR_MSG),
-        ('valid.path',    CLASS_NAME, False, True,  '{"errors": ["%s"]}' % IMPORT_ERROR_MSG),
-        ('valid.path',    CLASS_NAME, True,  False, '{"errors": ["%s"]}' % CLASS_NAME),
+        ('INVALID_CLASS', None,       False, False, '{"errors": ["IndexError: list index out of range"]}'),
+        ('INVALID.CLASS', None,       False, False, '{"errors": ["IndexError: list index out of range"]}'),
+        ('valid.path',    CLASS_NAME, False, False, '{"errors": ["ImportError: %s"]}' % IMPORT_ERROR_MSG),
+        ('valid.path',    CLASS_NAME, False, True,  '{"errors": ["ImportError: %s"]}' % IMPORT_ERROR_MSG),
+        ('valid.path',    CLASS_NAME, True,  False, '{"errors": ["AttributeError: %s"]}' % CLASS_NAME),
         ('valid.path',    CLASS_NAME, True,  True,  None)
 
     ])
