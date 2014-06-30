@@ -11,7 +11,7 @@ Install this extension in your CKAN is instance is as easy as intall any other C
 * Activate your virtual environment (generally by running `. /usr/lib/ckan/default/bin/activate`)
 * Install the extension by running `python setup.py develop`
 * Modify your configuration file (generally in `/etc/ckan/default/production.ini`) and add `privatedatasets` in the `ckan.plugins` setting. 
-* In the same config file, specify the location of your parser by adding the `ckan.privatedatasets.parser` setting. For example, to set the [FiWareNotificationParser](https://github.com/conwetlab/ckanext-privatedatasets/blob/develop/ckanext/privatedatasets/parsers/fiware.py) as notification parser, add the following line: `ckan.privatedatasets.parser = ckanext.privatedatasets.parsers.fiware:FiWareNotificationParser`
+* In the same config file, specify the location of your parser by adding the `ckan.privatedatasets.parser` setting. For example, to set the [FiWareNotificationParser](https://github.com/conwetlab/ckanext-privatedatasets/blob/master/ckanext/privatedatasets/parsers/fiware.py) as notification parser, add the following line: `ckan.privatedatasets.parser = ckanext.privatedatasets.parsers.fiware:FiWareNotificationParser`
 * Restart your apache2 reserver (`sudo service apache2 restart`)
 * That's All!
 
@@ -23,7 +23,7 @@ If you want to create your own parser, you have to:
 
 1. Create a class with a method called `parse_notification`
 2. Import `request` from `ckan.common` in order to be able to read the notification: `from ckan.common import request`.
-3. You can parse the notification as you like. You can read the body by accesing `request.body`.
+3. Parse the notification as you like. You can read the body by accesing `request.body`.
 4. Return a dictionary with the following structure. The `errors` field contains the list of errors arised when the notification was parsed while the `users_datasets` is the lists of datasets available for each user (each element of this list is a dictionary with two fields: `user` and `datasets`). If the `error` field is present and it is **not** empty, the `users_datasets` field will **not** be processed.
 
 ```
