@@ -201,10 +201,15 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
 
         _old_package_search = tk.get_action('package_search')
 
+        @tk.side_effect_free
         def _new_package_search(context, data_dict):
-            if request.path == '/dataset':
+            valid_urls = ['/dataset', '/api/3/action/package_search',
+                          '/api/3/action/dataset_search']
+            if request.path in valid_urls:
                 context.update({'ignore_capacity_check': True})
             return _old_package_search(context, data_dict)
+
+        _new_package_search.__doc__ = _old_package_search.__doc__
 
         # Modify the package_show function used across the system
         return {'package_search': _new_package_search}

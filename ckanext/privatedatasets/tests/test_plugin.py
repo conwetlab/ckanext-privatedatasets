@@ -156,10 +156,11 @@ class PluginTest(unittest.TestCase):
         self.assertEquals(auth_functions['package_update'], plugin.package_update)
 
     @parameterized.expand([
-        ('/dataset',          True),    # Include ignore_capacity_check
-        ('/',                 False),   # Not include ignore_capacity_check
-        ('/datasets',         False),   # Not include ignore_capacity_check
-        ('/api/rest/dataset', False)    # Not include ignore_capacity_check. TODO: Maybe in the future this must change
+        ('/dataset',                     True),    # Include ignore_capacity_check
+        ('/',                            False),   # Not include ignore_capacity_check
+        ('/datasets',                    False),   # Not include ignore_capacity_check
+        ('/api/3/action/package_search', True),    # Include ignore_capacity_check
+        ('/api/3/action/dataset_search', True)     # Include ignore_capacity_check
     ])
     def test_package_seach_modified(self, request_path, include_ignore_capacity):
         # Mock the default actions
@@ -169,18 +170,21 @@ class PluginTest(unittest.TestCase):
         # Mock request
         plugin.request.path = request_path
 
+        # Unmock the decorator
+        plugin.tk.side_effect_free = self._tk.side_effect_free
+
         # Get the actions returned by the plugin
         actions = self.privateDatasets.get_actions()
 
         # Call the function
         context = {'id': 'test', 'another_test': 'test_value'}
+        expected_context = context.copy()
         data_dict = {'example': 'test', 'key': 'value'}
         actions['package_search'](context, data_dict)
 
         # Test if the default function has been called properly
         package_search_old.assert_called_once_with(ANY, data_dict)
         context_called = package_search_old.call_args_list[0][0][0]    # First call, first argument
-        expected_context = context.copy()
 
         if include_ignore_capacity:
             expected_context.update({'ignore_capacity_check': True})
