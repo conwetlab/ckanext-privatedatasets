@@ -185,7 +185,7 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
         # DataSet adquired notification
         m.connect('/dataset_adquired',
                   controller='ckanext.privatedatasets.controller:AdquiredDatasetsController',
-                  action='add_user', conditions=dict(method=['POST']))
+                  action='add_users', conditions=dict(method=['POST']))
 
         return m
 

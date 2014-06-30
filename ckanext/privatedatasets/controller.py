@@ -19,7 +19,7 @@ class AdquiredDatasetsController(base.BaseController):
         environ['pylons.status_code_redirect'] = True
         return base.BaseController.__call__(self, environ, start_response)
 
-    def add_user(self):
+    def add_users(self):
 
         log.info('Notification Request received')
 
@@ -55,7 +55,7 @@ class AdquiredDatasetsController(base.BaseController):
                         dataset = plugins.toolkit.get_action('package_show')({'ignore_auth': True}, {'id': dataset_id})
 
                         # Generate default set of users if it does not exist
-                        if 'allowed_users' not in dataset:
+                        if 'allowed_users' not in dataset or dataset['allowed_users'] is None:
                             dataset['allowed_users'] = ''
 
                         # Only new users will be inserted

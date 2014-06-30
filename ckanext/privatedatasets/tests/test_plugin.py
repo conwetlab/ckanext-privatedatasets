@@ -204,7 +204,7 @@ class PluginTest(unittest.TestCase):
         # Test that the connect method has been called
         m.connect.assert_called_once_with('/dataset_adquired',
                                           controller='ckanext.privatedatasets.controller:AdquiredDatasetsController',
-                                          action='add_user', conditions=dict(method=['POST']))
+                                          action='add_users', conditions=dict(method=['POST']))
 
     @parameterized.expand([
         ('create_package_schema'),
