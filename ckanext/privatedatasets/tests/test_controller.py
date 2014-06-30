@@ -174,10 +174,7 @@ class ControllerTest(unittest.TestCase):
                 elif dataset_id in not_updatable_datasets and allowed_users is not None and user_datasets['user'] not in allowed_users:
                     warns.append('Dataset %s: %s' % (dataset_id, ADD_USERS_ERROR))
 
-        if len(warns) > 0:
-            expected_result = json.dumps({'warns': warns})
-        else:
-            expected_result = None
+        expected_result = json.dumps({'warns': warns}) if len(warns) > 0 else None
 
         # Check that the returned result is as expected
         self.assertEquals(expected_result, result)

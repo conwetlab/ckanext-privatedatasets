@@ -1,6 +1,6 @@
-/* Dataset visibility toggler
- * When no organization is selected in the org dropdown then set visibility to
- * public always and disable dropdown
+/* Dataset allowed_users and adquire_url toggler
+ * allowd_users and adquire_url can only be active when a user attempts to create
+ * a private dataset outside an organization 
  */
 
 this.ckan.module('allowed-users', function ($, _) {
