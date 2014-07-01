@@ -46,6 +46,7 @@ class PluginTest(unittest.TestCase):
         (None, None, None,   False, 'active', None,     None,  None,                      None,        None,              True),
         # Anonymous user (private)
         (None, None, None,   True,  'active', None,     None,  None,                      None,        '/',               False),
+        (None, None, '',     True,  'active', None,     None,  '',                        None,        '/',               False),
         # Anonymous user (private). Buy URL not shown
         (None, None, None,   True,  'active', None,     None,  None,                      'google.es', '/',               False),
         # Anonymous user (private). Buy URL shown
@@ -83,7 +84,7 @@ class PluginTest(unittest.TestCase):
         returned_package.owner_org = owner_org
         returned_package.extras = {}
 
-        if allowed_users:
+        if allowed_users is not None:
             returned_package.extras['allowed_users'] = allowed_users
 
         if adquire_url:
@@ -95,9 +96,9 @@ class PluginTest(unittest.TestCase):
 
         # Prepare the context
         context = {}
-        if user:
+        if user is not None:
             context['user'] = user
-        if user_obj_id:
+        if user_obj_id is not None:
             context['auth_user_obj'] = MagicMock()
             context['auth_user_obj'].id = user_obj_id
 
@@ -134,9 +135,9 @@ class PluginTest(unittest.TestCase):
 
         # Prepare the context
         context = {}
-        if user:
+        if user is not None:
             context['user'] = user
-        if user_obj_id:
+        if user_obj_id is not None:
             context['auth_user_obj'] = MagicMock()
             context['auth_user_obj'].id = user_obj_id
 
@@ -278,7 +279,7 @@ class PluginTest(unittest.TestCase):
 
         plugin.private_datasets_metadata_checker(KEY, data, errors, {})
 
-        if (error_set):
+        if error_set:
             self.assertEquals(1, len(errors[KEY]))
         else:
             self.assertEquals(0, len(errors[KEY]))

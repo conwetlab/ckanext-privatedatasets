@@ -38,9 +38,11 @@ def package_show(context, data_dict):
         # user is in the allowed_users object
         if not authorized:
             if hasattr(package, 'extras') and 'allowed_users' in package.extras:
-                allowed_users = package.extras['allowed_users'].split(',')
-                if user in allowed_users:
-                    authorized = True
+                allowed_users = package.extras['allowed_users']
+                if allowed_users != '': # ''.split(',') ==> ['']
+                    allowed_users_list = allowed_users.split(',')
+                    if user in allowed_users_list:
+                        authorized = True
 
         if not authorized:
             # Show a flash message with the URL to adquire the dataset
