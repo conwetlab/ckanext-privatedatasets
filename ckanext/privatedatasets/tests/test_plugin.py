@@ -34,6 +34,9 @@ class PluginTest(unittest.TestCase):
         plugin.new_authz = self._new_authz
         plugin.tk = self._tk
 
+        if hasattr(self, '_package_show'):
+            plugin.package_show = self._package_show
+
     def test_implementations(self):
         self.assertTrue(plugin.p.IDatasetForm.implemented_by(plugin.PrivateDatasets))
         self.assertTrue(plugin.p.IAuthFunctions.implemented_by(plugin.PrivateDatasets))
@@ -151,10 +154,57 @@ class PluginTest(unittest.TestCase):
         if creator_user_id != user_obj_id and owner_org:
             plugin.new_authz.has_user_permission_for_group_or_org.assert_called_once_with(owner_org, user, 'update_dataset')
 
+    @parameterized.expand([
+        (True, True),
+        (True, False),
+        (False, False),
+        (False, False)
+    ])
+    def test_auth_resource_show(self, exist_pkg=True, authorized_pkg=True):
+        #Recover the exception
+        plugin.tk.ObjectNotFound = self._tk.ObjectNotFound
+
+        # Mock the calls
+        package = MagicMock()
+        package.id = '1'
+
+        final_query = MagicMock()
+        final_query.first = MagicMock(return_value=package if exist_pkg else None)
+
+        second_join = MagicMock()
+        second_join.filter = MagicMock(return_value=final_query)
+
+        first_join = MagicMock()
+        first_join.join = MagicMock(return_value=second_join)
+
+        query = MagicMock()
+        query.join = MagicMock(return_value=first_join)
+
+        model = MagicMock()
+        session = MagicMock()
+        session.query = MagicMock(return_value=query)
+        model.Session = session
+
+        # Create the context
+        context = {}
+        context['model'] = model
+
+        # Mock the package_show function
+        self._package_show = plugin.package_show
+        success = True if authorized_pkg else False
+        plugin.package_show = MagicMock(return_value={'success': success})
+
+        if not exist_pkg:
+            self.assertRaises(self._tk.ObjectNotFound, plugin.resource_show, context, {})
+        else:
+            result = plugin.resource_show(context, {})
+            self.assertEquals(authorized_pkg, result['success'])
+
     def test_auth_functions(self):
         auth_functions = self.privateDatasets.get_auth_functions()
         self.assertEquals(auth_functions['package_show'], plugin.package_show)
         self.assertEquals(auth_functions['package_update'], plugin.package_update)
+        self.assertEquals(auth_functions['resource_show'], plugin.resource_show)
 
     @parameterized.expand([
         ('/dataset',                     True),    # Include ignore_capacity_check

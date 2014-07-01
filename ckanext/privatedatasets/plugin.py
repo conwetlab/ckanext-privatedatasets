@@ -11,7 +11,6 @@ from ckan.common import _, request
 ########################### AUTH FUNCTIONS ###########################
 ######################################################################
 
-@tk.auth_allow_anonymous_access
 def package_show(context, data_dict):
     user = context.get('user')
     user_obj = context.get('auth_user_obj')
@@ -80,6 +79,34 @@ def package_update(context, data_dict):
 
     if not authorized:
         return {'success': False, 'msg': _('User %s is not authorized to edit package %s') % (user, package.id)}
+    else:
+        return {'success': True}
+
+
+@tk.auth_allow_anonymous_access
+def resource_show(context, data_dict):
+    # This function is needed since CKAN resource_show function uses the default package_show
+    # function instead the one defined in the plugin.
+    # A bug is openend in order to be able to remove this function
+    # https://github.com/ckan/ckan/issues/1818
+    model = context['model']
+    user = context.get('user')
+    resource = logic_auth.get_resource_object(context, data_dict)
+
+    # check authentication against package
+    query = model.Session.query(model.Package)\
+        .join(model.ResourceGroup)\
+        .join(model.Resource)\
+        .filter(model.ResourceGroup.id == resource.resource_group_id)
+    pkg = query.first()
+    if not pkg:
+        raise tk.ObjectNotFound(_('No package found for this resource, cannot check auth.'))
+
+    pkg_dict = {'id': pkg.id}
+    authorized = package_show(context, pkg_dict).get('success')
+
+    if not authorized:
+        return {'success': False, 'msg': _('User %s not authorized to read resource %s') % (user, resource.id)}
     else:
         return {'success': True}
 
@@ -165,7 +192,8 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
 
     def get_auth_functions(self):
         return {'package_show': package_show,
-                'package_update': package_update}
+                'package_update': package_update,
+                'resource_show': resource_show}
 
     ######################################################################
     ############################ ICONFIGURER #############################
