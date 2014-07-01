@@ -44,6 +44,10 @@ class PluginTest(unittest.TestCase):
         self.assertTrue(plugin.p.IRoutes.implemented_by(plugin.PrivateDatasets))
         self.assertTrue(plugin.p.IActions.implemented_by(plugin.PrivateDatasets))
 
+    def test_decordators(self):
+        self.assertEquals(True, getattr(plugin.package_show, 'auth_allow_anonymous_access', False))
+        self.assertEquals(True, getattr(plugin.resource_show, 'auth_allow_anonymous_access', False))
+
     @parameterized.expand([
         # Anonymous user (public)
         (None, None, None,   False, 'active', None,     None,  None,                      None,        None,              True),

@@ -11,6 +11,7 @@ from ckan.common import _, request
 ########################### AUTH FUNCTIONS ###########################
 ######################################################################
 
+@tk.auth_allow_anonymous_access
 def package_show(context, data_dict):
     user = context.get('user')
     user_obj = context.get('auth_user_obj')
