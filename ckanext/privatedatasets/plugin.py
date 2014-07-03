@@ -39,7 +39,7 @@ def package_show(context, data_dict):
         if not authorized:
             if hasattr(package, 'extras') and 'allowed_users' in package.extras:
                 allowed_users = package.extras['allowed_users']
-                if allowed_users != '': # ''.split(',') ==> ['']
+                if allowed_users != '':     # ''.split(',') ==> ['']
                     allowed_users_list = allowed_users.split(',')
                     if user in allowed_users_list:
                         authorized = True
@@ -50,7 +50,8 @@ def package_show(context, data_dict):
             # The message cannot be displayed in other pages that uses the package_show function such as
             # the user profile page
 
-            if hasattr(package, 'extras') and 'adquire_url' in package.extras and request.path.startswith('/dataset/'):
+            if hasattr(package, 'extras') and 'adquire_url' in package.extras and request.path.startswith('/dataset/')\
+                    and package.extras['adquire_url'] != '':
                 helpers.flash_notice(_('This private dataset can be adquired. To do so, please click ' +
                                        '<a target="_blank" href="%s">here</a>') % package.extras['adquire_url'],
                                      allow_html=True)
