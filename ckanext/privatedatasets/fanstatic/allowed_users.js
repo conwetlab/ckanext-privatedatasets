@@ -12,9 +12,8 @@ this.ckan.module('allowed-users', function ($, _) {
     },
     _onChange: function() {
       var ds_private = $('#field-private').val();
-      var organization = $('#field-organizations').val();
 
-      if (ds_private == "True" && !organization) {
+      if (ds_private == "True") {
         $('#field-allowed_users').prop('disabled', false);  //Enable
         $('#field-adquire_url').prop('disabled', false);    //Enable
       } else {

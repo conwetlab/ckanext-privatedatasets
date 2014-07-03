@@ -121,12 +121,11 @@ def private_datasets_metadata_checker(key, data, errors, context):
     # TODO: In some cases, we will need to retireve all the dataset information if it isn't present...
 
     private_val = data.get(('private',))
-    owner_org = data.get(('owner_org',))
     private = private_val is True if isinstance(private_val, bool) else private_val == "True"
     metadata_value = data[key]
 
     # If allowed users are included and the dataset is not private outside and organization, an error will be raised.
-    if metadata_value != '' and (not private or owner_org):
+    if metadata_value != '' and not private:
         errors[key].append(_('This field is only valid when you create a private dataset outside an organization'))
 
 

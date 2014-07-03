@@ -78,7 +78,12 @@ class PluginTest(unittest.TestCase):
         (1,    2,    'test', False, 'active', 'conwet', False, None,                      None,        None,              True),
         (1,    2,    'test', True,  'active', 'conwet', False, None,                      None,        None,              False),
         (1,    2,    'test', True,  'active', 'conwet', True,  None,                      None,        None,              True),
-        (1,    2,    'test', True,  'draft',  'conwet', True,  None,                      None,        None,              False)
+        (1,    2,    'test', True,  'draft',  'conwet', True,  None,                      None,        None,              False),
+        # Other user with organizations (user is not in the organization)
+        (1,    2,    'test', True,  'active', 'conwet', False, 'test',                    None,        None,              True),
+        (1,    2,    'test', True,  'active', 'conwet', False, 'some,another,other',      None,        None,              False),
+        (1,    2,    'test', True,  'active', 'conwet', False, 'some,another,other',      'google.es', '/dataset/testds', False),
+        (1,    2,    'test', True,  'active', 'conwet', False, 'some,another,other',      'google.es', '/',               False)
     ])
     def test_auth_package_show(self, creator_user_id, user_obj_id, user, private, state, owner_org,
                                owner_member, allowed_users, adquire_url, request_path, authorized):
@@ -309,8 +314,8 @@ class PluginTest(unittest.TestCase):
         ('False', None,     '',     False),
         # When data is present, the field is only valid when the
         # organization is not set and the private field is set to true
-        (True,    'conwet', 'test', True),
-        ('True',  'conwet', 'test', True),
+        (True,    'conwet', 'test', False),
+        ('True',  'conwet', 'test', False),
         (False,   'conwet', 'test', True),
         ('False', 'conwet', 'test', True),
         (True,    None,     'test', False),
