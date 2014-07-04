@@ -130,6 +130,21 @@ def private_datasets_metadata_checker(key, data, errors, context):
         errors[key].append(_('This field is only valid when you create a private dataset outside an organization'))
 
 
+######################################################################
+############################### ADQUIRED #############################
+######################################################################
+
+def adquired(pkg_dict):
+
+    adquired = False
+    if 'allowed_users' in pkg_dict and pkg_dict['allowed_users'] != '' and pkg_dict['allowed_users'] is not None:
+        allowed_users = pkg_dict['allowed_users'].split(',')
+        if tk.c.user in allowed_users:
+            adquired = True
+
+    return adquired
+
+
 class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
 
     p.implements(p.IDatasetForm)
@@ -138,6 +153,7 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
     p.implements(p.IRoutes, inherit=True)
     p.implements(p.IActions)
     p.implements(p.IPackageController)
+    p.implements(p.ITemplateHelpers)
 
     ######################################################################
     ############################ DATASET FORM ############################
@@ -212,6 +228,10 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
         # that CKAN will use this plugin's custom templates.
         tk.add_template_directory(config, 'templates')
 
+        # Add this plugin's public dir to CKAN's extra_public_paths, so
+        # that CKAN will use this plugin's custom static files.
+        tk.add_public_directory(config, 'public')
+
         # Register this plugin's fanstatic directory with CKAN.
         tk.add_resource('fanstatic', 'privatedatasets')
 
@@ -260,6 +280,7 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
         return pkg_dict
 
     def before_view(self, pkg_dict):
+        print pkg_dict
         return pkg_dict
 
     def before_search(self, search_params):
@@ -303,3 +324,10 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
 
     def after_delete(self, context, pkg_dict):
         return pkg_dict
+
+    ######################################################################
+    ########################## ITEMPLATESHELER ###########################
+    ######################################################################
+
+    def get_helpers(self):
+        return {'privatedatasets_adquired': adquired}

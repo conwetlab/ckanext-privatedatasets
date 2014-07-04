@@ -44,6 +44,7 @@ class PluginTest(unittest.TestCase):
         self.assertTrue(plugin.p.IRoutes.implemented_by(plugin.PrivateDatasets))
         self.assertTrue(plugin.p.IActions.implemented_by(plugin.PrivateDatasets))
         self.assertTrue(plugin.p.IPackageController.implemented_by(plugin.PrivateDatasets))
+        self.assertTrue(plugin.p.ITemplateHelpers.implemented_by(plugin.PrivateDatasets))
 
     def test_decordators(self):
         self.assertEquals(True, getattr(plugin.package_show, 'auth_allow_anonymous_access', False))
@@ -429,3 +430,21 @@ class PluginTest(unittest.TestCase):
             expected_search_params['fq'] += ' -(-searchable:True AND searchable:[* TO *])'
 
         self.assertEquals(expected_search_params, result)
+
+    def test_helpers_functions(self):
+        helpers_functions = self.privateDatasets.get_helpers()
+        self.assertEquals(helpers_functions['privatedatasets_adquired'], plugin.adquired)
+
+    @parameterized.expand([
+        (False, None,                 'user', False),
+        (True,  '',                   'user', False),
+        (True,  None,                 'user', False),
+        (True,  'user',               'user', True),
+        (True,  'another_user,user',  'user', True),
+        (True,  'another_user,user2', 'user', False),
+    ])
+    def test_adquired(self, include_allowed_users, allowed_users, user, adquired):
+        plugin.tk.c.user = user
+        self.assertEquals(adquired, plugin.adquired({'allowed_users': allowed_users}))
+
+
