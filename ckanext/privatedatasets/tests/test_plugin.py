@@ -43,6 +43,7 @@ class PluginTest(unittest.TestCase):
         self.assertTrue(plugin.p.IConfigurer.implemented_by(plugin.PrivateDatasets))
         self.assertTrue(plugin.p.IRoutes.implemented_by(plugin.PrivateDatasets))
         self.assertTrue(plugin.p.IActions.implemented_by(plugin.PrivateDatasets))
+        self.assertTrue(plugin.p.IPackageController.implemented_by(plugin.PrivateDatasets))
 
     def test_decordators(self):
         self.assertEquals(True, getattr(plugin.package_show, 'auth_allow_anonymous_access', False))
@@ -348,3 +349,83 @@ class PluginTest(unittest.TestCase):
 
     def test_package_types(self):
         self.assertEquals([], self.privateDatasets.package_types())
+
+    @parameterized.expand([
+        ('after_create',),
+        ('after_update',),
+        ('after_show',),
+        ('after_delete',),
+        ('after_create', 'False'),
+        ('after_update', 'False'),
+        ('after_show',   'False'),
+        ('after_delete', 'False')
+    ])
+    def test_packagecontroller_after(self, function, private='True'):
+        pkg_dict = {'test': 'a', 'private': private, 'allowed_users': 'a,b,c'}
+        expected_pkg_dict = pkg_dict.copy()
+        result = getattr(self.privateDatasets, function)({}, pkg_dict)  # Call the function
+        self.assertEquals(expected_pkg_dict, result)                    # Check the result
+
+    def test_packagecontroller_after_search(self):
+        search_res = {'test': 'a', 'private': 'a', 'allowed_users': 'a,b,c'}
+        expected_search_res = search_res.copy()
+        result = getattr(self.privateDatasets, 'after_search')(search_res, {})  # Call the function
+        self.assertEquals(expected_search_res, result)                          # Check the result
+
+    @parameterized.expand([
+        ('before_index',),
+        ('before_view',),
+        ('create',),
+        ('edit',),
+        ('read',),
+        ('delete',),
+        ('before_index', 'False'),
+        ('before_view',  'False'),
+        ('create',       'False'),
+        ('edit',         'False'),
+        ('read',         'False'),
+        ('delete',       'False')
+    ])
+    def test_before_and_CRUD(self, function, private='True'):
+        pkg_dict = {'test': 'a', 'private': private, 'allowed_users': 'a,b,c'}
+        expected_pkg_dict = pkg_dict.copy()
+        result = getattr(self.privateDatasets, function)(pkg_dict)   # Call the function
+        self.assertEquals(expected_pkg_dict, result)                 # Check the result
+
+    @parameterized.expand([
+        (None,                              None,                              True),
+        (None,                              '',                                True),
+        ('',                                None,                              True),
+        ('',                                '',                                True),
+        ('ow',                              'ne',                              True),
+        ('owner_org:"conwet"',              None,                              False),
+        ('owner_org:"conwet"',              'ne',                              False),
+        ('ow',                              'owner_org:"conwet"',              False),
+        (None,                              'owner_org:"conwet"',              False),
+        ('+owner_org:"conwet" +cap:public', None,                              False),
+        ('+owner_org:"conwet" +cap_public', 'ne',                              False),
+        ('ow',                              '+owner_org:"conwet" +cap:public', False),
+        (None,                              '+owner_org:"conwet" +cap:public', False),
+        ('+owner_org:"conwet" +cap:public', '+owner_org:"conwet" +cap:public', False)
+    ])
+    def test_before_serach(self, q=None, fq=None, expected_searchable=True):
+        search_params = {}
+
+        if q is not None:
+            search_params['q'] = q
+
+        if fq is not None:
+            search_params['fq'] = fq
+
+        expected_search_params = search_params.copy()
+
+        # Call the function
+        result = self.privateDatasets.before_search(search_params)
+
+        # Check the result
+        if expected_searchable:
+            if 'fq' not in expected_search_params:
+                expected_search_params['fq'] = ''
+            expected_search_params['fq'] += ' -(-searchable:True AND searchable:[* TO *])'
+
+        self.assertEquals(expected_search_params, result)

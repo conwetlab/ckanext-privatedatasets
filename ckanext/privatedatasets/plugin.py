@@ -137,6 +137,7 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
     p.implements(p.IConfigurer)
     p.implements(p.IRoutes, inherit=True)
     p.implements(p.IActions)
+    p.implements(p.IPackageController)
 
     ######################################################################
     ############################ DATASET FORM ############################
@@ -152,7 +153,11 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
                               tk.get_converter('convert_to_extras')],
             'adquire_url': [tk.get_validator('ignore_missing'),
                             private_datasets_metadata_checker,
-                            tk.get_converter('convert_to_extras')]
+                            tk.get_converter('convert_to_extras')],
+            'searchable': [tk.get_validator('ignore_missing'),
+                           private_datasets_metadata_checker,
+                           tk.get_converter('convert_to_extras'),
+                           tk.get_validator('boolean_validator')]
         }
 
     def create_package_schema(self):
@@ -173,7 +178,9 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
             'allowed_users': [tk.get_converter('convert_from_extras'),
                               tk.get_validator('ignore_missing')],
             'adquire_url': [tk.get_converter('convert_from_extras'),
-                            tk.get_validator('ignore_missing')]
+                            tk.get_validator('ignore_missing')],
+            'searchable': [tk.get_converter('convert_from_extras'),
+                           tk.get_validator('ignore_missing')]
         })
         return schema
 
@@ -225,8 +232,8 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
     ######################################################################
 
     def get_actions(self):
-        # Update package_show function. When the URL is the URL used to
-        # check the datasets, the context parameter will me modified and
+        # Update package_search function. When the URL is the URL used to
+        # retrieve the datasets, the context parameter will me modified and
         # the field 'ignore_capacity_check' will be added in order to
         # get both the private and the public datasets.
 
@@ -244,3 +251,55 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
 
         # Modify the package_show function used across the system
         return {'package_search': _new_package_search}
+
+    ######################################################################
+    ######################### IPACKAGECONTROLLER #########################
+    ######################################################################
+
+    def before_index(self, pkg_dict):
+        return pkg_dict
+
+    def before_view(self, pkg_dict):
+        return pkg_dict
+
+    def before_search(self, search_params):
+
+        # Filter mustn't be applied when a user serachs datasets within organizations
+        if ('q' not in search_params or 'owner_org' not in search_params['q']) and \
+                ('fq' not in search_params or 'owner_org' not in search_params['fq']):
+
+            # Create the fq field if it does not exist
+            if 'fq' not in search_params:
+                search_params['fq'] = ''
+
+            # searchable does not exist or is equals to True
+            search_params['fq'] += ' -(-searchable:True AND searchable:[* TO *])'
+
+        return search_params
+
+    def create(self, pkg_dict):
+        return pkg_dict
+
+    def edit(self, pkg_dict):
+        return pkg_dict
+
+    def read(self, pkg_dict):
+        return pkg_dict
+
+    def delete(self, pkg_dict):
+        return pkg_dict
+
+    def after_create(self, context, pkg_dict):
+        return pkg_dict
+
+    def after_update(self, context, pkg_dict):
+        return pkg_dict
+
+    def after_show(self, context, pkg_dict):
+        return pkg_dict
+
+    def after_search(self, search_results, search_params):
+        return search_results
+
+    def after_delete(self, context, pkg_dict):
+        return pkg_dict
