@@ -234,9 +234,12 @@ class PluginTest(unittest.TestCase):
         self.privateDatasets.after_map(m)
 
         # Test that the connect method has been called
-        m.connect.assert_called_once_with('/dataset_adquired',
-                                          controller='ckanext.privatedatasets.controller:AdquiredDatasetsController',
-                                          action='add_users', conditions=dict(method=['POST']))
+        m.connect.assert_any_call('/dataset_adquired',
+                                  controller='ckanext.privatedatasets.controller:AdquiredDatasetsController',
+                                  action='add_users', conditions=dict(method=['POST']))
+        m.connect.assert_any_call('user_adquired_datasets', '/dashboad/adquired', ckan_icon='shopping-cart',
+                                  controller='ckanext.privatedatasets.controller:AdquiredDatasetsController',
+                                  action='user_adquired_datasets', conditions=dict(method=['GET']))
 
     @parameterized.expand([
         ('create_package_schema'),
