@@ -151,7 +151,6 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
     p.implements(p.IAuthFunctions)
     p.implements(p.IConfigurer)
     p.implements(p.IRoutes, inherit=True)
-    p.implements(p.IActions)
     p.implements(p.IPackageController)
     p.implements(p.ITemplateHelpers)
 
@@ -248,54 +247,23 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
         return m
 
     ######################################################################
-    ############################## IACTIONS ##############################
-    ######################################################################
-
-    def get_actions(self):
-        # Update package_search function. When the URL is the URL used to
-        # retrieve the datasets, the context parameter will me modified and
-        # the field 'ignore_capacity_check' will be added in order to
-        # get both the private and the public datasets.
-
-        _old_package_search = tk.get_action('package_search')
-
-        @tk.side_effect_free
-        def _new_package_search(context, data_dict):
-            valid_urls = ['/dataset', '/api/3/action/package_search',
-                          '/api/3/action/dataset_search']
-            if request.path in valid_urls:
-                context.update({'ignore_capacity_check': True})
-            return _old_package_search(context, data_dict)
-
-        _new_package_search.__doc__ = _old_package_search.__doc__
-
-        # Modify the package_show function used across the system
-        return {'package_search': _new_package_search}
-
-    ######################################################################
     ######################### IPACKAGECONTROLLER #########################
     ######################################################################
 
     def before_index(self, pkg_dict):
+
+        if 'extras_searchable' in pkg_dict:
+            if pkg_dict['extras_searchable'] == 'False':
+                pkg_dict['capacity'] = 'private'
+            else:
+                pkg_dict['capacity'] = 'public'
+
         return pkg_dict
 
     def before_view(self, pkg_dict):
-        print pkg_dict
         return pkg_dict
 
     def before_search(self, search_params):
-
-        # Filter mustn't be applied when a user serachs datasets within organizations
-        if ('q' not in search_params or 'owner_org' not in search_params['q']) and \
-                ('fq' not in search_params or 'owner_org' not in search_params['fq']):
-
-            # Create the fq field if it does not exist
-            if 'fq' not in search_params:
-                search_params['fq'] = ''
-
-            # searchable does not exist or is equals to True
-            search_params['fq'] += ' -(-searchable:True AND searchable:[* TO *])'
-
         return search_params
 
     def create(self, pkg_dict):

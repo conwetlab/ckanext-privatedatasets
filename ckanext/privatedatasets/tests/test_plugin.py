@@ -1,7 +1,7 @@
 import unittest
 import ckanext.privatedatasets.plugin as plugin
 
-from mock import MagicMock, ANY
+from mock import MagicMock
 from nose_parameterized import parameterized
 
 
@@ -37,14 +37,16 @@ class PluginTest(unittest.TestCase):
         if hasattr(self, '_package_show'):
             plugin.package_show = self._package_show
 
-    def test_implementations(self):
-        self.assertTrue(plugin.p.IDatasetForm.implemented_by(plugin.PrivateDatasets))
-        self.assertTrue(plugin.p.IAuthFunctions.implemented_by(plugin.PrivateDatasets))
-        self.assertTrue(plugin.p.IConfigurer.implemented_by(plugin.PrivateDatasets))
-        self.assertTrue(plugin.p.IRoutes.implemented_by(plugin.PrivateDatasets))
-        self.assertTrue(plugin.p.IActions.implemented_by(plugin.PrivateDatasets))
-        self.assertTrue(plugin.p.IPackageController.implemented_by(plugin.PrivateDatasets))
-        self.assertTrue(plugin.p.ITemplateHelpers.implemented_by(plugin.PrivateDatasets))
+    @parameterized.expand([
+        (plugin.p.IDatasetForm,),
+        (plugin.p.IAuthFunctions,),
+        (plugin.p.IConfigurer,),
+        (plugin.p.IRoutes,),
+        (plugin.p.IPackageController,),
+        (plugin.p.ITemplateHelpers,)
+    ])
+    def test_implementations(self, interface):
+        self.assertTrue(interface.implemented_by(plugin.PrivateDatasets))
 
     def test_decordators(self):
         self.assertEquals(True, getattr(plugin.package_show, 'auth_allow_anonymous_access', False))
@@ -217,42 +219,6 @@ class PluginTest(unittest.TestCase):
         self.assertEquals(auth_functions['package_update'], plugin.package_update)
         self.assertEquals(auth_functions['resource_show'], plugin.resource_show)
 
-    @parameterized.expand([
-        ('/dataset',                     True),    # Include ignore_capacity_check
-        ('/',                            False),   # Not include ignore_capacity_check
-        ('/datasets',                    False),   # Not include ignore_capacity_check
-        ('/api/3/action/package_search', True),    # Include ignore_capacity_check
-        ('/api/3/action/dataset_search', True)     # Include ignore_capacity_check
-    ])
-    def test_package_seach_modified(self, request_path, include_ignore_capacity):
-        # Mock the default actions
-        package_search_old = MagicMock()
-        plugin.tk.get_action = MagicMock(return_value=package_search_old)
-
-        # Mock request
-        plugin.request.path = request_path
-
-        # Unmock the decorator
-        plugin.tk.side_effect_free = self._tk.side_effect_free
-
-        # Get the actions returned by the plugin
-        actions = self.privateDatasets.get_actions()
-
-        # Call the function
-        context = {'id': 'test', 'another_test': 'test_value'}
-        expected_context = context.copy()
-        data_dict = {'example': 'test', 'key': 'value'}
-        actions['package_search'](context, data_dict)
-
-        # Test if the default function has been called properly
-        package_search_old.assert_called_once_with(ANY, data_dict)
-        context_called = package_search_old.call_args_list[0][0][0]    # First call, first argument
-
-        if include_ignore_capacity:
-            expected_context.update({'ignore_capacity_check': True})
-
-        self.assertEquals(expected_context, context_called)
-
     def test_update_config(self):
         # Call the method
         config = {'test': 1234, 'another': 'value'}
@@ -329,7 +295,7 @@ class PluginTest(unittest.TestCase):
 
         # TODO: Maybe this test should be refactored since the function should be refactored
 
-        KEY = ('test')
+        KEY = ('test',)
         errors = {}
         errors[KEY] = []
 
@@ -374,13 +340,13 @@ class PluginTest(unittest.TestCase):
         self.assertEquals(expected_search_res, result)                          # Check the result
 
     @parameterized.expand([
-        ('before_index',),
+        ('before_search',),
         ('before_view',),
         ('create',),
         ('edit',),
         ('read',),
         ('delete',),
-        ('before_index', 'False'),
+        ('before_search', 'False'),
         ('before_view',  'False'),
         ('create',       'False'),
         ('edit',         'False'),
@@ -394,42 +360,22 @@ class PluginTest(unittest.TestCase):
         self.assertEquals(expected_pkg_dict, result)                 # Check the result
 
     @parameterized.expand([
-        (None,                              None,                              True),
-        (None,                              '',                                True),
-        ('',                                None,                              True),
-        ('',                                '',                                True),
-        ('ow',                              'ne',                              True),
-        ('owner_org:"conwet"',              None,                              False),
-        ('owner_org:"conwet"',              'ne',                              False),
-        ('ow',                              'owner_org:"conwet"',              False),
-        (None,                              'owner_org:"conwet"',              False),
-        ('+owner_org:"conwet" +cap:public', None,                              False),
-        ('+owner_org:"conwet" +cap_public', 'ne',                              False),
-        ('ow',                              '+owner_org:"conwet" +cap:public', False),
-        (None,                              '+owner_org:"conwet" +cap:public', False),
-        ('+owner_org:"conwet" +cap:public', '+owner_org:"conwet" +cap:public', False)
+        ('public',  None,    'public'),
+        ('public',  'False', 'private'),
+        ('public',  'True',  'public'),
+        ('private', None,    'private'),
+        ('private', 'False', 'private'),
+        ('public',  'True',  'public')
     ])
-    def test_before_serach(self, q=None, fq=None, expected_searchable=True):
-        search_params = {}
+    def test_before_index(self, initialCapacity, searchable, finalCapacity):
+        pkg_dict = {'capacity': initialCapacity, 'name': 'a', 'description': 'This is a test'}
+        if searchable is not None:
+            pkg_dict['extras_searchable'] = searchable
 
-        if q is not None:
-            search_params['q'] = q
+        expected_result = pkg_dict.copy()
+        expected_result['capacity'] = finalCapacity
 
-        if fq is not None:
-            search_params['fq'] = fq
-
-        expected_search_params = search_params.copy()
-
-        # Call the function
-        result = self.privateDatasets.before_search(search_params)
-
-        # Check the result
-        if expected_searchable:
-            if 'fq' not in expected_search_params:
-                expected_search_params['fq'] = ''
-            expected_search_params['fq'] += ' -(-searchable:True AND searchable:[* TO *])'
-
-        self.assertEquals(expected_search_params, result)
+        self.assertEquals(expected_result, self.privateDatasets.before_index(pkg_dict))
 
     def test_helpers_functions(self):
         helpers_functions = self.privateDatasets.get_helpers()
@@ -446,5 +392,3 @@ class PluginTest(unittest.TestCase):
     def test_adquired(self, include_allowed_users, allowed_users, user, adquired):
         plugin.tk.c.user = user
         self.assertEquals(adquired, plugin.adquired({'allowed_users': allowed_users}))
-
-
