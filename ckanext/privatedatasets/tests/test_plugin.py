@@ -347,11 +347,11 @@ class PluginTest(unittest.TestCase):
         ('read',),
         ('delete',),
         ('before_search', 'False'),
-        ('before_view',  'False'),
-        ('create',       'False'),
-        ('edit',         'False'),
-        ('read',         'False'),
-        ('delete',       'False')
+        ('before_view',   'False'),
+        ('create',        'False'),
+        ('edit',          'False'),
+        ('read',          'False'),
+        ('delete',        'False')
     ])
     def test_before_and_CRUD(self, function, private='True'):
         pkg_dict = {'test': 'a', 'private': private, 'allowed_users': 'a,b,c'}
