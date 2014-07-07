@@ -243,6 +243,9 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
         m.connect('/dataset_adquired',
                   controller='ckanext.privatedatasets.controller:AdquiredDatasetsController',
                   action='add_users', conditions=dict(method=['POST']))
+        m.connect('user_adquired_datasets', '/dashboad/adquired', ckan_icon='shopping-cart',
+                  controller='ckanext.privatedatasets.controller:AdquiredDatasetsController',
+                  action='user_adquired_datasets', conditions=dict(method=['GET']))
 
         return m
 

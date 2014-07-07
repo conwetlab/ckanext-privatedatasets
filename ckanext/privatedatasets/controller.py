@@ -1,11 +1,12 @@
 import ckan.lib.base as base
 import ckan.lib.helpers as helpers
 import ckan.plugins as plugins
+import ckan.model as model
 import importlib
 import logging
 import pylons.config as config
 
-from ckan.common import response
+from ckan.common import response, _
 
 log = logging.getLogger(__name__)
 
@@ -85,3 +86,38 @@ class AdquiredDatasetsController(base.BaseController):
         # Return warnings that inform about non-existing datasets
         if len(warns) > 0:
             return helpers.json.dumps({'warns': warns})
+
+    def user_adquired_datasets(self):
+
+        c = plugins.toolkit.c
+        context = {
+            'model': model,
+            'session': model.Session,
+            'user': plugins.toolkit.c.user
+        }
+
+        try:
+            c.user_dict = plugins.toolkit.get_action('user_show')(context, {'user_obj': c.userobj})
+            c.user_dict['adquired_datasets'] = []
+        except plugins.toolkit.ObjectNotFound:
+            plugins.toolkit.abort(404, _('User not found'))
+        except plugins.toolkit.NotAuthorized:
+            plugins.toolkit.abort(401, _('Not authorized to see this page'))
+
+        query = model.Session.query(model.PackageExtra).filter(
+            # Select only the allowed_users key
+            'package_extra.key=\'%s\' AND package_extra.value!=\'\' ' % 'allowed_users' +
+            # Selec only when the state is 'active'
+            'AND package_extra.state=\'%s\' ' % 'active' +
+            # The user name should be contained in the list
+            'AND regexp_split_to_array(package_extra.value,\',\') @> ARRAY[\'%s\']' % context['user'])
+
+        for dataset in query:
+            try:
+                print dataset.package_id
+                dataset_dict = plugins.toolkit.get_action('package_show')(context, {'id': dataset.package_id})
+                c.user_dict['adquired_datasets'].append(dataset_dict)
+            except Exception:
+                continue
+
+        return plugins.toolkit.render('user/dashboard_adquired.html')
