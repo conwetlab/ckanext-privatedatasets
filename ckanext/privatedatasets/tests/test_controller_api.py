@@ -11,7 +11,7 @@ CLASS_NAME = 'parser_class'
 ADD_USERS_ERROR = 'Default Message'
 
 
-class ControllerTest(unittest.TestCase):
+class APIControllerTest(unittest.TestCase):
 
     def setUp(self):
 

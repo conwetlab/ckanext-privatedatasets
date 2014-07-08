@@ -107,6 +107,7 @@ class AdquiredDatasetsControllerUI(base.BaseController):
             'user': plugins.toolkit.c.user
         }
 
+        # Get user information
         try:
             c.user_dict = plugins.toolkit.get_action('user_show')(context, {'user_obj': c.userobj})
             c.user_dict['adquired_datasets'] = []
@@ -115,6 +116,7 @@ class AdquiredDatasetsControllerUI(base.BaseController):
         except plugins.toolkit.NotAuthorized:
             plugins.toolkit.abort(401, _('Not authorized to see this page'))
 
+        # Get the datasets adquired by the user
         query = model.Session.query(model.PackageExtra).filter(
             # Select only the allowed_users key
             'package_extra.key=\'%s\' AND package_extra.value!=\'\' ' % 'allowed_users' +
@@ -123,9 +125,9 @@ class AdquiredDatasetsControllerUI(base.BaseController):
             # The user name should be contained in the list
             'AND regexp_split_to_array(package_extra.value,\',\') @> ARRAY[\'%s\']' % context['user'])
 
+        # Get full information about the datasets
         for dataset in query:
             try:
-                print dataset.package_id
                 dataset_dict = plugins.toolkit.get_action('package_show')(context, {'id': dataset.package_id})
                 c.user_dict['adquired_datasets'].append(dataset_dict)
             except Exception:
