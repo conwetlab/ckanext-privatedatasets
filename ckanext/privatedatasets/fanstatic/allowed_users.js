@@ -1,6 +1,6 @@
 /* Dataset allowed_users and adquire_url toggler
- * allowd_users and adquire_url can only be active when a user attempts to create
- * a private dataset outside an organization 
+ * allowed_users, adquire_url and searchable can only be active when a 
+ * user attempts to create a private dataset outside an organization 
  */
 
 this.ckan.module('allowed-users', function ($, _) {

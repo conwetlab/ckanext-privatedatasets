@@ -32,12 +32,12 @@ class AdquiredDatasetsControllerUI(base.BaseController):
         query = model.Session.query(model.PackageExtra).filter(
             # Select only the allowed_users key
             'package_extra.key=\'%s\' AND package_extra.value!=\'\' ' % 'allowed_users' +
-            # Selec only when the state is 'active'
+            # Select only when the state is 'active'
             'AND package_extra.state=\'%s\' ' % 'active' +
             # The user name should be contained in the list
             'AND regexp_split_to_array(package_extra.value,\',\') @> ARRAY[\'%s\']' % context['user'])
 
-        # Get full information about the datasets
+        # Get the datasets
         for dataset in query:
             try:
                 dataset_dict = plugins.toolkit.get_action('package_show')(context, {'id': dataset.package_id})

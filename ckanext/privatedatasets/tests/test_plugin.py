@@ -168,8 +168,8 @@ class PluginTest(unittest.TestCase):
             plugin.new_authz.has_user_permission_for_group_or_org.assert_called_once_with(owner_org, user, 'update_dataset')
 
     @parameterized.expand([
-        (True, True),
-        (True, False),
+        (True,  True),
+        (True,  False),
         (False, False),
         (False, False)
     ])
@@ -393,5 +393,11 @@ class PluginTest(unittest.TestCase):
         (True,  'another_user,user2', 'user', False),
     ])
     def test_adquired(self, include_allowed_users, allowed_users, user, adquired):
+        # Configure test
         plugin.tk.c.user = user
-        self.assertEquals(adquired, plugin.adquired({'allowed_users': allowed_users}))
+        pkg_dict = {}
+        if include_allowed_users:
+            pkg_dict['allowed_users'] = allowed_users
+
+        # Check the function returns the expected result
+        self.assertEquals(adquired, plugin.adquired(pkg_dict))

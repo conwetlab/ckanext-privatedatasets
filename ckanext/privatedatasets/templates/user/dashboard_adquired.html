@@ -13,9 +13,7 @@
   {% else %}
     <p class="empty">
       {{ _('You haven\'t adquired any datasets.') }}
-      {% if h.check_access('package_create') %}
-        {% link_for _('Adquire one now?'), controller='package', action='search' %}
-      {% endif %}
+      {% link_for _('Adquire one now?'), controller='package', action='search' %}
     </p>
   {% endif %}
 {% endblock %}
