@@ -51,15 +51,30 @@ class UIControllerTest(unittest.TestCase):
         user_show.assert_called_once_with(expected_context, {'user_obj': controller.plugins.toolkit.c.userobj})
         controller.plugins.toolkit.abort.assert_called_once_with(expected_status, ANY)
 
-    def test_no_errors(self):
+    @parameterized.expand([
+        ({},),
+        ({2: controller.plugins.toolkit.ObjectNotFound},),
+        ({1: controller.plugins.toolkit.NotAuthorized},)
+    ])
+    def test_no_error_loading_users(self, package_errors={}):
 
         pkgs_ids = [0, 1, 2, 3]
         user = 'example_user_test'
         controller.plugins.toolkit.c.user = user
 
         # get_action mock
+        default_package = {'pkg_id': 0, 'test': 'ok', 'res': 'ta'}
+
+        def _package_show(context, data_dict):
+            if data_dict['id'] in package_errors:
+                raise package_errors[data_dict['id']]('ERROR')
+            else:
+                pkg = default_package.copy()
+                pkg['pkg_id'] = data_dict['id']
+                return pkg
+
         user_dict = {'user_name': 'test', 'another_val': 'example value'}
-        package_show = MagicMock(return_value={'pkg_id': '1', 'test': 'ok', 'res': 'ta'})
+        package_show = MagicMock(side_effect=_package_show)
         user_show = MagicMock(return_value=user_dict.copy())
 
         def _get_action(action):
@@ -106,11 +121,15 @@ class UIControllerTest(unittest.TestCase):
         for i in pkgs_ids:
             package_show.assert_any_call(expected_context, {'id': i})
 
-        # Check that the template has the correct datasets
+        # Check that the template receives the correct datasets
         expected_user_dict = user_dict.copy()
         expected_user_dict['adquired_datasets'] = []
         for i in pkgs_ids:
-            expected_user_dict['adquired_datasets'].append(package_show.return_value)
+            if i not in package_errors:
+                pkg = default_package.copy()
+                pkg['pkg_id'] = i
+                expected_user_dict['adquired_datasets'].append(pkg)
+
         self.assertEquals(expected_user_dict, controller.plugins.toolkit.c.user_dict)
 
         # Check that the render method has been called and that its result has been returned
