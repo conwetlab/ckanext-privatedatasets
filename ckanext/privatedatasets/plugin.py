@@ -237,10 +237,10 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
     def after_map(self, m):
         # DataSet adquired notification
         m.connect('/dataset_adquired',
-                  controller='ckanext.privatedatasets.controllers:AdquiredDatasetsControllerAPI',
+                  controller='ckanext.privatedatasets.controllers.api_controller:AdquiredDatasetsControllerAPI',
                   action='add_users', conditions=dict(method=['POST']))
         m.connect('user_adquired_datasets', '/dashboad/adquired', ckan_icon='shopping-cart',
-                  controller='ckanext.privatedatasets.controllers:AdquiredDatasetsControllerUI',
+                  controller='ckanext.privatedatasets.controllers.ui_controller:AdquiredDatasetsControllerUI',
                   action='user_adquired_datasets', conditions=dict(method=['GET']))
 
         return m

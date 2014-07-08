@@ -235,10 +235,10 @@ class PluginTest(unittest.TestCase):
 
         # Test that the connect method has been called
         m.connect.assert_any_call('/dataset_adquired',
-                                  controller='ckanext.privatedatasets.controllers:AdquiredDatasetsControllerAPI',
+                                  controller='ckanext.privatedatasets.controllers.api_controller:AdquiredDatasetsControllerAPI',
                                   action='add_users', conditions=dict(method=['POST']))
         m.connect.assert_any_call('user_adquired_datasets', '/dashboad/adquired', ckan_icon='shopping-cart',
-                                  controller='ckanext.privatedatasets.controllers:AdquiredDatasetsControllerUI',
+                                  controller='ckanext.privatedatasets.controllers.ui_controller:AdquiredDatasetsControllerUI',
                                   action='user_adquired_datasets', conditions=dict(method=['GET']))
 
     @parameterized.expand([
