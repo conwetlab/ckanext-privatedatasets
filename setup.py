@@ -6,7 +6,7 @@ version = '0.1'
 setup(
     name='ckanext-privatedatasets',
     version=version,
-    description="This extensions allows a user to create private datasets only visible to certain users. The extension provides also an API to specify which users can access private datasets",
+    description="This extensions allows users to create private datasets only visible to certain users. The extension provides also an API to specify programatically which users can access private datasets",
     long_description='''
     ''',
     classifiers=[], # Get strings from http://pypi.python.org/pypi?%3Aaction=list_classifiers

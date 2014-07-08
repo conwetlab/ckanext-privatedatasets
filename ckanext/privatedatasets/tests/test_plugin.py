@@ -1,7 +1,7 @@
 import unittest
 import ckanext.privatedatasets.plugin as plugin
 
-from mock import MagicMock, ANY
+from mock import MagicMock
 from nose_parameterized import parameterized
 
 
@@ -37,12 +37,16 @@ class PluginTest(unittest.TestCase):
         if hasattr(self, '_package_show'):
             plugin.package_show = self._package_show
 
-    def test_implementations(self):
-        self.assertTrue(plugin.p.IDatasetForm.implemented_by(plugin.PrivateDatasets))
-        self.assertTrue(plugin.p.IAuthFunctions.implemented_by(plugin.PrivateDatasets))
-        self.assertTrue(plugin.p.IConfigurer.implemented_by(plugin.PrivateDatasets))
-        self.assertTrue(plugin.p.IRoutes.implemented_by(plugin.PrivateDatasets))
-        self.assertTrue(plugin.p.IActions.implemented_by(plugin.PrivateDatasets))
+    @parameterized.expand([
+        (plugin.p.IDatasetForm,),
+        (plugin.p.IAuthFunctions,),
+        (plugin.p.IConfigurer,),
+        (plugin.p.IRoutes,),
+        (plugin.p.IPackageController,),
+        (plugin.p.ITemplateHelpers,)
+    ])
+    def test_implementations(self, interface):
+        self.assertTrue(interface.implemented_by(plugin.PrivateDatasets))
 
     def test_decordators(self):
         self.assertEquals(True, getattr(plugin.package_show, 'auth_allow_anonymous_access', False))
@@ -78,7 +82,12 @@ class PluginTest(unittest.TestCase):
         (1,    2,    'test', False, 'active', 'conwet', False, None,                      None,        None,              True),
         (1,    2,    'test', True,  'active', 'conwet', False, None,                      None,        None,              False),
         (1,    2,    'test', True,  'active', 'conwet', True,  None,                      None,        None,              True),
-        (1,    2,    'test', True,  'draft',  'conwet', True,  None,                      None,        None,              False)
+        (1,    2,    'test', True,  'draft',  'conwet', True,  None,                      None,        None,              False),
+        # Other user with organizations (user is not in the organization)
+        (1,    2,    'test', True,  'active', 'conwet', False, 'test',                    None,        None,              True),
+        (1,    2,    'test', True,  'active', 'conwet', False, 'some,another,other',      None,        None,              False),
+        (1,    2,    'test', True,  'active', 'conwet', False, 'some,another,other',      'google.es', '/dataset/testds', False),
+        (1,    2,    'test', True,  'active', 'conwet', False, 'some,another,other',      'google.es', '/',               False)
     ])
     def test_auth_package_show(self, creator_user_id, user_obj_id, user, private, state, owner_org,
                                owner_member, allowed_users, adquire_url, request_path, authorized):
@@ -159,8 +168,8 @@ class PluginTest(unittest.TestCase):
             plugin.new_authz.has_user_permission_for_group_or_org.assert_called_once_with(owner_org, user, 'update_dataset')
 
     @parameterized.expand([
-        (True, True),
-        (True, False),
+        (True,  True),
+        (True,  False),
         (False, False),
         (False, False)
     ])
@@ -210,42 +219,6 @@ class PluginTest(unittest.TestCase):
         self.assertEquals(auth_functions['package_update'], plugin.package_update)
         self.assertEquals(auth_functions['resource_show'], plugin.resource_show)
 
-    @parameterized.expand([
-        ('/dataset',                     True),    # Include ignore_capacity_check
-        ('/',                            False),   # Not include ignore_capacity_check
-        ('/datasets',                    False),   # Not include ignore_capacity_check
-        ('/api/3/action/package_search', True),    # Include ignore_capacity_check
-        ('/api/3/action/dataset_search', True)     # Include ignore_capacity_check
-    ])
-    def test_package_seach_modified(self, request_path, include_ignore_capacity):
-        # Mock the default actions
-        package_search_old = MagicMock()
-        plugin.tk.get_action = MagicMock(return_value=package_search_old)
-
-        # Mock request
-        plugin.request.path = request_path
-
-        # Unmock the decorator
-        plugin.tk.side_effect_free = self._tk.side_effect_free
-
-        # Get the actions returned by the plugin
-        actions = self.privateDatasets.get_actions()
-
-        # Call the function
-        context = {'id': 'test', 'another_test': 'test_value'}
-        expected_context = context.copy()
-        data_dict = {'example': 'test', 'key': 'value'}
-        actions['package_search'](context, data_dict)
-
-        # Test if the default function has been called properly
-        package_search_old.assert_called_once_with(ANY, data_dict)
-        context_called = package_search_old.call_args_list[0][0][0]    # First call, first argument
-
-        if include_ignore_capacity:
-            expected_context.update({'ignore_capacity_check': True})
-
-        self.assertEquals(expected_context, context_called)
-
     def test_update_config(self):
         # Call the method
         config = {'test': 1234, 'another': 'value'}
@@ -261,9 +234,12 @@ class PluginTest(unittest.TestCase):
         self.privateDatasets.after_map(m)
 
         # Test that the connect method has been called
-        m.connect.assert_called_once_with('/dataset_adquired',
-                                          controller='ckanext.privatedatasets.controller:AdquiredDatasetsController',
-                                          action='add_users', conditions=dict(method=['POST']))
+        m.connect.assert_any_call('/dataset_adquired',
+                                  controller='ckanext.privatedatasets.controllers.api_controller:AdquiredDatasetsControllerAPI',
+                                  action='add_users', conditions=dict(method=['POST']))
+        m.connect.assert_any_call('user_adquired_datasets', '/dashboad/adquired', ckan_icon='shopping-cart',
+                                  controller='ckanext.privatedatasets.controllers.ui_controller:AdquiredDatasetsControllerUI',
+                                  action='user_adquired_datasets', conditions=dict(method=['GET']))
 
     @parameterized.expand([
         ('create_package_schema'),
@@ -309,8 +285,8 @@ class PluginTest(unittest.TestCase):
         ('False', None,     '',     False),
         # When data is present, the field is only valid when the
         # organization is not set and the private field is set to true
-        (True,    'conwet', 'test', True),
-        ('True',  'conwet', 'test', True),
+        (True,    'conwet', 'test', False),
+        ('True',  'conwet', 'test', False),
         (False,   'conwet', 'test', True),
         ('False', 'conwet', 'test', True),
         (True,    None,     'test', False),
@@ -322,7 +298,7 @@ class PluginTest(unittest.TestCase):
 
         # TODO: Maybe this test should be refactored since the function should be refactored
 
-        KEY = ('test')
+        KEY = ('test',)
         errors = {}
         errors[KEY] = []
 
@@ -343,3 +319,85 @@ class PluginTest(unittest.TestCase):
 
     def test_package_types(self):
         self.assertEquals([], self.privateDatasets.package_types())
+
+    @parameterized.expand([
+        ('after_create',),
+        ('after_update',),
+        ('after_show',),
+        ('after_delete',),
+        ('after_create', 'False'),
+        ('after_update', 'False'),
+        ('after_show',   'False'),
+        ('after_delete', 'False')
+    ])
+    def test_packagecontroller_after(self, function, private='True'):
+        pkg_dict = {'test': 'a', 'private': private, 'allowed_users': 'a,b,c'}
+        expected_pkg_dict = pkg_dict.copy()
+        result = getattr(self.privateDatasets, function)({}, pkg_dict)  # Call the function
+        self.assertEquals(expected_pkg_dict, result)                    # Check the result
+
+    def test_packagecontroller_after_search(self):
+        search_res = {'test': 'a', 'private': 'a', 'allowed_users': 'a,b,c'}
+        expected_search_res = search_res.copy()
+        result = getattr(self.privateDatasets, 'after_search')(search_res, {})  # Call the function
+        self.assertEquals(expected_search_res, result)                          # Check the result
+
+    @parameterized.expand([
+        ('before_search',),
+        ('before_view',),
+        ('create',),
+        ('edit',),
+        ('read',),
+        ('delete',),
+        ('before_search', 'False'),
+        ('before_view',   'False'),
+        ('create',        'False'),
+        ('edit',          'False'),
+        ('read',          'False'),
+        ('delete',        'False')
+    ])
+    def test_before_and_CRUD(self, function, private='True'):
+        pkg_dict = {'test': 'a', 'private': private, 'allowed_users': 'a,b,c'}
+        expected_pkg_dict = pkg_dict.copy()
+        result = getattr(self.privateDatasets, function)(pkg_dict)   # Call the function
+        self.assertEquals(expected_pkg_dict, result)                 # Check the result
+
+    @parameterized.expand([
+        ('public',  None,    'public'),
+        ('public',  'False', 'private'),
+        ('public',  'True',  'public'),
+        ('private', None,    'private'),
+        ('private', 'False', 'private'),
+        ('public',  'True',  'public')
+    ])
+    def test_before_index(self, initialCapacity, searchable, finalCapacity):
+        pkg_dict = {'capacity': initialCapacity, 'name': 'a', 'description': 'This is a test'}
+        if searchable is not None:
+            pkg_dict['extras_searchable'] = searchable
+
+        expected_result = pkg_dict.copy()
+        expected_result['capacity'] = finalCapacity
+
+        self.assertEquals(expected_result, self.privateDatasets.before_index(pkg_dict))
+
+    def test_helpers_functions(self):
+        helpers_functions = self.privateDatasets.get_helpers()
+        self.assertEquals(helpers_functions['privatedatasets_adquired'], plugin.adquired)
+
+    @parameterized.expand([
+        (False, None,                 'user', False),
+        (True,  '',                   'user', False),
+        (True,  None,                 'user', False),
+        (True,  'user',               'user', True),
+        (True,  'another_user,user',  'user', True),
+        (True,  'another_user,user2', 'user', False),
+    ])
+    def test_adquired(self, include_allowed_users, allowed_users, user, adquired):
+        # Configure test
+        plugin.tk.c.user = user
+        pkg_dict = {}
+        if include_allowed_users:
+            pkg_dict['allowed_users'] = allowed_users
+
+        # Check the function returns the expected result
+        self.assertEquals(adquired, plugin.adquired(pkg_dict))

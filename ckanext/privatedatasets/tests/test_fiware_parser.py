@@ -69,21 +69,21 @@ class FiWareParserTest(unittest.TestCase):
         fiware.request = self._request
 
     @parameterized.expand([
-        (TEST_CASES['one_ds']['host'], TEST_CASES['one_ds']['json'], TEST_CASES['one_ds']['result']),
-        (TEST_CASES['two_ds']['host'], TEST_CASES['two_ds']['json'], TEST_CASES['two_ds']['result']),
-        (TEST_CASES['error']['host'], TEST_CASES['error']['json'], TEST_CASES['error']['result']),
-        (TEST_CASES['error_one_ds']['host'], TEST_CASES['error_one_ds']['json'], TEST_CASES['error_one_ds']['result']),
-        (TEST_CASES['two_errors']['host'], TEST_CASES['two_errors']['json'], TEST_CASES['two_errors']['result']),
-        (TEST_CASES['two_errors_two_ds']['host'], TEST_CASES['two_errors_two_ds']['json'], TEST_CASES['two_errors_two_ds']['result']),
+        ('one_ds',),
+        ('two_ds',),
+        ('error',),
+        ('error_one_ds',),
+        ('two_errors',),
+        ('two_errors_two_ds',),
     ])
-    def test_parse_notification(self, my_host, request_body, expected_result):
+    def test_parse_notification(self, case):
 
         # Configure
-        fiware.request.host = my_host
-        fiware.request.body = request_body
+        fiware.request.host = TEST_CASES[case]['host']
+        fiware.request.body = TEST_CASES[case]['json']
 
         # Call the function
         result = self.parser.parse_notification()
 
         # Assert that the result is what we expected to be
-        self.assertEquals(expected_result, result)
+        self.assertEquals(TEST_CASES[case]['result'], result)

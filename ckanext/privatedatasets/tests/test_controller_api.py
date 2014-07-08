@@ -1,4 +1,4 @@
-import ckanext.privatedatasets.controller as controller
+import ckanext.privatedatasets.controllers.api_controller as controller
 import json
 import unittest
 
@@ -11,12 +11,12 @@ CLASS_NAME = 'parser_class'
 ADD_USERS_ERROR = 'Default Message'
 
 
-class ControllerTest(unittest.TestCase):
+class APIControllerTest(unittest.TestCase):
 
     def setUp(self):
 
         # Get the instance
-        self.instance = controller.AdquiredDatasetsController()
+        self.instanceAPI = controller.AdquiredDatasetsControllerAPI()
 
         # Load the mocks
         self._config = controller.config
@@ -63,7 +63,7 @@ class ControllerTest(unittest.TestCase):
                                                        return_value=package if path_exist else None)
 
         # Call the function
-        result = self.instance.add_users()
+        result = self.instanceAPI.add_users()
 
         # Checks
         self.assertEquals(expected_error, result)
@@ -121,7 +121,7 @@ class ControllerTest(unittest.TestCase):
         package_search, package_update = self.configure_mocks(parse_result)
 
         # Call the function
-        result = self.instance.add_users()
+        result = self.instanceAPI.add_users()
 
         # Checks
         self.assertEquals(0, package_search.call_count)
@@ -163,7 +163,7 @@ class ControllerTest(unittest.TestCase):
         package_show, package_update = self.configure_mocks(parse_result, datasets_not_found, not_updatable_datasets, allowed_users)
 
         # Call the function
-        result = self.instance.add_users()
+        result = self.instanceAPI.add_users()
 
         # Calculate the list of warns
         warns = []

@@ -39,7 +39,7 @@ def package_show(context, data_dict):
         if not authorized:
             if hasattr(package, 'extras') and 'allowed_users' in package.extras:
                 allowed_users = package.extras['allowed_users']
-                if allowed_users != '': # ''.split(',') ==> ['']
+                if allowed_users != '':     # ''.split(',') ==> ['']
                     allowed_users_list = allowed_users.split(',')
                     if user in allowed_users_list:
                         authorized = True
@@ -50,7 +50,8 @@ def package_show(context, data_dict):
             # The message cannot be displayed in other pages that uses the package_show function such as
             # the user profile page
 
-            if hasattr(package, 'extras') and 'adquire_url' in package.extras and request.path.startswith('/dataset/'):
+            if hasattr(package, 'extras') and 'adquire_url' in package.extras and request.path.startswith('/dataset/')\
+                    and package.extras['adquire_url'] != '':
                 helpers.flash_notice(_('This private dataset can be adquired. To do so, please click ' +
                                        '<a target="_blank" href="%s">here</a>') % package.extras['adquire_url'],
                                      allow_html=True)
@@ -121,13 +122,27 @@ def private_datasets_metadata_checker(key, data, errors, context):
     # TODO: In some cases, we will need to retireve all the dataset information if it isn't present...
 
     private_val = data.get(('private',))
-    owner_org = data.get(('owner_org',))
     private = private_val is True if isinstance(private_val, bool) else private_val == "True"
     metadata_value = data[key]
 
     # If allowed users are included and the dataset is not private outside and organization, an error will be raised.
-    if metadata_value != '' and (not private or owner_org):
+    if metadata_value != '' and not private:
         errors[key].append(_('This field is only valid when you create a private dataset outside an organization'))
+
+
+######################################################################
+############################### ADQUIRED #############################
+######################################################################
+
+def adquired(pkg_dict):
+
+    adquired = False
+    if 'allowed_users' in pkg_dict and pkg_dict['allowed_users'] != '' and pkg_dict['allowed_users'] is not None:
+        allowed_users = pkg_dict['allowed_users'].split(',')
+        if tk.c.user in allowed_users:
+            adquired = True
+
+    return adquired
 
 
 class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
@@ -136,7 +151,8 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
     p.implements(p.IAuthFunctions)
     p.implements(p.IConfigurer)
     p.implements(p.IRoutes, inherit=True)
-    p.implements(p.IActions)
+    p.implements(p.IPackageController)
+    p.implements(p.ITemplateHelpers)
 
     ######################################################################
     ############################ DATASET FORM ############################
@@ -152,7 +168,11 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
                               tk.get_converter('convert_to_extras')],
             'adquire_url': [tk.get_validator('ignore_missing'),
                             private_datasets_metadata_checker,
-                            tk.get_converter('convert_to_extras')]
+                            tk.get_converter('convert_to_extras')],
+            'searchable': [tk.get_validator('ignore_missing'),
+                           private_datasets_metadata_checker,
+                           tk.get_converter('convert_to_extras'),
+                           tk.get_validator('boolean_validator')]
         }
 
     def create_package_schema(self):
@@ -173,7 +193,9 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
             'allowed_users': [tk.get_converter('convert_from_extras'),
                               tk.get_validator('ignore_missing')],
             'adquire_url': [tk.get_converter('convert_from_extras'),
-                            tk.get_validator('ignore_missing')]
+                            tk.get_validator('ignore_missing')],
+            'searchable': [tk.get_converter('convert_from_extras'),
+                           tk.get_validator('ignore_missing')]
         })
         return schema
 
@@ -215,32 +237,64 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
     def after_map(self, m):
         # DataSet adquired notification
         m.connect('/dataset_adquired',
-                  controller='ckanext.privatedatasets.controller:AdquiredDatasetsController',
+                  controller='ckanext.privatedatasets.controllers.api_controller:AdquiredDatasetsControllerAPI',
                   action='add_users', conditions=dict(method=['POST']))
+        m.connect('user_adquired_datasets', '/dashboad/adquired', ckan_icon='shopping-cart',
+                  controller='ckanext.privatedatasets.controllers.ui_controller:AdquiredDatasetsControllerUI',
+                  action='user_adquired_datasets', conditions=dict(method=['GET']))
 
         return m
 
     ######################################################################
-    ############################## IACTIONS ##############################
+    ######################### IPACKAGECONTROLLER #########################
     ######################################################################
 
-    def get_actions(self):
-        # Update package_show function. When the URL is the URL used to
-        # check the datasets, the context parameter will me modified and
-        # the field 'ignore_capacity_check' will be added in order to
-        # get both the private and the public datasets.
+    def before_index(self, pkg_dict):
 
-        _old_package_search = tk.get_action('package_search')
+        if 'extras_searchable' in pkg_dict:
+            if pkg_dict['extras_searchable'] == 'False':
+                pkg_dict['capacity'] = 'private'
+            else:
+                pkg_dict['capacity'] = 'public'
 
-        @tk.side_effect_free
-        def _new_package_search(context, data_dict):
-            valid_urls = ['/dataset', '/api/3/action/package_search',
-                          '/api/3/action/dataset_search']
-            if request.path in valid_urls:
-                context.update({'ignore_capacity_check': True})
-            return _old_package_search(context, data_dict)
+        return pkg_dict
 
-        _new_package_search.__doc__ = _old_package_search.__doc__
+    def before_view(self, pkg_dict):
+        return pkg_dict
 
-        # Modify the package_show function used across the system
-        return {'package_search': _new_package_search}
+    def before_search(self, search_params):
+        return search_params
+
+    def create(self, pkg_dict):
+        return pkg_dict
+
+    def edit(self, pkg_dict):
+        return pkg_dict
+
+    def read(self, pkg_dict):
+        return pkg_dict
+
+    def delete(self, pkg_dict):
+        return pkg_dict
+
+    def after_create(self, context, pkg_dict):
+        return pkg_dict
+
+    def after_update(self, context, pkg_dict):
+        return pkg_dict
+
+    def after_show(self, context, pkg_dict):
+        return pkg_dict
+
+    def after_search(self, search_results, search_params):
+        return search_results
+
+    def after_delete(self, context, pkg_dict):
+        return pkg_dict
+
+    ######################################################################
+    ########################## ITEMPLATESHELER ###########################
+    ######################################################################
+
+    def get_helpers(self):
+        return {'privatedatasets_adquired': adquired}

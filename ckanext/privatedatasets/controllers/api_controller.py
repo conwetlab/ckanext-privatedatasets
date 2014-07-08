@@ -12,7 +12,11 @@ log = logging.getLogger(__name__)
 PARSER_CONFIG_PROP = 'ckan.privatedatasets.parser'
 
 
-class AdquiredDatasetsController(base.BaseController):
+######################################################################
+############################ API CONTROLLER ##########################
+######################################################################
+
+class AdquiredDatasetsControllerAPI(base.BaseController):
 
     def __call__(self, environ, start_response):
         # avoid status_code_redirect intercepting error responses
