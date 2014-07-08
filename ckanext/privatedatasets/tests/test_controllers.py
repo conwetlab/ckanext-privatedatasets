@@ -1,4 +1,4 @@
-import ckanext.privatedatasets.controller as controller
+import ckanext.privatedatasets.controllers as controllers
 import json
 import unittest
 
@@ -16,27 +16,27 @@ class ControllerTest(unittest.TestCase):
     def setUp(self):
 
         # Get the instance
-        self.instance = controller.AdquiredDatasetsController()
+        self.instanceAPI = controllers.AdquiredDatasetsControllerAPI()
 
         # Load the mocks
-        self._config = controller.config
-        controller.config = MagicMock()
+        self._config = controllers.config
+        controllers.config = MagicMock()
 
-        self._importlib = controller.importlib
-        controller.importlib = MagicMock()
+        self._importlib = controllers.importlib
+        controllers.importlib = MagicMock()
 
-        self._plugins = controller.plugins
-        controller.plugins = MagicMock()
+        self._plugins = controllers.plugins
+        controllers.plugins = MagicMock()
 
-        self._response = controller.response
-        controller.response = MagicMock()
+        self._response = controllers.response
+        controllers.response = MagicMock()
 
     def tearDown(self):
         # Unmock
-        controller.config = self._config
-        controller.importlib = self._importlib
-        controller.plugins = self._plugins
-        controller.response = self._response
+        controllers.config = self._config
+        controllers.importlib = self._importlib
+        controllers.plugins = self._plugins
+        controllers.response = self._response
 
     @parameterized.expand([
         ('',              None,       False, False, '{"errors": ["%s not configured"]}' % PARSER_CONFIG_PROP),
@@ -52,29 +52,29 @@ class ControllerTest(unittest.TestCase):
 
         class_package = class_path
         class_package += ':' + class_name if class_name else ''
-        controller.config = {PARSER_CONFIG_PROP: class_package}
+        controllers.config = {PARSER_CONFIG_PROP: class_package}
 
         # Configure the mock
         package = MagicMock()
         if class_name and not class_exist:
             delattr(package, class_name)
 
-        controller.importlib.import_module = MagicMock(side_effect=ImportError(IMPORT_ERROR_MSG) if not path_exist else None,
-                                                       return_value=package if path_exist else None)
+        controllers.importlib.import_module = MagicMock(side_effect=ImportError(IMPORT_ERROR_MSG) if not path_exist else None,
+                                                        return_value=package if path_exist else None)
 
         # Call the function
-        result = self.instance.add_users()
+        result = self.instanceAPI.add_users()
 
         # Checks
         self.assertEquals(expected_error, result)
-        self.assertEquals(0, controller.plugins.toolkit.get_action.call_count)
+        self.assertEquals(0, controllers.plugins.toolkit.get_action.call_count)
 
         if expected_error:
-            self.assertEquals(400, controller.response.status_int)
+            self.assertEquals(400, controllers.response.status_int)
 
     def configure_mocks(self, parse_result, datasets_not_found=[], not_updatable_datasets=[], allowed_users=None):
 
-        controller.config = {PARSER_CONFIG_PROP: 'valid.path:%s' % CLASS_NAME}
+        controllers.config = {PARSER_CONFIG_PROP: 'valid.path:%s' % CLASS_NAME}
 
         # Configure mocks
         parser_instance = MagicMock()
@@ -82,21 +82,21 @@ class ControllerTest(unittest.TestCase):
         package = MagicMock()
         package.parser_class = MagicMock(return_value=parser_instance)
 
-        controller.importlib.import_module = MagicMock(return_value=package)
+        controllers.importlib.import_module = MagicMock(return_value=package)
 
         # We should use the real exceptions
-        controller.plugins.toolkit.ObjectNotFound = self._plugins.toolkit.ObjectNotFound
-        controller.plugins.toolkit.ValidationError = self._plugins.toolkit.ValidationError
+        controllers.plugins.toolkit.ObjectNotFound = self._plugins.toolkit.ObjectNotFound
+        controllers.plugins.toolkit.ValidationError = self._plugins.toolkit.ValidationError
 
         def _package_show(context, data_dict):
             if data_dict['id'] in datasets_not_found:
-                raise controller.plugins.toolkit.ObjectNotFound()
+                raise controllers.plugins.toolkit.ObjectNotFound()
             else:
                 return {'id': data_dict['id'], 'allowed_users': allowed_users}
 
         def _package_update(context, data_dict):
             if data_dict['id'] in not_updatable_datasets:
-                raise controller.plugins.toolkit.ValidationError({'allowed_users': [ADD_USERS_ERROR]})
+                raise controllers.plugins.toolkit.ValidationError({'allowed_users': [ADD_USERS_ERROR]})
 
         package_show = MagicMock(side_effect=_package_show)
         package_update = MagicMock(side_effect=_package_update)
@@ -107,7 +107,7 @@ class ControllerTest(unittest.TestCase):
             elif action == 'package_show':
                 return package_show
 
-        controller.plugins.toolkit.get_action = _get_action
+        controllers.plugins.toolkit.get_action = _get_action
 
         return package_show, package_update
 
@@ -121,13 +121,13 @@ class ControllerTest(unittest.TestCase):
         package_search, package_update = self.configure_mocks(parse_result)
 
         # Call the function
-        result = self.instance.add_users()
+        result = self.instanceAPI.add_users()
 
         # Checks
         self.assertEquals(0, package_search.call_count)
         self.assertEquals(0, package_update.call_count)
         self.assertEquals(expected_result, result)
-        self.assertEquals(400, controller.response.status_int)
+        self.assertEquals(400, controllers.response.status_int)
 
     @parameterized.expand([
         # Simple Test: one user and one dataset
@@ -163,7 +163,7 @@ class ControllerTest(unittest.TestCase):
         package_show, package_update = self.configure_mocks(parse_result, datasets_not_found, not_updatable_datasets, allowed_users)
 
         # Call the function
-        result = self.instance.add_users()
+        result = self.instanceAPI.add_users()
 
         # Calculate the list of warns
         warns = []

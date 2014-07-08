@@ -13,7 +13,11 @@ log = logging.getLogger(__name__)
 PARSER_CONFIG_PROP = 'ckan.privatedatasets.parser'
 
 
-class AdquiredDatasetsController(base.BaseController):
+######################################################################
+############################ API CONTROLLER ##########################
+######################################################################
+
+class AdquiredDatasetsControllerAPI(base.BaseController):
 
     def __call__(self, environ, start_response):
         # avoid status_code_redirect intercepting error responses
@@ -86,6 +90,13 @@ class AdquiredDatasetsController(base.BaseController):
         # Return warnings that inform about non-existing datasets
         if len(warns) > 0:
             return helpers.json.dumps({'warns': warns})
+
+
+######################################################################
+############################ UI CONTROLLER ###########################
+######################################################################
+
+class AdquiredDatasetsControllerUI(base.BaseController):
 
     def user_adquired_datasets(self):
 

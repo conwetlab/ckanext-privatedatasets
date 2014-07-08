@@ -227,10 +227,6 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
         # that CKAN will use this plugin's custom templates.
         tk.add_template_directory(config, 'templates')
 
-        # Add this plugin's public dir to CKAN's extra_public_paths, so
-        # that CKAN will use this plugin's custom static files.
-        tk.add_public_directory(config, 'public')
-
         # Register this plugin's fanstatic directory with CKAN.
         tk.add_resource('fanstatic', 'privatedatasets')
 
@@ -241,10 +237,10 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
     def after_map(self, m):
         # DataSet adquired notification
         m.connect('/dataset_adquired',
-                  controller='ckanext.privatedatasets.controller:AdquiredDatasetsController',
+                  controller='ckanext.privatedatasets.controllers:AdquiredDatasetsControllerAPI',
                   action='add_users', conditions=dict(method=['POST']))
         m.connect('user_adquired_datasets', '/dashboad/adquired', ckan_icon='shopping-cart',
-                  controller='ckanext.privatedatasets.controller:AdquiredDatasetsController',
+                  controller='ckanext.privatedatasets.controllers:AdquiredDatasetsControllerUI',
                   action='user_adquired_datasets', conditions=dict(method=['GET']))
 
         return m
