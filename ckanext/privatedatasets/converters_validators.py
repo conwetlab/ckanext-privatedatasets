@@ -1,20 +1,26 @@
 import db
 
+from ckan.plugins import toolkit
 from ckan.common import _
 from itertools import count
 
 
 def private_datasets_metadata_checker(key, data, errors, context):
 
-    # TODO: In some cases, we will need to retireve all the dataset information if it isn't present...
-
+    dataset_id = data.get(('id',))
     private_val = data.get(('private',))
+
+    # If the private field is not included in the data dict, we must check the current value
+    if not private_val and dataset_id:
+        dataset_dict = toolkit.get_action('package_show')({'ignore_auth': True}, {'id': dataset_id})
+        private_val = dataset_dict.get('private')
+
     private = private_val is True if isinstance(private_val, bool) else private_val == "True"
     metadata_value = data[key]
 
     # If allowed users are included and the dataset is not private outside and organization, an error will be raised.
     if metadata_value != '' and not private:
-        errors[key].append(_('This field is only valid when you create a private dataset outside an organization'))
+        errors[key].append(_('This field is only valid when you create a private dataset'))
 
 
 def allowed_users_convert(key, data, errors, context):
