@@ -5,24 +5,14 @@ import db
 
 def is_adquired(pkg_dict):
 
-    adquired = False
-
     if db.package_allowed_users_table is None:
         db.init_db(model)
 
-    if db.AllowedUser.get(package_id=pkg_dict['id'], user_name=tk.c.user):
-        adquired = True
-
-    return adquired
+    return len(db.AllowedUser.get(package_id=pkg_dict['id'], user_name=tk.c.user)) > 0
 
 
 def is_owner(pkg_dict):
-
-    owner = False
-    if tk.c.userobj.id == pkg_dict['creator_user_id']:
-        owner = True
-
-    return owner
+    return tk.c.userobj.id == pkg_dict['creator_user_id']
 
 
 def get_allowed_users_str(users):

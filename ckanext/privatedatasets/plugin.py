@@ -151,27 +151,28 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
             db.init_db(context['model'])
 
         # Get the users and the package ID
-        received_users = [allowed_user for allowed_user in pkg_dict['allowed_users']]
-        package_id = pkg_dict['id']
+        if 'allowed_users' in pkg_dict:
+            received_users = [allowed_user for allowed_user in pkg_dict['allowed_users']]
+            package_id = pkg_dict['id']
 
-        # Get current users
-        users = db.AllowedUser.get(package_id=package_id)
+            # Get current users
+            users = db.AllowedUser.get(package_id=package_id)
 
-        # Delete users and save the list of current users
-        current_users = []
-        for user in users:
-            current_users.append(user.user_name)
-            if user.user_name not in received_users:
-                session.delete(user)
+            # Delete users and save the list of current users
+            current_users = []
+            for user in users:
+                current_users.append(user.user_name)
+                if user.user_name not in received_users:
+                    session.delete(user)
 
-        # Add non existing users
-        for user_name in received_users:
-            if user_name not in current_users:
-                out = db.AllowedUser()
-                out.package_id = package_id
-                out.user_name = user_name
-                out.save()
-                session.add(out)
+            # Add non existing users
+            for user_name in received_users:
+                if user_name not in current_users:
+                    out = db.AllowedUser()
+                    out.package_id = package_id
+                    out.user_name = user_name
+                    out.save()
+                    session.add(out)
 
         return pkg_dict
 
