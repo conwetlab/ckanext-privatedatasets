@@ -1,6 +1,8 @@
 import ckan.lib.base as base
 import ckan.lib.helpers as helpers
+import ckan.model as model
 import ckan.plugins as plugins
+import ckanext.privatedatasets.db as db
 import importlib
 import logging
 import pylons.config as config
@@ -26,6 +28,9 @@ class AdquiredDatasetsControllerAPI(base.BaseController):
     def add_users(self):
 
         log.info('Notification Request received')
+
+        if db.package_allowed_users_table is None:
+            db.init_db(model)
 
         # Get the parser from the configuration
         class_path = config.get(PARSER_CONFIG_PROP, '')
@@ -55,23 +60,16 @@ class AdquiredDatasetsControllerAPI(base.BaseController):
             for user_info in result['users_datasets']:
                 for dataset_id in user_info['datasets']:
                     try:
-                        # Get dataset data
+
                         dataset = plugins.toolkit.get_action('package_show')({'ignore_auth': True}, {'id': dataset_id})
+                        allowed_user = db.AllowedUser.get(package_id=dataset['id'], user_name=user_info['user'])
 
-                        # Generate default set of users if it does not exist
-                        if 'allowed_users' not in dataset or dataset['allowed_users'] is None:
-                            dataset['allowed_users'] = ''
-
-                        # Only new users will be inserted
-                        allowed_users = dataset['allowed_users'].split(',')
-                        if user_info['user'] not in allowed_users:
-
-                            # Comma is only introduced when there are more than one user in the list of allowed users
-                            separator = '' if dataset['allowed_users'] == '' else ','
-                            dataset['allowed_users'] += separator + user_info['user']
-
-                            # Update dataset data
-                            plugins.toolkit.get_action('package_update')({'ignore_auth': True}, dataset)
+                        if not allowed_user:
+                            allowed_user = db.AllowedUser()
+                            allowed_user.package_id = dataset['id']
+                            allowed_user.user_name = user_info['user']
+                            allowed_user.save()
+                            model.Session.add(allowed_user)
                         else:
                             log.warn('The user %s is already allowed to access the %s dataset' % (user_info['user'], dataset_id))
 
@@ -85,6 +83,9 @@ class AdquiredDatasetsControllerAPI(base.BaseController):
                         # only valid for private datasets outside an organization. In this case, a wanr will return
                         # but the process will continue
                         warns.append('Dataset %s: %s' % (dataset_id, e.error_dict['allowed_users'][0]))
+
+        # Commit the changes
+        model.Session.commit()
 
         # Return warnings that inform about non-existing datasets
         if len(warns) > 0:
