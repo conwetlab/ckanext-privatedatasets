@@ -15,27 +15,15 @@ def init_db(model):
 
     global AllowedUser
     AllowedUser = _AllowedUser
-    # We will just try to create the table.  If it already exists we get an
-    # error but we can just skip it and carry on.
-    sql = '''
-                CREATE TABLE package_allowed_users (
-                    package_id text NOT NULL,
-                    user_name text NOT NULL
-                );
-    '''
-    conn = model.Session.connection()
-    try:
-        conn.execute(sql)
-    except sa.exc.ProgrammingError:
-        pass
-    model.Session.commit()
 
-    types = sa.types
     global package_allowed_users_table
     package_allowed_users_table = sa.Table('package_allowed_users', model.meta.metadata,
-        sa.Column('package_id', types.UnicodeText, primary_key=True, default=u''),
-        sa.Column('user_name', types.UnicodeText, primary_key=True, default=u''),
+        sa.Column('package_id', sa.types.UnicodeText, primary_key=True, default=u''),
+        sa.Column('user_name', sa.types.UnicodeText, primary_key=True, default=u''),
     )
+
+    # Create the table only if it does not exist
+    package_allowed_users_table.create(checkfirst=True)
 
     model.meta.mapper(
         AllowedUser,

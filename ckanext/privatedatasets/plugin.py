@@ -152,6 +152,12 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
 
         # Get the users and the package ID
         if 'allowed_users' in pkg_dict:
+
+            # When the user removes all the users using the UI, we recieve an array with one
+            # element that is an empty string, so set the value properly
+            if len(pkg_dict['allowed_users']) == 1 and pkg_dict['allowed_users'][0] == '':
+                pkg_dict['allowed_users'] = []
+
             received_users = [allowed_user for allowed_user in pkg_dict['allowed_users']]
             package_id = pkg_dict['id']
 
