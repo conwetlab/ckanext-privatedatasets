@@ -1,6 +1,7 @@
 import ckan.plugins as p
 import ckan.plugins.toolkit as tk
 import auth
+import constants
 import converters_validators as conv_val
 import db
 import helpers as helpers
@@ -24,18 +25,18 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
             # remove datasets_with_no_organization_cannot_be_private validator
             'private': [tk.get_validator('ignore_missing'),
                         tk.get_validator('boolean_validator')],
-            'allowed_users_str': [tk.get_validator('ignore_missing'),
-                                  conv_val.allowed_users_convert,
-                                  conv_val.private_datasets_metadata_checker],
-            'allowed_users': [tk.get_validator('ignore_missing'),
-                              conv_val.private_datasets_metadata_checker],
-            'adquire_url': [tk.get_validator('ignore_missing'),
-                            conv_val.private_datasets_metadata_checker,
-                            tk.get_converter('convert_to_extras')],
-            'searchable': [tk.get_validator('ignore_missing'),
-                           conv_val.private_datasets_metadata_checker,
-                           tk.get_converter('convert_to_extras'),
-                           tk.get_validator('boolean_validator')]
+            constants.ALLOWED_USERS_STR: [tk.get_validator('ignore_missing'),
+                                          conv_val.allowed_users_convert,
+                                          conv_val.private_datasets_metadata_checker],
+            constants.ALLOWED_USERS: [tk.get_validator('ignore_missing'),
+                                      conv_val.private_datasets_metadata_checker],
+            constants.ADQUIRE_URL: [tk.get_validator('ignore_missing'),
+                                    conv_val.private_datasets_metadata_checker,
+                                    tk.get_converter('convert_to_extras')],
+            constants.SEARCHABLE: [tk.get_validator('ignore_missing'),
+                                   conv_val.private_datasets_metadata_checker,
+                                   tk.get_converter('convert_to_extras'),
+                                   tk.get_validator('boolean_validator')]
         }
 
     def create_package_schema(self):
@@ -53,12 +54,12 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
     def show_package_schema(self):
         schema = super(PrivateDatasets, self).show_package_schema()
         schema.update({
-            'allowed_users': [conv_val.get_allowed_users,
-                              tk.get_validator('ignore_missing')],
-            'adquire_url': [tk.get_converter('convert_from_extras'),
-                            tk.get_validator('ignore_missing')],
-            'searchable': [tk.get_converter('convert_from_extras'),
-                           tk.get_validator('ignore_missing')]
+            constants.ALLOWED_USERS: [conv_val.get_allowed_users,
+                                      tk.get_validator('ignore_missing')],
+            constants.ADQUIRE_URL: [tk.get_converter('convert_from_extras'),
+                                    tk.get_validator('ignore_missing')],
+            constants.SEARCHABLE: [tk.get_converter('convert_from_extras'),
+                                   tk.get_validator('ignore_missing')]
         })
         return schema
 
@@ -114,7 +115,7 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
 
     def before_index(self, pkg_dict):
 
-        if 'extras_searchable' in pkg_dict:
+        if 'extras_' + constants.SEARCHABLE in pkg_dict:
             if pkg_dict['extras_searchable'] == 'False':
                 pkg_dict['capacity'] = 'private'
             else:
@@ -141,24 +142,20 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
         return pkg_dict
 
     def after_create(self, context, pkg_dict):
-        return pkg_dict
-
-    def after_update(self, context, pkg_dict):
-
         session = context['session']
 
         if db.package_allowed_users_table is None:
             db.init_db(context['model'])
 
         # Get the users and the package ID
-        if 'allowed_users' in pkg_dict:
+        if constants.ALLOWED_USERS in pkg_dict:
 
             # When the user removes all the users using the UI, we recieve an array with one
             # element that is an empty string, so set the value properly
-            if len(pkg_dict['allowed_users']) == 1 and pkg_dict['allowed_users'][0] == '':
-                pkg_dict['allowed_users'] = []
+            if len(pkg_dict[constants.ALLOWED_USERS]) == 1 and pkg_dict[constants.ALLOWED_USERS][0] == '':
+                pkg_dict[constants.ALLOWED_USERS] = []
 
-            received_users = [allowed_user for allowed_user in pkg_dict['allowed_users']]
+            received_users = [allowed_user for allowed_user in pkg_dict[constants.ALLOWED_USERS]]
             package_id = pkg_dict['id']
 
             # Get current users
@@ -182,12 +179,17 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
 
         return pkg_dict
 
+    def after_update(self, context, pkg_dict):
+        return self.after_create(context, pkg_dict)
+
     def after_show(self, context, pkg_dict):
+
         user_obj = context.get('auth_user_obj')
+        updating_via_api = context.get(constants.CONTEXT_CALLBACK, False)
 
         # Only the package creator can update it
-        if not user_obj or (pkg_dict['creator_user_id'] != user_obj.id and not user_obj.sysadmin):
-            attrs = ['allowed_users', 'searchable', 'adquire_url']
+        if not updating_via_api and (not user_obj or (pkg_dict['creator_user_id'] != user_obj.id and not user_obj.sysadmin)):
+            attrs = [constants.ALLOWED_USERS, constants.SEARCHABLE, constants.ADQUIRE_URL]
             for attr in attrs:
                 if attr in pkg_dict:
                     del pkg_dict[attr]

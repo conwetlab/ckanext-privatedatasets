@@ -1,3 +1,4 @@
+import constants
 import db
 
 from ckan.plugins import toolkit
@@ -29,10 +30,10 @@ def allowed_users_convert(key, data, errors, context):
     else:
         allowed_users = data[key]
 
-    current_index = max([int(k[1]) for k in data.keys() if len(k) == 2 and k[0] == 'allowed_users'] + [-1])
+    current_index = max([int(k[1]) for k in data.keys() if len(k) == 2 and k[0] == constants.ALLOWED_USERS] + [-1])
 
     for num, allowed_user in zip(count(current_index + 1), allowed_users):
-        data[('allowed_users', num)] = allowed_user
+        data[(constants.ALLOWED_USERS, num)] = allowed_user
 
 
 def get_allowed_users(key, data, errors, context):

@@ -2,6 +2,7 @@ import ckan.lib.base as base
 import ckan.lib.helpers as helpers
 import ckan.model as model
 import ckan.plugins as plugins
+import ckanext.privatedatasets.constants as constants
 import ckanext.privatedatasets.db as db
 import importlib
 import logging
@@ -61,15 +62,16 @@ class AdquiredDatasetsControllerAPI(base.BaseController):
                 for dataset_id in user_info['datasets']:
                     try:
 
-                        dataset = plugins.toolkit.get_action('package_show')({'ignore_auth': True}, {'id': dataset_id})
-                        allowed_user = db.AllowedUser.get(package_id=dataset['id'], user_name=user_info['user'])
+                        dataset = plugins.toolkit.get_action('package_show')({'ignore_auth': True, constants.CONTEXT_CALLBACK: True}, {'id': dataset_id})
 
-                        if not allowed_user:
-                            allowed_user = db.AllowedUser()
-                            allowed_user.package_id = dataset['id']
-                            allowed_user.user_name = user_info['user']
-                            allowed_user.save()
-                            model.Session.add(allowed_user)
+                        # Create the array
+                        if constants.ALLOWED_USERS not in dataset:
+                            dataset[constants.ALLOWED_USERS] = []
+
+                        # Add the user only if he/she is not in the list
+                        if user_info['user'] not in dataset[constants.ALLOWED_USERS]:
+                            dataset[constants.ALLOWED_USERS].append(user_info['user'])
+                            plugins.toolkit.get_action('package_update')({'ignore_auth': True}, dataset)
                         else:
                             log.warn('The user %s is already allowed to access the %s dataset' % (user_info['user'], dataset_id))
 
@@ -82,7 +84,7 @@ class AdquiredDatasetsControllerAPI(base.BaseController):
                         # Some datasets does not allow to introduce the list of allowed users since this property is
                         # only valid for private datasets outside an organization. In this case, a wanr will return
                         # but the process will continue
-                        warns.append('Dataset %s: %s' % (dataset_id, e.error_dict['allowed_users'][0]))
+                        warns.append('Dataset %s: %s' % (dataset_id, e.error_dict[constants.ALLOWED_USERS][0]))
 
         # Commit the changes
         model.Session.commit()

@@ -12,8 +12,12 @@ def is_adquired(pkg_dict):
 
 
 def is_owner(pkg_dict):
-    return tk.c.userobj.id == pkg_dict['creator_user_id']
+    if tk.c.userobj:
+        return tk.c.userobj.id == pkg_dict['creator_user_id']
+    else:
+        return False
 
 
 def get_allowed_users_str(users):
-    return ','.join([user for user in users])
+    if users:
+        return ','.join([user for user in users])
