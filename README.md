@@ -22,7 +22,7 @@ Since each service can send notifications in a different way, the extension allo
 If you want to create your own parser, you have to:
 
 1. Create a class with a method called `parse_notification`. This method will recieve one argument that will include the notification body.
-2. Parse the notification as you like. You can raise a CKAN's default exception (`DataError`, `ValidationError`, `ObjectNotFound`, `NotAuthorized`, `ValidationError`, `SearchError`, `SearchQueryError` or `SearchIndexError`) if you find an error parsing the notification.
+2. Parse the notification as you like. You can raise a CKAN's default exception (`ValidationError`, `ObjectNotFound`, `NotAuthorized`, `ValidationError`, `SearchError`, `SearchQueryError` or `SearchIndexError`) if you find an error parsing the notification.
 3. Return a dictionary with the structure attached below. The `users_datasets` is the lists of datasets available for each user (each element of this list is a dictionary with two fields: `user` and `datasets`). 
 
 ```

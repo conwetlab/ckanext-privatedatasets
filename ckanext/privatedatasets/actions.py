@@ -13,6 +13,9 @@ def package_adquired(context, request_data):
 
     log.info('Notification Request received')
 
+    # Check access
+    plugins.toolkit.check_access(constants.PACKAGE_ADQUIRED, context, request_data)
+
     # Get the parser from the configuration
     class_path = config.get(PARSER_CONFIG_PROP, '')
 

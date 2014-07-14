@@ -107,3 +107,9 @@ def resource_show(context, data_dict):
         return {'success': False, 'msg': _('User %s not authorized to read resource %s') % (user, resource.id)}
     else:
         return {'success': True}
+
+
+@tk.auth_allow_anonymous_access
+def package_adquired(context, data_dict):
+    # TODO: Improve security
+    return {'success': True}
