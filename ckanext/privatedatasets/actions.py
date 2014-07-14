@@ -27,14 +27,14 @@ def package_adquired(context, request_data):
     else:
         raise plugins.toolkit.ValidationError({'message': '%s not configured' % PARSER_CONFIG_PROP})
 
-    # Introduce the users into the datasets
+    # Parse the result using the parser set in the configuration
     # Expected result: {'errors': ["...", "...", ...]
     #                   'users_datasets': [{'user': 'user_name', 'datasets': ['ds1', 'ds2', ...]}, ...]}
-    warns = []
-
-    # Parse the result using the parser set in the configuration
     result = parser.parse_notification(request_data)
 
+    warns = []
+
+    # Introduce the users into the datasets
     for user_info in result['users_datasets']:
         for dataset_id in user_info['datasets']:
             try:
