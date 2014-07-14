@@ -12,7 +12,7 @@ def private_datasets_metadata_checker(key, data, errors, context):
     private_val = data.get(('private',))
 
     # If the private field is not included in the data dict, we must check the current value
-    if not private_val and dataset_id:
+    if private_val is None and dataset_id:
         dataset_dict = toolkit.get_action('package_show')({'ignore_auth': True}, {'id': dataset_id})
         private_val = dataset_dict.get('private')
 
@@ -33,7 +33,7 @@ def allowed_users_convert(key, data, errors, context):
     current_index = max([int(k[1]) for k in data.keys() if len(k) == 2 and k[0] == constants.ALLOWED_USERS] + [-1])
 
     for num, allowed_user in zip(count(current_index + 1), allowed_users):
-        data[(constants.ALLOWED_USERS, num)] = allowed_user
+        data[(constants.ALLOWED_USERS, num)] = allowed_user.strip()
 
 
 def get_allowed_users(key, data, errors, context):
