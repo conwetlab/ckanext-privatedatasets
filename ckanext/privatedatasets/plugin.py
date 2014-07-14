@@ -1,6 +1,7 @@
 import ckan.plugins as p
 import ckan.plugins.toolkit as tk
 import auth
+import actions
 import constants
 import converters_validators as conv_val
 import db
@@ -13,6 +14,7 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
     p.implements(p.IAuthFunctions)
     p.implements(p.IConfigurer)
     p.implements(p.IRoutes, inherit=True)
+    p.implements(p.IActions)
     p.implements(p.IPackageController)
     p.implements(p.ITemplateHelpers)
 
@@ -95,19 +97,23 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
         tk.add_resource('fanstatic', 'privatedatasets')
 
     ######################################################################
-    ############################### ROUTES ###############################
+    ############################## IROUTES ###############################
     ######################################################################
 
     def after_map(self, m):
         # DataSet adquired notification
-        m.connect('/dataset_adquired',
-                  controller='ckanext.privatedatasets.controllers.api_controller:AdquiredDatasetsControllerAPI',
-                  action='add_users', conditions=dict(method=['POST']))
         m.connect('user_adquired_datasets', '/dashboad/adquired', ckan_icon='shopping-cart',
                   controller='ckanext.privatedatasets.controllers.ui_controller:AdquiredDatasetsControllerUI',
                   action='user_adquired_datasets', conditions=dict(method=['GET']))
 
         return m
+
+    ######################################################################
+    ############################## IACTIONS ##############################
+    ######################################################################
+
+    def get_actions(self):
+        return {'package_adquired': actions.package_adquired}
 
     ######################################################################
     ######################### IPACKAGECONTROLLER #########################
