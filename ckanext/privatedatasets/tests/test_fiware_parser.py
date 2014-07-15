@@ -21,21 +21,18 @@ TEST_CASES = {
         'host': 'localhost',
         'json': {"customer_name": "test", "resources": [{"url": "http://localhosta/dataset/ds1"}]},
         'error': 'Dataset ds1 is associated with the CKAN instance located at localhosta',
-        'result': {'users_datasets': [{'user': 'test', 'datasets': []}]}
     },
     'error_one_ds': {
         'host': 'localhost',
         'json': {"customer_name": "test", "resources": [{"url": "http://localhosta/dataset/ds1"},
                 {"url": "http://localhost/dataset/ds2"}]},
         'error': 'Dataset ds1 is associated with the CKAN instance located at localhosta',
-        'result': {'users_datasets': [{'user': 'test', 'datasets': ['ds2']}]}
     },
     'two_errors': {
         'host': 'localhost',
         'json': {"customer_name": "test", "resources": [{"url": "http://localhosta/dataset/ds1"},
                 {"url": "http://localhostb/dataset/ds2"}]},
         'error': 'Dataset ds1 is associated with the CKAN instance located at localhosta',
-        'result': {'users_datasets': [{'user': 'test', 'datasets': []}]}
     },
     'two_errors_two_ds': {
         'host': 'example.com',
@@ -43,8 +40,39 @@ TEST_CASES = {
                 {"url": "http://example.es/dataset/ds2"}, {"url": "http://example.com/dataset/ds3"},
                 {"url": "http://example.com/dataset/ds4"}]},
         'error': 'Dataset ds1 is associated with the CKAN instance located at localhosta',
-        'result': {'users_datasets': [{'user': 'test', 'datasets': ['ds3', 'ds4']}]}
     },
+    'no_customer_name': {
+        'host': 'localhost',
+        'json': {"resources": [{"url": "http://localhost/dataset/ds1"}]},
+        'error': 'customer_name not found in the request'
+    },
+    'no_resources': {
+        'host': 'localhost',
+        'json': {"customer_name": "test"},
+        'error': 'resources not found in the request'
+    },
+    'no_customer_name_and_resources': {
+        'host': 'localhost',
+        'json': {"customer": "test"},
+        'error': 'customer_name not found in the request'
+    },
+    'invalid_customer_name': {
+        'host': 'localhost',
+        'json': {"customer_name": 974, "resources": [{"url": "http://localhost/dataset/ds1"}]},
+        'error': 'Invalid customer_name format'
+    },
+    'invalid_resources': {
+        'host': 'localhost',
+        'json': {"customer_name": "test", "resources": "http://localhost/dataset/ds1"},
+        'error': 'Invalid resources format'
+    },
+    'missing_url_resource': {
+        'host': 'localhost',
+        'json': {"customer_name": "test", "resources": [{"urla": "http://localhost/dataset/ds1"}]},
+        'error': 'Invalid resources format'
+    },
+
+
 }
 
 
@@ -69,6 +97,12 @@ class FiWareParserTest(unittest.TestCase):
         ('error_one_ds',),
         ('two_errors',),
         ('two_errors_two_ds',),
+        ('no_customer_name',),
+        ('no_resources',),
+        ('no_customer_name_and_resources',),
+        ('invalid_customer_name',),
+        ('invalid_resources',),
+        ('missing_url_resource',)
     ])
     def test_parse_notification(self, case):
 

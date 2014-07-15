@@ -11,7 +11,7 @@ class FiWareNotificationParser(object):
 
         my_host = request.host
 
-        fields = ['resources', 'customer_name']
+        fields = ['customer_name', 'resources']
 
         for field in fields:
             if not field in request_data:
@@ -22,11 +22,11 @@ class FiWareNotificationParser(object):
         user_name = request_data['customer_name']
         datasets = []
 
-        if not isinstance(resources, list):
-            raise tk.ValidationError({'message': 'Invalid resources format'})
-
         if not isinstance(user_name, basestring):
             raise tk.ValidationError({'message': 'Invalid customer_name format'})
+
+        if not isinstance(resources, list):
+            raise tk.ValidationError({'message': 'Invalid resources format'})
 
         for resource in resources:
             if isinstance(resource, dict) and 'url' in resource:
