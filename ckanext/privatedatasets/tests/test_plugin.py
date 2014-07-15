@@ -15,8 +15,12 @@ class PluginTest(unittest.TestCase):
         self._tk = plugin.tk
         plugin.tk = MagicMock()
 
+        self._db = plugin.db
+        plugin.db = MagicMock()
+
     def tearDown(self):
         plugin.tk = self._tk
+        plugin.db = self._db
 
     @parameterized.expand([
         (plugin.p.IDatasetForm,),
@@ -215,6 +219,92 @@ class PluginTest(unittest.TestCase):
         helpers_functions = self.privateDatasets.get_helpers()
         self.assertEquals(helpers_functions['privatedatasets_adquired'], plugin.helpers.is_adquired)
 
-    # TODO: Test after create, after update...
+    @parameterized.expand([
+        # One element
+        (['a'],           [],              ['a'],           []),
+        (['a'],           ['a'],           [],              []),
+        ([],              ['a'],           [],              ['a']),
+        ([''],            ['a'],           [],              ['a']),
+        # Two elements
+        (['a', 'b'],      [],              ['a', 'b'],      []),
+        (['a', 'b'],      ['b'],           ['a'],           []),
+        (['a'],           ['a', 'b'],      [],              ['b']),
+        ([],              ['a', 'b'],      [],              ['a', 'b']),
+        (['a', 'b'],      ['a', 'b'],      [],              []),
+        ([''],            ['a', 'b'],      [],              ['a', 'b']),
+        # Three or more elements
+        (['c'],           ['a', 'b'],      ['c'],           ['a', 'b']),
+        (['a', 'b', 'c'], ['a', 'b'],      ['c'],           []),
+        (['a', 'b', 'c'], ['a'],           ['b', 'c'],      []),
+        (['a', 'b', 'c'], ['a', 'b', 'c'], [],              []),
+        (['a', 'b', 'c'], [],              ['a', 'b', 'c'], []),
+        (['a', 'b'],      ['a', 'b', 'c'], [],              ['c'])
+    ])
+    def test_after_create(self, new_users, current_users, users_to_add, users_to_delete):
 
+        package_id = 'package_id'
 
+        # Each time 'AllowedUser' is called, we must get a new instance
+        # and this is the way to get this behaviour
+        def constructor():
+            return MagicMock()
+
+        plugin.db.AllowedUser = MagicMock(side_effect=constructor)
+
+        # Configure the database mock
+        db_current_users = []
+        for user in current_users:
+            db_user = MagicMock()
+            db_user.package_id = package_id
+            db_user.user_name = user
+            db_current_users.append(db_user)
+
+        plugin.db.AllowedUser.get = MagicMock(return_value=db_current_users)
+
+        # Call the method
+        context = {'user': 'test', 'auth_user_obj': {'id': 1}, 'session': MagicMock(), 'model': MagicMock()}
+        pkg_dict = {'id': 'package_id', 'allowed_users': new_users}
+        self.privateDatasets.after_create(context, pkg_dict)
+
+        def _test_calls(user_list, function):
+            self.assertEquals(len(user_list), function.call_count)
+            for user in user_list:
+                found = False
+                for call in function.call_args_list:
+                    call_user = call[0][0]
+
+                    if call_user.package_id == package_id and call.user_name == user:
+                        found = True
+                        break
+
+                self.assertTrue(found)
+
+        # Check that the method has deleted the appropriate users
+        _test_calls(users_to_delete, context['session'].delete)
+
+        # Check that the method has added the appropiate users
+        _test_calls(users_to_add, context['session'].add)
+
+    @parameterized.expand([
+        # One element
+        (['a'],           [],              ['a'],           []),
+        (['a'],           ['a'],           [],              []),
+        ([],              ['a'],           [],              ['a']),
+        ([''],            ['a'],           [],              ['a']),
+        # Two elements
+        (['a', 'b'],      [],              ['a', 'b'],      []),
+        (['a', 'b'],      ['b'],           ['a'],           []),
+        (['a'],           ['a', 'b'],      [],              ['b']),
+        ([],              ['a', 'b'],      [],              ['a', 'b']),
+        (['a', 'b'],      ['a', 'b'],      [],              []),
+        ([''],            ['a', 'b'],      [],              ['a', 'b']),
+        # Three or more elements
+        (['c'],           ['a', 'b'],      ['c'],           ['a', 'b']),
+        (['a', 'b', 'c'], ['a', 'b'],      ['c'],           []),
+        (['a', 'b', 'c'], ['a'],           ['b', 'c'],      []),
+        (['a', 'b', 'c'], ['a', 'b', 'c'], [],              []),
+        (['a', 'b', 'c'], [],              ['a', 'b', 'c'], []),
+        (['a', 'b'],      ['a', 'b', 'c'], [],              ['c'])
+    ])
+    def test_after_update(self, new_users, current_users, users_to_add, users_to_delete):
+        self.test_after_create(new_users, current_users, users_to_add, users_to_delete)
