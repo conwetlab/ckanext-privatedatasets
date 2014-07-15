@@ -44,11 +44,11 @@ def package_adquired(context, request_data):
 
                 dataset = plugins.toolkit.get_action('package_show')({'ignore_auth': True, constants.CONTEXT_CALLBACK: True}, {'id': dataset_id})
 
-                # Create the array
+                # Create the array if it does not exist
                 if constants.ALLOWED_USERS not in dataset or dataset[constants.ALLOWED_USERS] is None:
                     dataset[constants.ALLOWED_USERS] = []
 
-                # Add the user only if he/she is not in the list
+                # Add the user only if it is not in the list
                 if user_info['user'] not in dataset[constants.ALLOWED_USERS]:
                     dataset[constants.ALLOWED_USERS].append(user_info['user'])
                     plugins.toolkit.get_action('package_update')({'ignore_auth': True}, dataset)

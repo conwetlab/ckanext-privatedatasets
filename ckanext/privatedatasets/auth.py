@@ -13,7 +13,7 @@ def package_show(context, data_dict):
     user_obj = context.get('auth_user_obj')
     package = logic_auth.get_package_object(context, data_dict)
 
-    # datasets can be readed by it creator
+    # datasets can be read by its creator
     if package and user_obj and package.creator_user_id == user_obj.id:
         return {'success': True}
 
@@ -36,6 +36,7 @@ def package_show(context, data_dict):
             # Init the model
             db.init_db(context['model'])
 
+            # Branch not executed if the database return an empty list
             if db.AllowedUser.get(package_id=package.id, user_name=user):
                 authorized = True
 
@@ -86,6 +87,7 @@ def resource_show(context, data_dict):
     # function instead the one defined in the plugin.
     # A bug is openend in order to be able to remove this function
     # https://github.com/ckan/ckan/issues/1818
+    # It's fixed now, so this function can be deleted when the new version is released.
     _model = context['model']
     user = context.get('user')
     resource = logic_auth.get_resource_object(context, data_dict)
