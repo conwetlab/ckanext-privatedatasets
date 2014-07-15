@@ -161,7 +161,7 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
             if len(pkg_dict[constants.ALLOWED_USERS]) == 1 and pkg_dict[constants.ALLOWED_USERS][0] == '':
                 pkg_dict[constants.ALLOWED_USERS] = []
 
-            received_users = [allowed_user for allowed_user in pkg_dict[constants.ALLOWED_USERS]]
+            allowed_users = pkg_dict[constants.ALLOWED_USERS]
             package_id = pkg_dict['id']
 
             # Get current users
@@ -171,11 +171,11 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
             current_users = []
             for user in users:
                 current_users.append(user.user_name)
-                if user.user_name not in received_users:
+                if user.user_name not in allowed_users:
                     session.delete(user)
 
             # Add non existing users
-            for user_name in received_users:
+            for user_name in allowed_users:
                 if user_name not in current_users:
                     out = db.AllowedUser()
                     out.package_id = package_id
