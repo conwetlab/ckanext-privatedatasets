@@ -219,29 +219,7 @@ class PluginTest(unittest.TestCase):
         helpers_functions = self.privateDatasets.get_helpers()
         self.assertEquals(helpers_functions['privatedatasets_adquired'], plugin.helpers.is_adquired)
 
-    @parameterized.expand([
-        # One element
-        (['a'],           [],              ['a'],           []),
-        (['a'],           ['a'],           [],              []),
-        ([],              ['a'],           [],              ['a']),
-        ([''],            ['a'],           [],              ['a']),
-        # Two elements
-        (['a', 'b'],      [],              ['a', 'b'],      []),
-        (['a', 'b'],      ['b'],           ['a'],           []),
-        (['a'],           ['a', 'b'],      [],              ['b']),
-        ([],              ['a', 'b'],      [],              ['a', 'b']),
-        (['a', 'b'],      ['a', 'b'],      [],              []),
-        ([''],            ['a', 'b'],      [],              ['a', 'b']),
-        # Three or more elements
-        (['c'],           ['a', 'b'],      ['c'],           ['a', 'b']),
-        (['a', 'b', 'c'], ['a', 'b'],      ['c'],           []),
-        (['a', 'b', 'c'], ['a'],           ['b', 'c'],      []),
-        (['a', 'b', 'c'], ['a', 'b', 'c'], [],              []),
-        (['a', 'b', 'c'], [],              ['a', 'b', 'c'], []),
-        (['a', 'b'],      ['a', 'b', 'c'], [],              ['c'])
-    ])
-    def test_after_create(self, new_users, current_users, users_to_add, users_to_delete):
-
+    def _aux_test_after_create_update(self, function, new_users, current_users, users_to_add, users_to_delete):
         package_id = 'package_id'
 
         # Each time 'AllowedUser' is called, we must get a new instance
@@ -264,7 +242,7 @@ class PluginTest(unittest.TestCase):
         # Call the method
         context = {'user': 'test', 'auth_user_obj': {'id': 1}, 'session': MagicMock(), 'model': MagicMock()}
         pkg_dict = {'id': 'package_id', 'allowed_users': new_users}
-        self.privateDatasets.after_create(context, pkg_dict)
+        function(context, pkg_dict)
 
         def _test_calls(user_list, function):
             self.assertEquals(len(user_list), function.call_count)
@@ -306,5 +284,29 @@ class PluginTest(unittest.TestCase):
         (['a', 'b', 'c'], [],              ['a', 'b', 'c'], []),
         (['a', 'b'],      ['a', 'b', 'c'], [],              ['c'])
     ])
+    def test_after_create(self, new_users, current_users, users_to_add, users_to_delete):
+        self._aux_test_after_create_update(self.privateDatasets.after_create, new_users, current_users, users_to_add, users_to_delete)
+
+    @parameterized.expand([
+        # One element
+        (['a'],           [],              ['a'],           []),
+        (['a'],           ['a'],           [],              []),
+        ([],              ['a'],           [],              ['a']),
+        ([''],            ['a'],           [],              ['a']),
+        # Two elements
+        (['a', 'b'],      [],              ['a', 'b'],      []),
+        (['a', 'b'],      ['b'],           ['a'],           []),
+        (['a'],           ['a', 'b'],      [],              ['b']),
+        ([],              ['a', 'b'],      [],              ['a', 'b']),
+        (['a', 'b'],      ['a', 'b'],      [],              []),
+        ([''],            ['a', 'b'],      [],              ['a', 'b']),
+        # Three or more elements
+        (['c'],           ['a', 'b'],      ['c'],           ['a', 'b']),
+        (['a', 'b', 'c'], ['a', 'b'],      ['c'],           []),
+        (['a', 'b', 'c'], ['a'],           ['b', 'c'],      []),
+        (['a', 'b', 'c'], ['a', 'b', 'c'], [],              []),
+        (['a', 'b', 'c'], [],              ['a', 'b', 'c'], []),
+        (['a', 'b'],      ['a', 'b', 'c'], [],              ['c'])
+    ])
     def test_after_update(self, new_users, current_users, users_to_add, users_to_delete):
-        self.test_after_create(new_users, current_users, users_to_add, users_to_delete)
+        self._aux_test_after_create_update(self.privateDatasets.after_update, new_users, current_users, users_to_add, users_to_delete)
