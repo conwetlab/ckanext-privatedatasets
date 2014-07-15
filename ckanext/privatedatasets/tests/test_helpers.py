@@ -24,20 +24,15 @@ class HelpersTest(unittest.TestCase):
         helpers.db = self._db
 
     @parameterized.expand([
-        (False, False, 'user', False),
-        (True,  False, 'user', True),
-        (False, True,  'user', False),
-        (True,  True,  'user', True),
-        (False, False, None,   False),
-        (True,  False, None,  False),
-        (False, True,  None,  False),
-        (True,  True,  None,  False),
+        (False, 'user', False),
+        (True,  'user', True),
+        (False, None,   False),
+        (True,  None,   False),
     ])
-    def test_is_adquired(self, db_auth, table_initialized, user, adquired):
+    def test_is_adquired(self, db_auth, user, adquired):
         # Configure test
         helpers.tk.c.user = user
         pkg_dict = {'id': 'package_id'}
-        helpers.db.package_allowed_users_table = None if not table_initialized else MagicMock()
 
         db_response = []
         if db_auth is True:
@@ -51,10 +46,8 @@ class HelpersTest(unittest.TestCase):
         # Check the function returns the expected result
         self.assertEquals(adquired, helpers.is_adquired(pkg_dict))
 
-        if not table_initialized:
-            helpers.db.init_db.assert_called_once_with(helpers.model)
-        else:
-            self.assertEquals(0, helpers.db.init_db.call_count)
+        # Check that the database has been initialized properly
+        helpers.db.init_db.assert_called_once_with(helpers.model)
 
     @parameterized.expand([
         (1, 1,    True),

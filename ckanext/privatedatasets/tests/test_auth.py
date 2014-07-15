@@ -41,6 +41,7 @@ class AuthTest(unittest.TestCase):
     def test_decordators(self):
         self.assertEquals(True, getattr(auth.package_show, 'auth_allow_anonymous_access', False))
         self.assertEquals(True, getattr(auth.resource_show, 'auth_allow_anonymous_access', False))
+        self.assertEquals(True, getattr(auth.package_adquired, 'auth_allow_anonymous_access', False))
 
     @parameterized.expand([
         # Anonymous user (public)
@@ -54,6 +55,7 @@ class AuthTest(unittest.TestCase):
         (None, None, None,   True,  'active', None,     None,  None,  'google.es', '/dataset/testds', False),
         # The creator can always see the dataset
         (1,    1,    None,   False, 'active', None,     None,  None,  None,        None,              True),
+        (1,    1,    None,   True,  'active', 'conwet', None,  None,  None,        None,              True),
         (1,    1,    None,   True,  'active', None,     None,  None,  None,        None,              True),
         (1,    1,    None,   False, 'draft',  None,     None,  None,  None,        None,              True),
         # Other user (no organizations)
@@ -120,9 +122,19 @@ class AuthTest(unittest.TestCase):
         # Check the result
         self.assertEquals(authorized, result['success'])
 
-        # Check that the mocks has been called properly
-        if private and owner_org and state == 'active':
+        # Premissions for organization are checked when the dataset is private, it belongs to an organization
+        # and when the dataset has not been created by the user who is asking for it
+        if private and owner_org and state == 'active' and creator_user_id != user_obj_id:
             auth.new_authz.has_user_permission_for_group_or_org.assert_called_once_with(owner_org, user, 'read')
+
+        # The databse is only initialized when:
+        # * the dataset is private AND
+        # * the dataset is active AND
+        # * the dataset has no organization OR the user does not belong to that organization AND
+        # * the dataset has not been created by the user who is asking for it
+        if private and state == 'active' and ((owner_org and not owner_org) or not owner_org) and creator_user_id != user_obj_id:
+            # Check that the database has been initialized properly
+            auth.db.init_db.assert_called_once_with(context['model'])
 
         # Conditions to buy a dataset; It should be private, active and should not belong to any organization
         if not authorized and state == 'active' and not owner_org and request_path.startswith('/dataset/'):
@@ -208,3 +220,6 @@ class AuthTest(unittest.TestCase):
         else:
             result = auth.resource_show(context, {})
             self.assertEquals(authorized_pkg, result['success'])
+
+    def test_package_adquired(self):
+        self.assertTrue(auth.package_adquired({}, {}))

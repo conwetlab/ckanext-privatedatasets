@@ -13,8 +13,7 @@ class AdquiredDatasetsControllerUI(base.BaseController):
 
     def user_adquired_datasets(self):
 
-        if db.package_allowed_users_table is None:
-            db.init_db(model)
+        db.init_db(model)
 
         c = plugins.toolkit.c
         context = {

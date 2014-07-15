@@ -39,8 +39,7 @@ def allowed_users_convert(key, data, errors, context):
 def get_allowed_users(key, data, errors, context):
     pkg_id = data[('id',)]
 
-    if db.package_allowed_users_table is None:
-        db.init_db(context['model'])
+    db.init_db(context['model'])
 
     users = db.AllowedUser.get(package_id=pkg_id)
     counter = 0

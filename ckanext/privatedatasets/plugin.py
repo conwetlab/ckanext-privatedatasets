@@ -151,8 +151,7 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
     def after_create(self, context, pkg_dict):
         session = context['session']
 
-        if db.package_allowed_users_table is None:
-            db.init_db(context['model'])
+        db.init_db(context['model'])
 
         # Get the users and the package ID
         if constants.ALLOWED_USERS in pkg_dict:

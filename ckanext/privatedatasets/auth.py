@@ -34,8 +34,7 @@ def package_show(context, data_dict):
         # user is in the allowed_users object
         if not authorized:
             # Init the model
-            if db.package_allowed_users_table is None:
-                db.init_db(context['model'])
+            db.init_db(context['model'])
 
             if db.AllowedUser.get(package_id=package.id, user_name=user):
                 authorized = True

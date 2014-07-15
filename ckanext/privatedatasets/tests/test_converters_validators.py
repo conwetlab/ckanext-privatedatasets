@@ -74,12 +74,14 @@ class ConvertersValidatorsTest(unittest.TestCase):
             self.assertEquals(0, len(errors[KEY]))
 
     @parameterized.expand([
-        ('',       0, []),
-        ('',       2, []),
-        ('a',      0, ['a']),
-        ('a',      2, ['a']),
-        ('a,z, d', 0, ['a', 'z', 'd']),
-        ('a,z, d', 2, ['a', 'z', 'd'])
+        ('',             0, []),
+        ('',             2, []),
+        ('a',            0, ['a']),
+        ('a',            2, ['a']),
+        ('a,z, d',       0, ['a', 'z', 'd']),
+        ('a,z, d',       2, ['a', 'z', 'd']),
+        (['a','z', 'd'], 0, ['a', 'z', 'd']),
+        (['a','z', 'd'], 2, ['a', 'z', 'd'])
     ])
     def test_allowed_user_convert(self, users_str, previous_users, expected_users):
         key_str = 'allowed_users_str'
@@ -97,23 +99,15 @@ class ConvertersValidatorsTest(unittest.TestCase):
             self.assertEquals(expected_users[i - previous_users], data[(key, i)])
 
     @parameterized.expand([
-        ([],                        True),
-        (['a'],                     True),
-        (['a', 'b'],                True),
-        (['a', 'b', 'c'],           True),
-        (['a', 'b', 'c', 'd', 'e'], True),
-        ([],                        False),
-        (['a'],                     False),
-        (['a', 'b'],                False),
-        (['a', 'b', 'c'],           False),
-        (['a', 'b', 'c', 'd', 'e'], False)
+        ([],),
+        (['a'],),
+        (['a', 'b'],),
+        (['a', 'b', 'c'],),
+        (['a', 'b', 'c', 'd', 'e'],)
     ])
-    def test_get_allowed_users(self, users, table_initialized):
+    def test_get_allowed_users(self, users):
         key = 'allowed_users'
         data = {('id',): 'package_id'}
-
-        # Table init
-        conv_val.db.package_allowed_users_table = None if not table_initialized else MagicMock()
 
         # Each time 'AllowedUser' is called, we must get a new instance
         # and this is the way to get this behaviour
@@ -141,7 +135,4 @@ class ConvertersValidatorsTest(unittest.TestCase):
             self.assertEquals(user, data[(key, i)])
 
         # Check that the table has been initialized properly
-        if not table_initialized:
-            conv_val.db.init_db.assert_called_once_with(context['model'])
-        else:
-            self.assertEquals(0, conv_val.db.init_db.call_count)
+        conv_val.db.init_db.assert_called_once_with(context['model'])

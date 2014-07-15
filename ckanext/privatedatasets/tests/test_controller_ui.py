@@ -102,6 +102,9 @@ class UIControllerTest(unittest.TestCase):
         # Call the function
         returned = self.instanceUI.user_adquired_datasets()
 
+        # Check that the database has been initialized properly
+        controller.db.init_db.assert_called_once_with(controller.model)
+
         # User_show called correctly
         expected_context = {
             'model': controller.model,
