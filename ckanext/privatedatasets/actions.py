@@ -45,7 +45,7 @@ def package_adquired(context, request_data):
                 dataset = plugins.toolkit.get_action('package_show')({'ignore_auth': True, constants.CONTEXT_CALLBACK: True}, {'id': dataset_id})
 
                 # Create the array
-                if constants.ALLOWED_USERS not in dataset:
+                if constants.ALLOWED_USERS not in dataset or dataset[constants.ALLOWED_USERS] is None:
                     dataset[constants.ALLOWED_USERS] = []
 
                 # Add the user only if he/she is not in the list

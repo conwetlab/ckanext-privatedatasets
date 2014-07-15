@@ -19,6 +19,9 @@ class UIControllerTest(unittest.TestCase):
         self._model = controller.model
         controller.model = MagicMock()
 
+        self._db = controller.db
+        controller.db = MagicMock()
+
         # Set exceptions
         controller.plugins.toolkit.ObjectNotFound = self._plugins.toolkit.ObjectNotFound
         controller.plugins.toolkit.NotAuthorized = self._plugins.toolkit.NotAuthorized
@@ -27,6 +30,7 @@ class UIControllerTest(unittest.TestCase):
         # Unmock
         controller.plugins = self._plugins
         controller.model = self._model
+        controller.db = self._db
 
     @parameterized.expand([
         (controller.plugins.toolkit.ObjectNotFound, 404),
@@ -90,11 +94,10 @@ class UIControllerTest(unittest.TestCase):
         for i in pkgs_ids:
             pkg = MagicMock()
             pkg.package_id = i
+            pkg.user_name = user
             query_res.append(pkg)
 
-        filter_f = MagicMock()
-        filter_f.filter = MagicMock(return_value=query_res)
-        controller.model.Session.query = MagicMock(return_value=filter_f)
+        controller.db.AllowedUser.get = MagicMock(return_value=query_res)
 
         # Call the function
         returned = self.instanceUI.user_adquired_datasets()
@@ -109,12 +112,7 @@ class UIControllerTest(unittest.TestCase):
         user_show.assert_called_once_with(expected_context, {'user_obj': controller.plugins.toolkit.c.userobj})
 
         # Query called correctry
-        controller.model.Session.query.assert_called_once_with(controller.model.PackageExtra)
-
-        # Filter called correctly
-        filter_f.filter.assert_called_once_with('package_extra.key=\'allowed_users\' AND package_extra.value!=\'\' ' +
-                                                'AND package_extra.state=\'active\' AND ' +
-                                                'regexp_split_to_array(package_extra.value,\',\') @> ARRAY[\'%s\']' % user)
+        controller.db.AllowedUser.get.assert_called_once_with(user_name=user)
 
         # Assert that the package_show has been called properly
         self.assertEquals(len(pkgs_ids), package_show.call_count)
