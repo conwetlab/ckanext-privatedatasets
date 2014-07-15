@@ -69,7 +69,7 @@ TEST_CASES = {
     'missing_url_resource': {
         'host': 'localhost',
         'json': {"customer_name": "test", "resources": [{"urla": "http://localhost/dataset/ds1"}]},
-        'error': 'Invalid resources format'
+        'error': 'Invalid resource format'
     },
 
 
