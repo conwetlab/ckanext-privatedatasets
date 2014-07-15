@@ -56,9 +56,12 @@ class HelpersTest(unittest.TestCase):
     ])
     def test_is_owner(self, creator_user_id, user_id, owner):
         # Configure test
-        user = MagicMock()
-        user.id = user_id
-        helpers.tk.c.userobj = user
+        if user_id:
+            user = MagicMock()
+            user.id = user_id
+            helpers.tk.c.userobj = user
+        else:
+            helpers.tk.c.userobj = None
 
         pkg_dict = {'creator_user_id': creator_user_id}
 
