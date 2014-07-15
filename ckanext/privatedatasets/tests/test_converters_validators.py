@@ -38,14 +38,22 @@ class ConvertersValidatorsTest(unittest.TestCase):
         # not be taken into account anymore)
         (True,    True,  'conwet', 'test', False),
         ('True',  True,  'conwet', 'test', False),
+        (True,    False, 'conwet', 'test', False),
+        ('True',  False, 'conwet', 'test', False),
         (False,   True,  'conwet', 'test', True),
         ('False', True,  'conwet', 'test', True),
+        (False,   False, 'conwet', 'test', True),
+        ('False', False, 'conwet', 'test', True),
         (None,    True,  'conwet', 'test', False),
         (None,    False, 'conwet', 'test', True),
         (True,    True,  None,     'test', False),
         ('True',  True,  None,     'test', False),
+        (True,    False, None,     'test', False),
+        ('True',  False, None,     'test', False),
         (False,   True,  None,     'test', True),
         ('False', True,  None,     'test', True),
+        (False,   False, None,     'test', True),
+        ('False', False, None,     'test', True),
         (None,    True,  None,     'test', False),
         (None,    False, None,     'test', True),
     ])
@@ -109,17 +117,10 @@ class ConvertersValidatorsTest(unittest.TestCase):
         key = 'allowed_users'
         data = {('id',): 'package_id'}
 
-        # Each time 'AllowedUser' is called, we must get a new instance
-        # and this is the way to get this behaviour
-        def constructor():
-            return MagicMock()
-
-        conv_val.db.AllowedUser = MagicMock(side_effect=constructor)
-
         # Create the users
         db_res = []
         for user in users:
-            db_row = conv_val.db.AllowedUser()
+            db_row = MagicMock()
             db_row.package_id = 'package_id'
             db_row.user_name = user
             db_res.append(db_row)

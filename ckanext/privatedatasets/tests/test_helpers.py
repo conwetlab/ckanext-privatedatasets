@@ -29,13 +29,13 @@ class HelpersTest(unittest.TestCase):
         (False, None,   False),
         (True,  None,   False),
     ])
-    def test_is_adquired(self, db_auth, user, adquired):
+    def test_is_adquired(self, db_adquired, user, adquired):
         # Configure test
         helpers.tk.c.user = user
         pkg_dict = {'id': 'package_id'}
 
         db_response = []
-        if db_auth is True:
+        if db_adquired is True:
             out = helpers.db.AllowedUser()
             out.package_id = 'package_id'
             out.user_name = user

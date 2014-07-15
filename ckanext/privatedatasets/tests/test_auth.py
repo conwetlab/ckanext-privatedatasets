@@ -78,8 +78,7 @@ class AuthTest(unittest.TestCase):
         (1,    2,    'test', True,  'active', 'conwet', False, True,  None,        None,              True),
         (1,    2,    'test', True,  'active', 'conwet', False, False, None,        None,              False),
         (1,    2,    'test', True,  'active', 'conwet', False, False, 'google.es', '/dataset/testds', False),
-        (1,    2,    'test', True,  'active', 'conwet', False, False, 'google.es', '/',               False)
-    ])
+        (1,    2,    'test', True,  'active', 'conwet', False, False, 'google.es', '/',               False)    ])
     def test_auth_package_show(self, creator_user_id, user_obj_id, user, private, state, owner_org,
                                owner_member, db_auth, adquire_url, request_path, authorized):
 
@@ -126,19 +125,25 @@ class AuthTest(unittest.TestCase):
         # and when the dataset has not been created by the user who is asking for it
         if private and owner_org and state == 'active' and creator_user_id != user_obj_id:
             auth.new_authz.has_user_permission_for_group_or_org.assert_called_once_with(owner_org, user, 'read')
+        else:
+            self.assertEquals(0, auth.new_authz.has_user_permission_for_group_or_org.call_count)
 
         # The databse is only initialized when:
         # * the dataset is private AND
         # * the dataset is active AND
         # * the dataset has no organization OR the user does not belong to that organization AND
-        # * the dataset has not been created by the user who is asking for it
-        if private and state == 'active' and ((owner_org and not owner_org) or not owner_org) and creator_user_id != user_obj_id:
+        # * the dataset has not been created by the user who is asking for it OR the user is not specified
+        if private and state == 'active' and (not owner_org or not owner_member) and (creator_user_id != user_obj_id or user_obj_id is None):
             # Check that the database has been initialized properly
             auth.db.init_db.assert_called_once_with(context['model'])
+        else:
+            self.assertEquals(0, auth.db.init_db.call_count)
 
         # Conditions to buy a dataset; It should be private, active and should not belong to any organization
         if not authorized and state == 'active' and not owner_org and request_path.startswith('/dataset/'):
             auth.helpers.flash_error.assert_called_once()
+        else:
+            self.assertEquals(0, auth.helpers.flash_error.call_count)
 
     @parameterized.expand([
         (None, None, None,   None,     None,  False),   # Anonymous user
@@ -171,9 +176,12 @@ class AuthTest(unittest.TestCase):
         # Check the result
         self.assertEquals(authorized, result['success'])
 
-        # Check that the mock has been called properly
+        # Permissions for organization are checked when the user asking to update the dataset is not the creator
+        # and when the dataset has organization
         if creator_user_id != user_obj_id and owner_org:
             auth.new_authz.has_user_permission_for_group_or_org.assert_called_once_with(owner_org, user, 'update_dataset')
+        else:
+            self.assertEquals(0, auth.new_authz.has_user_permission_for_group_or_org.call_count)
 
     @parameterized.expand([
         (True,  True),

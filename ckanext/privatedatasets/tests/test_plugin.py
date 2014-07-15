@@ -31,15 +31,18 @@ class PluginTest(unittest.TestCase):
         (plugin.p.IPackageController,),
         (plugin.p.ITemplateHelpers,)
     ])
-    def test_implementations(self, interface):
+    def test_implementation(self, interface):
         self.assertTrue(interface.implemented_by(plugin.PrivateDatasets))
 
-    def test_auth_functions(self):
+    @parameterized.expand([
+        ('package_show',     plugin.auth.package_show),
+        ('package_update',   plugin.auth.package_update),
+        ('package_show',     plugin.auth.package_show),
+        ('package_adquired', plugin.auth.package_adquired)
+    ])
+    def test_auth_function(self, function_name, expected_function):
         auth_functions = self.privateDatasets.get_auth_functions()
-        self.assertEquals(auth_functions['package_show'], plugin.auth.package_show)
-        self.assertEquals(auth_functions['package_update'], plugin.auth.package_update)
-        self.assertEquals(auth_functions['resource_show'], plugin.auth.resource_show)
-        self.assertEquals(auth_functions['package_adquired'], plugin.auth.package_adquired)
+        self.assertEquals(auth_functions[function_name], expected_function)
 
     def test_update_config(self):
         # Call the method
@@ -60,15 +63,27 @@ class PluginTest(unittest.TestCase):
                                   controller='ckanext.privatedatasets.controllers.ui_controller:AdquiredDatasetsControllerUI',
                                   action='user_adquired_datasets', conditions=dict(method=['GET']))
 
-    def test_actions_functions(self):
+    @parameterized.expand([
+        ('package_adquired', plugin.actions.package_adquired)
+    ])
+    def test_actions_function(self, function_name, expected_function):
         actions = self.privateDatasets.get_actions()
-        self.assertEquals(actions['package_adquired'], plugin.actions.package_adquired)
+        self.assertEquals(actions[function_name], expected_function)
 
     def test_fallback(self):
         self.assertEquals(True, self.privateDatasets.is_fallback())
 
     def test_package_types(self):
         self.assertEquals([], self.privateDatasets.package_types())
+
+    @parameterized.expand([
+        ('privatedatasets_adquired', plugin.helpers.is_adquired),
+        ('get_allowed_users_str',    plugin.helpers.get_allowed_users_str),
+        ('is_owner',                 plugin.helpers.is_owner)
+    ])
+    def test_helpers_functions(self, function_name, expected_function):
+        helpers_functions = self.privateDatasets.get_helpers()
+        self.assertEquals(helpers_functions[function_name], expected_function)
 
     ######################################################################
     ############################## SCHEMAS ###############################
@@ -121,10 +136,10 @@ class PluginTest(unittest.TestCase):
     ######################################################################
 
     @parameterized.expand([
-        ('after_delete',),
-        ('after_delete', 'False')
+        ('True'),
+        ('False')
     ])
-    def test_packagecontroller_after_delete(self, function, private='True'):
+    def test_packagecontroller_after_delete(self, private):
         pkg_dict = {'test': 'a', 'private': private, 'allowed_users': ['a', 'b', 'c']}
         expected_pkg_dict = pkg_dict.copy()
         result = self.privateDatasets.after_delete({}, pkg_dict)    # Call the function
@@ -156,7 +171,7 @@ class PluginTest(unittest.TestCase):
     ])
     def test_packagecontroller_after_show(self, update_via_api, creator_id, user_id, sysadmin, fields_expected):
         
-        context = {'updating_via_cb': update_via_api, }
+        context = {'updating_via_cb': update_via_api}
 
         if creator_id is not None or sysadmin is not None:
             user = MagicMock()
@@ -214,10 +229,6 @@ class PluginTest(unittest.TestCase):
         expected_result['capacity'] = finalCapacity
 
         self.assertEquals(expected_result, self.privateDatasets.before_index(pkg_dict))
-
-    def test_helpers_functions(self):
-        helpers_functions = self.privateDatasets.get_helpers()
-        self.assertEquals(helpers_functions['privatedatasets_adquired'], plugin.helpers.is_adquired)
 
     def _aux_test_after_create_update(self, function, new_users, current_users, users_to_add, users_to_delete):
         package_id = 'package_id'

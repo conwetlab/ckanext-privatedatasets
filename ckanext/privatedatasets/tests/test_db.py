@@ -7,13 +7,15 @@ from mock import MagicMock
 class DBTest(unittest.TestCase):
 
     def setUp(self):
+        # Restart databse initial status
+        db.AllowedUser = None
+
         # Create mocks
         self._sa = db.sa
         db.sa = MagicMock()
 
     def tearDown(self):
         db.sa = self._sa
-        db.AllowedUser = None
 
     def test_initdb_not_initialized(self):
 
