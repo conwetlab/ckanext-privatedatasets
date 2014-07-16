@@ -11,6 +11,10 @@ def private_datasets_metadata_checker(key, data, errors, context):
     dataset_id = data.get(('id',))
     private_val = data.get(('private',))
 
+    #Avoid missing value
+    if not isinstance(private_val, basestring) and not isinstance(private_val, bool):
+        private_val = None
+
     # If the private field is not included in the data dict, we must check the current value
     if private_val is None and dataset_id:
         dataset_dict = toolkit.get_action('package_show')({'ignore_auth': True}, {'id': dataset_id})
@@ -20,7 +24,7 @@ def private_datasets_metadata_checker(key, data, errors, context):
     metadata_value = data[key]
 
     # If allowed users are included and the dataset is not private outside and organization, an error will be raised.
-    if metadata_value != '' and not private:
+    if metadata_value and not private:
         errors[key].append(_('This field is only valid when you create a private dataset'))
 
 

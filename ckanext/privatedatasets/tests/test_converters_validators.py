@@ -33,6 +33,18 @@ class ConvertersValidatorsTest(unittest.TestCase):
         ('False', True,  None,     '',     False),
         (None,    True,  None,     '',     False),
         (None,    False, None,     '',     False),
+        (True,    True,  'conwet', [],     False),
+        ('True',  True,  'conwet', [],     False),
+        (False,   True,  'conwet', [],     False),
+        ('False', True,  'conwet', [],     False),
+        (None,    True,  'conwet', [],     False),
+        (None,    False, 'conwet', [],     False),
+        (True,    True,  None,     [],     False),
+        ('True',  True,  None,     [],     False),
+        (False,   True,  None,     [],     False),
+        ('False', True,  None,     [],     False),
+        (None,    True,  None,     [],     False),
+        (None,    False, None,     [],     False),
         # When data is present, the field is only valid when the
         # the private field is set to true (organization should
         # not be taken into account anymore)
