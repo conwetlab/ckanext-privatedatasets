@@ -61,7 +61,3 @@ def get_allowed_users(key, data, errors, context):
     for user in users:
         data[(key[0], counter)] = user.user_name
         counter += 1
-
-
-def check_user_names(key, data, errors, context):
-    print data[key]
