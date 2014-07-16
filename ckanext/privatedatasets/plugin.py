@@ -28,9 +28,9 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
             'private': [tk.get_validator('ignore_missing'),
                         tk.get_validator('boolean_validator')],
             constants.ALLOWED_USERS_STR: [tk.get_validator('ignore_missing'),
-                                          conv_val.allowed_users_convert,
                                           conv_val.private_datasets_metadata_checker],
-            constants.ALLOWED_USERS: [tk.get_validator('ignore_missing'),
+            constants.ALLOWED_USERS: [conv_val.allowed_users_convert,
+                                      tk.get_validator('ignore_missing'),
                                       conv_val.private_datasets_metadata_checker],
             constants.ADQUIRE_URL: [tk.get_validator('ignore_missing'),
                                     conv_val.private_datasets_metadata_checker,
@@ -155,11 +155,6 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
 
         # Get the users and the package ID
         if constants.ALLOWED_USERS in pkg_dict:
-
-            # When the user removes all the users using the UI, we recieve an array with one
-            # element that is an empty string, so set the value properly
-            if len(pkg_dict[constants.ALLOWED_USERS]) == 1 and pkg_dict[constants.ALLOWED_USERS][0] == '':
-                pkg_dict[constants.ALLOWED_USERS] = []
 
             allowed_users = pkg_dict[constants.ALLOWED_USERS]
             package_id = pkg_dict['id']

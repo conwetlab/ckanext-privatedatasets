@@ -25,15 +25,29 @@ def private_datasets_metadata_checker(key, data, errors, context):
 
 
 def allowed_users_convert(key, data, errors, context):
-    if isinstance(data[key], basestring):
-        allowed_users = [allowed_user for allowed_user in data[key].split(',')]
+
+    # By default, all the fileds are in the data dictionary even if they contains nothing. In this case,
+    # the value is 'ckan.lib.navl.dictization_functions.Missing' and for this reason the type is checked
+
+    # Get the allowed user list
+    if (constants.ALLOWED_USERS,) in data and isinstance(data[(constants.ALLOWED_USERS,)], list):
+        allowed_users = data[(constants.ALLOWED_USERS,)]
+    elif (constants.ALLOWED_USERS_STR,) in data and isinstance(data[(constants.ALLOWED_USERS_STR,)], basestring):
+        allowed_users_str = data[(constants.ALLOWED_USERS_STR,)].strip()
+        allowed_users = [allowed_user for allowed_user in allowed_users_str.split(',') if allowed_user.strip() != '']
     else:
-        allowed_users = data[key]
+        allowed_users = None
 
-    current_index = max([int(k[1]) for k in data.keys() if len(k) == 2 and k[0] == constants.ALLOWED_USERS] + [-1])
+    if allowed_users is not None:
+        current_index = max([int(k[1]) for k in data.keys() if len(k) == 2 and k[0] == key[0]] + [-1])
 
-    for num, allowed_user in zip(count(current_index + 1), allowed_users):
-        data[(constants.ALLOWED_USERS, num)] = allowed_user.strip()
+        if len(allowed_users) == 0:
+            data[(constants.ALLOWED_USERS,)] = []
+        else:
+            for num, allowed_user in zip(count(current_index + 1), allowed_users):
+                allowed_user = allowed_user.strip()
+                toolkit.get_validator('name_validator')(allowed_user, context)      # User name should be validated
+                data[(key[0], num)] = allowed_user
 
 
 def get_allowed_users(key, data, errors, context):
@@ -47,3 +61,7 @@ def get_allowed_users(key, data, errors, context):
     for user in users:
         data[(key[0], counter)] = user.user_name
         counter += 1
+
+
+def check_user_names(key, data, errors, context):
+    print data[key]

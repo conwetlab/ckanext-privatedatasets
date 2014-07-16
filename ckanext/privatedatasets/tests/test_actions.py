@@ -151,7 +151,7 @@ class ActionsTest(unittest.TestCase):
                 if dataset_id in datasets_not_found:
                     warns.append('Dataset %s was not found in this instance' % dataset_id)
                 elif dataset_id in not_updatable_datasets and allowed_users is not None and user_datasets['user'] not in allowed_users:
-                    warns.append('Dataset %s: %s' % (dataset_id, ADD_USERS_ERROR))
+                    warns.append('%s(%s): %s' % (dataset_id, 'allowed_users', ADD_USERS_ERROR))
 
         expected_result = {'warns': warns} if len(warns) > 0 else None
 

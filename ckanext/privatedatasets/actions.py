@@ -64,7 +64,7 @@ def package_adquired(context, request_data):
                 # Some datasets does not allow to introduce the list of allowed users since this property is
                 # only valid for private datasets outside an organization. In this case, a wanr will return
                 # but the process will continue
-                warns.append('Dataset %s: %s' % (dataset_id, e.error_dict[constants.ALLOWED_USERS][0]))
+                warns.append('%s(%s): %s' % (dataset_id, constants.ALLOWED_USERS, e.error_dict[constants.ALLOWED_USERS][0]))
 
     # Return warnings that inform about non-existing datasets
     if len(warns) > 0:

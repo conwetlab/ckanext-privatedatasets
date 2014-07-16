@@ -86,24 +86,41 @@ class ConvertersValidatorsTest(unittest.TestCase):
         ('',             2, []),
         ('a',            0, ['a']),
         ('a',            2, ['a']),
+        (',,,   , ,  ',  0, []),
+        (',,,   , ,  ',  2, []),
         ('a,z, d',       0, ['a', 'z', 'd']),
         ('a,z, d',       2, ['a', 'z', 'd']),
         (['a','z', 'd'], 0, ['a', 'z', 'd']),
-        (['a','z', 'd'], 2, ['a', 'z', 'd'])
+        (['a','z', 'd'], 2, ['a', 'z', 'd']),
     ])
-    def test_allowed_user_convert(self, users_str, previous_users, expected_users):
+    def test_allowed_user_convert(self, users, previous_users, expected_users):
         key_str = 'allowed_users_str'
         key = 'allowed_users'
+
+        # Configure mock
+        name_validator = MagicMock()
+        conv_val.toolkit.get_validator = MagicMock(return_value=name_validator)
         
-        data = {(key_str,): users_str}
+        # Fullfill the data dictionary
+        # * list should be included in the allowed_users filed
+        # * strings should be included in the allowed_users_str field
+        if isinstance(users, basestring):
+            data_key = key_str
+        else:
+            data_key = key
+
+        data = {(data_key,): users}
+
         for i in range(0, previous_users):
             data[(key, i)] = i
 
         # Call the function
-        conv_val.allowed_users_convert((key_str,), data, {}, {})
+        context = {'user': 'test', 'auth_obj_id': {'id': 1}}
+        conv_val.allowed_users_convert((key,), data, {}, context)
 
         # Check that the users are set properly
         for i in range(previous_users, previous_users + len(expected_users)):
+            name_validator.assert_any_call(expected_users[i - previous_users], context)
             self.assertEquals(expected_users[i - previous_users], data[(key, i)])
 
     @parameterized.expand([

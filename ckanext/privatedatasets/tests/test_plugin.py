@@ -110,9 +110,9 @@ class PluginTest(unittest.TestCase):
                             plugin.conv_val.private_datasets_metadata_checker],
             'searchable': [plugin.tk.get_validator('ignore_missing'), plugin.tk.get_validator('boolean_validator'),
                            plugin.tk.get_converter('convert_to_extras'), plugin.conv_val.private_datasets_metadata_checker],
-            'allowed_users_str': [plugin.tk.get_validator('ignore_missing'), plugin.conv_val.allowed_users_convert,
-                                  plugin.conv_val.private_datasets_metadata_checker],
-            'allowed_users': [plugin.tk.get_validator('ignore_missing'), plugin.conv_val.private_datasets_metadata_checker]
+            'allowed_users_str': [plugin.tk.get_validator('ignore_missing'), plugin.conv_val.private_datasets_metadata_checker],
+            'allowed_users': [plugin.conv_val.allowed_users_convert, plugin.tk.get_validator('ignore_missing'),
+                              plugin.conv_val.private_datasets_metadata_checker]
         }
 
         self._check_fields(returned_schema, fields)
@@ -279,14 +279,12 @@ class PluginTest(unittest.TestCase):
         (['a'],           [],              ['a'],           []),
         (['a'],           ['a'],           [],              []),
         ([],              ['a'],           [],              ['a']),
-        ([''],            ['a'],           [],              ['a']),
         # Two elements
         (['a', 'b'],      [],              ['a', 'b'],      []),
         (['a', 'b'],      ['b'],           ['a'],           []),
         (['a'],           ['a', 'b'],      [],              ['b']),
         ([],              ['a', 'b'],      [],              ['a', 'b']),
         (['a', 'b'],      ['a', 'b'],      [],              []),
-        ([''],            ['a', 'b'],      [],              ['a', 'b']),
         # Three or more elements
         (['c'],           ['a', 'b'],      ['c'],           ['a', 'b']),
         (['a', 'b', 'c'], ['a', 'b'],      ['c'],           []),
@@ -303,14 +301,12 @@ class PluginTest(unittest.TestCase):
         (['a'],           [],              ['a'],           []),
         (['a'],           ['a'],           [],              []),
         ([],              ['a'],           [],              ['a']),
-        ([''],            ['a'],           [],              ['a']),
         # Two elements
         (['a', 'b'],      [],              ['a', 'b'],      []),
         (['a', 'b'],      ['b'],           ['a'],           []),
         (['a'],           ['a', 'b'],      [],              ['b']),
         ([],              ['a', 'b'],      [],              ['a', 'b']),
         (['a', 'b'],      ['a', 'b'],      [],              []),
-        ([''],            ['a', 'b'],      [],              ['a', 'b']),
         # Three or more elements
         (['c'],           ['a', 'b'],      ['c'],           ['a', 'b']),
         (['a', 'b', 'c'], ['a', 'b'],      ['c'],           []),
