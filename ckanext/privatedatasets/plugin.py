@@ -1,3 +1,4 @@
+import ckan.lib.search as search
 import ckan.plugins as p
 import ckan.plugins.toolkit as tk
 import auth
@@ -21,6 +22,9 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
     ######################################################################
     ############################ DATASET FORM ############################
     ######################################################################
+
+    def __init__(self, name=None):
+        self.indexer = search.PackageSearchIndex()
 
     def _modify_package_schema(self):
         return {
@@ -150,6 +154,7 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
 
     def after_create(self, context, pkg_dict):
         session = context['session']
+        update_cache = False
 
         db.init_db(context['model'])
 
@@ -168,6 +173,7 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
                 current_users.append(user.user_name)
                 if user.user_name not in allowed_users:
                     session.delete(user)
+                    update_cache = True
 
             # Add non existing users
             for user_name in allowed_users:
@@ -177,6 +183,20 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
                     out.user_name = user_name
                     out.save()
                     session.add(out)
+                    update_cache = True
+
+            session.commit()
+
+            # The cache should be updated. Otherwise, the system may return
+            # outdated information in future requests
+            if update_cache:
+                new_pkg_dict = tk.get_action('package_show')(
+                    {'model': context['model'],
+                     'ignore_auth': True,
+                     'validate': False,
+                     'use_cache': False},
+                    {'id': package_id})
+                self.indexer.update_dict(new_pkg_dict)
 
         return pkg_dict
 

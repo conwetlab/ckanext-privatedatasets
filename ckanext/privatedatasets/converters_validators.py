@@ -11,7 +11,7 @@ def private_datasets_metadata_checker(key, data, errors, context):
     dataset_id = data.get(('id',))
     private_val = data.get(('private',))
 
-    #Avoid missing value
+    # Avoid missing value
     if not isinstance(private_val, basestring) and not isinstance(private_val, bool):
         private_val = None
 

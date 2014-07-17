@@ -8,9 +8,6 @@ from nose_parameterized import parameterized
 class PluginTest(unittest.TestCase):
 
     def setUp(self):
-        # Create the plugin
-        self.privateDatasets = plugin.PrivateDatasets()
-
         # Create mocks
         self._tk = plugin.tk
         plugin.tk = MagicMock()
@@ -18,9 +15,16 @@ class PluginTest(unittest.TestCase):
         self._db = plugin.db
         plugin.db = MagicMock()
 
+        self._search = plugin.search
+        plugin.search = MagicMock()
+
+        # Create the plugin
+        self.privateDatasets = plugin.PrivateDatasets()
+
     def tearDown(self):
         plugin.tk = self._tk
         plugin.db = self._db
+        plugin.search = self._search
 
     @parameterized.expand([
         (plugin.p.IDatasetForm,),
@@ -233,6 +237,11 @@ class PluginTest(unittest.TestCase):
     def _aux_test_after_create_update(self, function, new_users, current_users, users_to_add, users_to_delete):
         package_id = 'package_id'
 
+        # Configure mocks
+        default_dict = {'a': '0', 'b': 1, 'm': True}
+        package_show = MagicMock(return_value=default_dict)
+        plugin.tk.get_action = MagicMock(return_value=package_show)
+
         # Each time 'AllowedUser' is called, we must get a new instance
         # and this is the way to get this behaviour
         def constructor():
@@ -273,6 +282,13 @@ class PluginTest(unittest.TestCase):
 
         # Check that the method has added the appropiate users
         _test_calls(users_to_add, context['session'].add)
+
+        if len(users_to_add) == 0 and len(users_to_delete) == 0:
+            # Check that the cache has not been updated
+            self.assertEquals(0, self.privateDatasets.indexer.update_dict.call_count)
+        else:
+            # Check that the cache has been updated
+            self.privateDatasets.indexer.update_dict.assert_called_once_with(default_dict)
 
     @parameterized.expand([
         # One element
