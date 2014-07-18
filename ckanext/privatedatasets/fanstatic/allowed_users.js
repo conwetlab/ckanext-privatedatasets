@@ -23,8 +23,7 @@ this.ckan.module('allowed-users', function ($, _) {
         $('#field-searchable').prop('disabled', true);      //Disable
         
         //Remove previous values
-        $('#s2id_field-allowed_users_str .select2-search-choice').remove();
-        $('#field-allowed_users_str').val('');
+        $('#field-allowed_users_str').select2('val', '');
         $('#field-adquire_url').val('');
         $('#field-searchable').val('True');
       }
