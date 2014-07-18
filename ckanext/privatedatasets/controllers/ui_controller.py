@@ -1,6 +1,7 @@
 import ckan.lib.base as base
 import ckan.model as model
 import ckan.plugins as plugins
+import ckanext.privatedatasets.db as db
 import logging
 
 from ckan.common import _
@@ -11,6 +12,8 @@ log = logging.getLogger(__name__)
 class AdquiredDatasetsControllerUI(base.BaseController):
 
     def user_adquired_datasets(self):
+
+        db.init_db(model)
 
         c = plugins.toolkit.c
         context = {
@@ -29,13 +32,7 @@ class AdquiredDatasetsControllerUI(base.BaseController):
             plugins.toolkit.abort(401, _('Not authorized to see this page'))
 
         # Get the datasets adquired by the user
-        query = model.Session.query(model.PackageExtra).filter(
-            # Select only the allowed_users key
-            'package_extra.key=\'%s\' AND package_extra.value!=\'\' ' % 'allowed_users' +
-            # Select only when the state is 'active'
-            'AND package_extra.state=\'%s\' ' % 'active' +
-            # The user name should be contained in the list
-            'AND regexp_split_to_array(package_extra.value,\',\') @> ARRAY[\'%s\']' % context['user'])
+        query = db.AllowedUser.get(user_name=context['user'])
 
         # Get the datasets
         for dataset in query:

@@ -1,0 +1,6 @@
+ALLOWED_USERS = 'allowed_users'
+ALLOWED_USERS_STR = 'allowed_users_str'
+SEARCHABLE = 'searchable'
+ADQUIRE_URL = 'adquire_url'
+CONTEXT_CALLBACK = 'updating_via_cb'
+PACKAGE_ADQUIRED = 'package_adquired'

@@ -14,17 +14,16 @@ this.ckan.module('allowed-users', function ($, _) {
       var ds_private = $('#field-private').val();
 
       if (ds_private == "True") {
-        $('#field-allowed_users').prop('disabled', false);  //Enable
+        $('#field-allowed_users_str').prop('disabled', false);  //Enable
         $('#field-adquire_url').prop('disabled', false);    //Enable
         $('#field-searchable').prop('disabled', false);    //Enable
       } else {
-        $('#field-allowed_users').prop('disabled', true);   //Disable
+        $('#field-allowed_users_str').prop('disabled', true);   //Disable
         $('#field-adquire_url').prop('disabled', true);     //Disable
         $('#field-searchable').prop('disabled', true);      //Disable
         
         //Remove previous values
-        $('#s2id_field-allowed_users .select2-search-choice').remove();
-        $('#field-allowed_users').val('');
+        $('#field-allowed_users_str').select2('val', '');
         $('#field-adquire_url').val('');
         $('#field-searchable').val('True');
       }
