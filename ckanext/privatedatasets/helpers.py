@@ -1,6 +1,5 @@
 import ckan.model as model
 import ckan.plugins.toolkit as tk
-import auth
 import db
 
 
@@ -29,8 +28,8 @@ def get_allowed_users_str(users):
 
 
 def can_read(pkg_dict):
-    if tk.c.userobj and tk.c.userobj.sysadmin:
-        return True
-    else:
-        context = {'user': tk.c.user, 'auth_user_obj': tk.c.userobj, 'model': model}
-        return auth.package_show(context, pkg_dict)['success'] is True
+    try:
+        context = {'user': tk.c.user, 'userobj': tk.c.userobj, 'model': model}
+        return tk.check_access('package_show', context, pkg_dict)
+    except tk.NotAuthorized:
+        return False

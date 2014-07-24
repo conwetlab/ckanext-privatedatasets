@@ -18,14 +18,10 @@ class HelpersTest(unittest.TestCase):
         self._db = helpers.db
         helpers.db = MagicMock()
 
-        self._auth = helpers.auth
-        helpers.auth = MagicMock()
-
     def tearDown(self):
         helpers.model = self._model
         helpers.tk = self._tk
         helpers.db = self._db
-        helpers.auth = self._auth
 
     @parameterized.expand([
         (False, 'user', False),
@@ -82,21 +78,25 @@ class HelpersTest(unittest.TestCase):
         self.assertEquals(expected_result, helpers.get_allowed_users_str(allowed_users))
 
     @parameterized.expand([
-        (None,  False, False),
-        (None,  True,  True),
-        (True,  False, True),
-        (True,  True,  True),
-        (False, False, False),
-        (False, True,  True)
+        (False,),
+        (True,)
     ])
-    def test_can_read(self, sysadmin, auth_result, expected_result):
-        if sysadmin is not None:
-            helpers.tk.c.userobj.sysadmin = sysadmin
-        else:
-            helpers.tk.c.userobj = None
+    def test_can_read(self, auth):
+        # Recover exception
+        helpers.tk.NotAuthorized = self._tk.NotAuthorized
 
-        helpers.auth.package_show = MagicMock(return_value={'success': auth_result})
+        def _check_access(function_name, context, data_dict):
+            if not auth:
+                raise helpers.tk.NotAuthorized()
+            else:
+                return True
 
-        # Call the function
+        helpers.tk.check_access = MagicMock(side_effect=_check_access)
+
+        # Call the function and check the result
         package = {'id': 1}
-        self.assertEquals(expected_result, helpers.can_read(package))
+        self.assertEquals(auth, helpers.can_read(package))
+
+        # Assert called with
+        context = {'user': helpers.tk.c.user, 'userobj': helpers.tk.c.userobj, 'model': helpers.model}
+        helpers.tk.check_access.assert_called_once_with('package_show', context, package)
