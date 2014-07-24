@@ -233,4 +233,5 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
     def get_helpers(self):
         return {'privatedatasets_adquired': helpers.is_adquired,
                 'get_allowed_users_str': helpers.get_allowed_users_str,
-                'is_owner': helpers.is_owner}
+                'is_owner': helpers.is_owner,
+                'can_read': helpers.can_read}

@@ -83,7 +83,8 @@ class PluginTest(unittest.TestCase):
     @parameterized.expand([
         ('privatedatasets_adquired', plugin.helpers.is_adquired),
         ('get_allowed_users_str',    plugin.helpers.get_allowed_users_str),
-        ('is_owner',                 plugin.helpers.is_owner)
+        ('is_owner',                 plugin.helpers.is_owner),
+        ('can_read',                 plugin.helpers.can_read)
     ])
     def test_helpers_functions(self, function_name, expected_function):
         helpers_functions = self.privateDatasets.get_helpers()

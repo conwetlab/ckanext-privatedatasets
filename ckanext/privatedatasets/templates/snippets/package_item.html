@@ -26,7 +26,7 @@ Example:
   {% block package_item_content %}
     <div class="dataset-content">
       <h3 class="dataset-heading">
-        {% if package.private and not adquired and not owner %}
+        {% if package.private and not adquired and not owner and not h.can_read(package) %}
           <span class="dataset-private label label-inverse">
             <i class="icon-lock"></i>
             {{ _('Private') }}
@@ -38,7 +38,7 @@ Example:
             {{ _('Adquired') }}
           </span>
         {% endif %}
-        {% if owner and package.private %}
+        {% if owner %}
           <span class="dataset-private label label-owner">
             <i class="icon-user"></i>
             {{ _('Owner') }}
