@@ -28,7 +28,8 @@ class TestSelenium(unittest.TestCase):
         model.repo.rebuild_db()
 
         self.driver = webdriver.Firefox()
-        self.driver.implicitly_wait(30)
+        self.driver.implicitly_wait(5)
+        self.driver.set_window_size(1024, 768)
         self.base_url = "http://127.0.0.1:5000/"
         self.verificationErrors = []
         self.accept_next_alert = True
@@ -98,6 +99,13 @@ class TestSelenium(unittest.TestCase):
             self.assert_fields_disabled(['field-searchable', 'field-allowed_users_str', 'field-adquire_url'])
 
         driver.find_element_by_name("save").click()
+
+        # The link button is only clicked if it's present
+        try:
+            driver.find_element_by_link_text("Link").click()
+        except Exception:
+            pass
+
         driver.find_element_by_id("field-image-url").clear()
         driver.find_element_by_id("field-image-url").send_keys(resource_url)
         driver.find_element_by_id("field-name").clear()
