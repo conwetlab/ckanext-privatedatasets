@@ -58,9 +58,14 @@ class UIControllerTest(unittest.TestCase):
     @parameterized.expand([
         ({},),
         ({2: controller.plugins.toolkit.ObjectNotFound},),
-        ({1: controller.plugins.toolkit.NotAuthorized},)
+        ({1: controller.plugins.toolkit.NotAuthorized},),
+        ({1: controller.plugins.toolkit.NotAuthorized, 2: controller.plugins.toolkit.ObjectNotFound},),
+        ({},                                                                                          [1]),
+        ({},                                                                                          [3, 2]),
+        ({1: controller.plugins.toolkit.NotAuthorized},                                               [2]),
+        ({1: controller.plugins.toolkit.NotAuthorized, 2: controller.plugins.toolkit.ObjectNotFound}, [1, 3]),
     ])
-    def test_no_error_loading_users(self, package_errors={}):
+    def test_no_error_loading_users(self, package_errors={}, deleted_packages=[]):
 
         pkgs_ids = [0, 1, 2, 3]
         user = 'example_user_test'
@@ -75,6 +80,7 @@ class UIControllerTest(unittest.TestCase):
             else:
                 pkg = default_package.copy()
                 pkg['pkg_id'] = data_dict['id']
+                pkg['state'] = 'deleted' if data_dict['id'] in deleted_packages else 'active'
                 return pkg
 
         user_dict = {'user_name': 'test', 'another_val': 'example value'}
@@ -126,9 +132,10 @@ class UIControllerTest(unittest.TestCase):
         expected_user_dict = user_dict.copy()
         expected_user_dict['adquired_datasets'] = []
         for i in pkgs_ids:
-            if i not in package_errors:
+            if i not in package_errors and i not in deleted_packages:
                 pkg = default_package.copy()
                 pkg['pkg_id'] = i
+                pkg['state'] = 'deleted' if i in deleted_packages else 'active'
                 expected_user_dict['adquired_datasets'].append(pkg)
 
         self.assertEquals(expected_user_dict, controller.plugins.toolkit.c.user_dict)

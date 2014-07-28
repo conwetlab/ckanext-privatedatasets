@@ -32,7 +32,7 @@ Example:
             {{ _('Private') }}
           </span>
         {% endif %}
-        {% if adquired %}
+        {% if adquired and not owner %}
           <span class="dataset-private label label-adquired">
             <i class="icon-shopping-cart"></i>
             {{ _('Adquired') }}

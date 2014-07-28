@@ -38,7 +38,9 @@ class AdquiredDatasetsControllerUI(base.BaseController):
         for dataset in query:
             try:
                 dataset_dict = plugins.toolkit.get_action('package_show')(context, {'id': dataset.package_id})
-                c.user_dict['adquired_datasets'].append(dataset_dict)
+                # Only packages with state == 'active' can be shown
+                if dataset_dict.get('state', None) == 'active':
+                    c.user_dict['adquired_datasets'].append(dataset_dict)
             except Exception:
                 continue
 
