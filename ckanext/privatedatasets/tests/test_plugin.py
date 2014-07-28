@@ -141,22 +141,6 @@ class PluginTest(unittest.TestCase):
     ######################################################################
 
     @parameterized.expand([
-        ('True'),
-        ('False')
-    ])
-    def test_packagecontroller_after_delete(self, private):
-        pkg_dict = {'test': 'a', 'private': private, 'allowed_users': ['a', 'b', 'c']}
-        expected_pkg_dict = pkg_dict.copy()
-        result = self.privateDatasets.after_delete({}, pkg_dict)    # Call the function
-        self.assertEquals(expected_pkg_dict, result)                # Check the result
-
-    def test_packagecontroller_after_search(self):
-        search_res = {'test': 'a', 'private': 'a', 'allowed_users': ['a', 'b', 'c']}
-        expected_search_res = search_res.copy()
-        result = getattr(self.privateDatasets, 'after_search')(search_res, {})  # Call the function
-        self.assertEquals(expected_search_res, result)                          # Check the result
-
-    @parameterized.expand([
         (True,  1, 1,    False, True),
         (True,  1, 2,    False, True),
         (True,  1, 1,    True,  True),
@@ -196,26 +180,6 @@ class PluginTest(unittest.TestCase):
                 self.assertTrue(field in result)
             else:
                 self.assertFalse(field in result)
-
-    @parameterized.expand([
-        ('before_search',),
-        ('before_view',),
-        ('create',),
-        ('edit',),
-        ('read',),
-        ('delete',),
-        ('before_search', 'False'),
-        ('before_view',   'False'),
-        ('create',        'False'),
-        ('edit',          'False'),
-        ('read',          'False'),
-        ('delete',        'False')
-    ])
-    def test_before_and_CRUD(self, function, private='True'):
-        pkg_dict = {'test': 'a', 'private': private, 'allowed_users': ['a', 'b', 'c']}
-        expected_pkg_dict = pkg_dict.copy()
-        result = getattr(self.privateDatasets, function)(pkg_dict)   # Call the function
-        self.assertEquals(expected_pkg_dict, result)                 # Check the result
 
     @parameterized.expand([
         ('public',  None,    'public'),

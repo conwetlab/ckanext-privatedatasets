@@ -16,7 +16,7 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
     p.implements(p.IConfigurer)
     p.implements(p.IRoutes, inherit=True)
     p.implements(p.IActions)
-    p.implements(p.IPackageController)
+    p.implements(p.IPackageController, inherit=True)
     p.implements(p.ITemplateHelpers)
 
     ######################################################################
@@ -134,24 +134,6 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
 
         return pkg_dict
 
-    def before_view(self, pkg_dict):
-        return pkg_dict
-
-    def before_search(self, search_params):
-        return search_params
-
-    def create(self, pkg_dict):
-        return pkg_dict
-
-    def edit(self, pkg_dict):
-        return pkg_dict
-
-    def read(self, pkg_dict):
-        return pkg_dict
-
-    def delete(self, pkg_dict):
-        return pkg_dict
-
     def after_create(self, context, pkg_dict):
         session = context['session']
         update_cache = False
@@ -218,12 +200,6 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
                 if attr in pkg_dict:
                     del pkg_dict[attr]
 
-        return pkg_dict
-
-    def after_search(self, search_results, search_params):
-        return search_results
-
-    def after_delete(self, context, pkg_dict):
         return pkg_dict
 
     ######################################################################
