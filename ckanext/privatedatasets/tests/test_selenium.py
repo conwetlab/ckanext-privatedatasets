@@ -1,5 +1,5 @@
-
 from nose_parameterized import parameterized
+from pylons import config
 from selenium import webdriver
 from selenium.webdriver.support.ui import Select
 from subprocess import Popen
@@ -9,6 +9,7 @@ import ckanext.privatedatasets.db as db
 import os
 import unittest
 import re
+import requests
 
 
 class TestSelenium(unittest.TestCase):
@@ -23,8 +24,13 @@ class TestSelenium(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         cls._process.terminate()
-    
-    def setUp(self):
+
+    def clearBBDD(self):
+        ckan_site_id = config.get('ckan.site_id')
+
+        # Clean Solr
+        requests.get("http://localhost:8983/solr/update?stream.body=%3Cdelete%3E%3Cquery%3Esite_id:" + ckan_site_id + "%3C/query%3E%3C/delete%3E&commit=true")
+
         # Clean the database
         model.repo.rebuild_db()
 
@@ -34,6 +40,9 @@ class TestSelenium(unittest.TestCase):
         for user in users:
             model.Session.delete(user)
         model.Session.commit()
+    
+    def setUp(self):
+        self.clearBBDD()
 
         self.driver = webdriver.Firefox()
         self.driver.implicitly_wait(5)
@@ -43,6 +52,7 @@ class TestSelenium(unittest.TestCase):
         self.accept_next_alert = True
 
     def tearDown(self):
+        self.clearBBDD()
         self.driver.quit()
         self.assertEqual([], self.verificationErrors)
 

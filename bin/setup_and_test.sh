@@ -102,10 +102,6 @@ python setup.py develop
 pip install -r dev-requirements.txt
 
 
-echo "Clear Solr..."
-curl http://localhost:8983/solr/update?commit=true -d '<delete><query>*:*</query></delete>'
-
-
 echo "Running tests..."
 nosetests --ckan --with-xunit --with-pylons=test.ini ckanext/privatedatasets/tests/ --with-coverage \
 --cover-package=ckanext.privatedatasets --cover-inclusive --cover-erase . --cover-xml
