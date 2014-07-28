@@ -141,6 +141,49 @@ class PluginTest(unittest.TestCase):
     ######################################################################
 
     @parameterized.expand([
+        ('True',  []),
+        ('False', []),
+        ('True',  ['abc']),
+        ('False', ['abc']),
+        ('True',  ['abc', 'def', 'ghi']),
+        ('False', ['abc', 'def', 'ghi']),
+    ])
+    def test_packagecontroller_after_delete(self, private, allowed_users):
+        pkg_id = '29472'
+        pkg_dict = {'test': 'a', 'id': pkg_id, 'private': private, 'allowed_users': allowed_users}
+        expected_pkg_dict = pkg_dict.copy()
+
+        # Configure the database mock
+        db_current_users = []
+        for user in allowed_users:
+            db_user = MagicMock()
+            db_user.package_id = pkg_id
+            db_user.user_name = user
+            db_current_users.append(db_user)
+
+        # Allowed users
+        plugin.db.AllowedUser.get = MagicMock(return_value=db_current_users)
+
+        context = {'user': 'test', 'auth_user_obj': {'id': 1}, 'session': MagicMock(), 'model': MagicMock()}
+        result = self.privateDatasets.after_delete(context, pkg_dict)   # Call the function
+        self.assertEquals(expected_pkg_dict, result)                    # Check the result
+
+        # Assert that the get method has been called
+        plugin.db.AllowedUser.get.assert_called_once_with(package_id=pkg_id)
+
+        # Check that all the users has been deleted
+        for user in allowed_users:
+            found = False
+            for call in context['session'].delete.call_args_list:
+                call_user = call[0][0]
+
+                if call_user.package_id == pkg_id and call_user.user_name == user:
+                    found = True
+                    break
+
+            self.assertTrue(found)
+
+    @parameterized.expand([
         (True,  1, 1,    False, True),
         (True,  1, 2,    False, True),
         (True,  1, 1,    True,  True),
@@ -236,7 +279,7 @@ class PluginTest(unittest.TestCase):
                 for call in function.call_args_list:
                     call_user = call[0][0]
 
-                    if call_user.package_id == package_id and call.user_name == user:
+                    if call_user.package_id == package_id and call_user.user_name == user:
                         found = True
                         break
 

@@ -202,6 +202,20 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
 
         return pkg_dict
 
+    def after_delete(self, context, pkg_dict):
+        session = context['session']
+        package_id = pkg_dict['id']
+
+        # Get current users
+        users = db.AllowedUser.get(package_id=package_id)
+
+        # Delete all the users
+        for user in users:
+            session.delete(user)
+        session.commit()
+
+        return pkg_dict
+
     ######################################################################
     ######################### ITEMPLATESHELPER ###########################
     ######################################################################
