@@ -1,10 +1,11 @@
-import ckan.model as model
+
 from nose_parameterized import parameterized
 from selenium import webdriver
 from selenium.webdriver.support.ui import Select
 from subprocess import Popen
 
-
+import ckan.model as model
+import ckanext.privatedatasets.db as db
 import os
 import unittest
 import re
@@ -26,6 +27,13 @@ class TestSelenium(unittest.TestCase):
     def setUp(self):
         # Clean the database
         model.repo.rebuild_db()
+
+        # Delete previous users
+        db.init_db(model)
+        users = db.AllowedUser.get()
+        for user in users:
+            model.Session.delete(user)
+        model.Session.commit()
 
         self.driver = webdriver.Firefox()
         self.driver.implicitly_wait(5)
@@ -130,7 +138,7 @@ class TestSelenium(unittest.TestCase):
         else:
             self.assert_fields_disabled(['field-searchable', 'field-allowed_users_str', 'field-adquire_url'])
 
-    def check_user_access(self, dataset, dataset_url, owner, allowed, private, searchable, adquire_url=None):
+    def check_user_access(self, dataset, dataset_url, owner, adquired, private, searchable, adquire_url=None):
         driver = self.driver
         driver.find_element_by_link_text("Datasets").click()
 
@@ -138,9 +146,9 @@ class TestSelenium(unittest.TestCase):
             xpath = "//div[@id='content']/div[3]/div/section/div/ul/li/div/h3/span"
 
             # Check the label
-            if not allowed:
+            if not adquired and private:
                 self.assertEqual("PRIVATE", driver.find_element_by_xpath(xpath).text)
-            elif allowed and not owner and private:
+            elif adquired and not owner and private:
                 self.assertEqual("ADQUIRED", driver.find_element_by_xpath(xpath).text)
             elif owner:
                 self.assertEqual("OWNER", driver.find_element_by_xpath(xpath).text)
@@ -148,7 +156,7 @@ class TestSelenium(unittest.TestCase):
             # Access the dataset
             driver.find_element_by_link_text(dataset).click()
 
-            if not allowed:
+            if not adquired and private:
                 xpath = "//div[@id='content']/div/div"
                 buy_msg = 'This private dataset can be adquired. To do so, please click here'
                 if adquire_url is not None:
@@ -167,6 +175,21 @@ class TestSelenium(unittest.TestCase):
         else:
             # If the dataset is not searchable, a link to it could not be found in the dataset search page
             self.assertEquals(None, re.search(dataset_url, driver.page_source))
+
+    def check_adquired(self, dataset, dataset_url, adquired, private):
+        driver = self.driver
+        driver.get(self.base_url + "dashboard")
+        driver.find_element_by_link_text("Adquired Datasets").click()
+
+        print adquired, private
+
+        if adquired and private:
+            driver.find_element_by_link_text(dataset).click()
+            self.assertEquals(self.base_url + 'dataset/%s' % dataset_url, driver.current_url)
+        else:
+            # If the user has not adquired the dataset, a link to this dataset could not be in the adquired dataset list
+            self.assertEquals(None, re.search(dataset_url, driver.page_source))
+
 
     @parameterized.expand([
         (['user1', 'user2', 'user3'],          True,  True,  ['user2'],          'http://store.conwet.com/'),
@@ -195,11 +218,13 @@ class TestSelenium(unittest.TestCase):
         self.create_ds(original_name, 'Example description', ['tag1', 'tag2', 'tag3'], private, searchable, allowed_users, adquire_url, 'http://upm.es', 'UPM Main', 'Example Description', 'CSV')
         self.check_ds_values(url_name, private, searchable, allowed_users, adquire_url)
         self.check_user_access(original_name, url_name, True, True, private, searchable, adquire_url)
+        self.check_adquired(original_name, url_name, False, private)
 
         # Rest of users
         rest_users = users[1:]
         for user in rest_users:
             self.logout()
             self.login(user, user)
-            allowed = True if not private or user in allowed_users else False
-            self.check_user_access(original_name, url_name, False, allowed, private, searchable, adquire_url)
+            adquired = user in allowed_users
+            self.check_user_access(original_name, url_name, False, adquired, private, searchable, adquire_url)
+            self.check_adquired(original_name, url_name, adquired, private)
