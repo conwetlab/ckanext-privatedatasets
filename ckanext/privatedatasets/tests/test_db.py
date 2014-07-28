@@ -15,6 +15,7 @@ class DBTest(unittest.TestCase):
         db.sa = MagicMock()
 
     def tearDown(self):
+        db.AllowedUser = None
         db.sa = self._sa
 
     def test_initdb_not_initialized(self):
