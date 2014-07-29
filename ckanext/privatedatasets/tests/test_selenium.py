@@ -95,7 +95,7 @@ class TestSelenium(unittest.TestCase):
         driver.find_element_by_css_selector('button.btn.btn-primary').click()
 
     def create_ds_first_page(self, name, description, tags, private, searchable, allowed_users, adquire_url):
-        # FIRST PART: Dataset properties
+        # FIRST PAGE: Dataset properties
         driver = self.driver
         driver.get(self.base_url)
         driver.find_element_by_link_text('Datasets').click()
@@ -109,7 +109,7 @@ class TestSelenium(unittest.TestCase):
         Select(driver.find_element_by_id('field-private')).select_by_visible_text('Private' if private else 'Public')
 
         # If the dataset is private, we should complete the fields
-        # If the dataset is public, these fields should be disabled
+        # If the dataset is public, these fields will be disabled (we'll check it)
         if private:
             Select(driver.find_element_by_id('field-searchable')).select_by_visible_text('True' if searchable else 'False')
             driver.find_element_by_id('field-allowed_users_str').clear()
@@ -126,14 +126,14 @@ class TestSelenium(unittest.TestCase):
         driver = self.driver
         self.create_ds_first_page(name, description, tags, private, searchable, allowed_users, adquire_url)
 
-        # SECOND PART: Add Resources
+        # SECOND PAGE: Add Resources
         try:
             # The link button is only clicked if it's present
             driver.find_element_by_link_text('Link').click()
         except Exception:
             pass
 
-        # THIRD PART: Metadata
+        # THIRD PAGE: Metadata
         driver.find_element_by_id('field-image-url').clear()
         driver.find_element_by_id('field-image-url').send_keys(resource_url)
         driver.find_element_by_id('field-name').clear()
