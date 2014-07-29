@@ -105,9 +105,9 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
     ############################## IROUTES ###############################
     ######################################################################
 
-    def after_map(self, m):
+    def before_map(self, m):
         # DataSet adquired notification
-        m.connect('user_adquired_datasets', '/dashboad/adquired', ckan_icon='shopping-cart',
+        m.connect('user_adquired_datasets', '/dashboard/adquired', ckan_icon='shopping-cart',
                   controller='ckanext.privatedatasets.controllers.ui_controller:AdquiredDatasetsControllerUI',
                   action='user_adquired_datasets', conditions=dict(method=['GET']))
 

@@ -269,3 +269,18 @@ class TestSelenium(unittest.TestCase):
         msg_error = self.driver.find_element_by_xpath('//div[@id=\'content\']/div[3]/div/section/div/form/div/ul/li').text
         self.assertEquals('Allowed users: %s' % expected_msg, msg_error)
 
+    @parameterized.expand([
+        ('Adquire Dataset',  'dataset'),
+        ('Adquire one now?', 'dataset')
+    ])
+    def test_dashboard_basic_links(self, link, expected_url):
+        # Create a default user
+        user = 'user1'
+        self.default_register(user)
+        self.login(user, user)
+
+        # Enter the adquired dataset tab
+        driver = self.driver
+        driver.get(self.base_url + 'dashboard/adquired')
+        driver.find_element_by_link_text(link).click()
+        self.assertEquals(self.base_url + 'dataset', self.base_url + expected_url)

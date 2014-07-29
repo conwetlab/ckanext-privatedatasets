@@ -60,10 +60,10 @@ class PluginTest(unittest.TestCase):
     def test_map(self):
         # Call the method
         m = MagicMock()
-        self.privateDatasets.after_map(m)
+        self.privateDatasets.before_map(m)
 
         # Test that the connect method has been called
-        m.connect.assert_any_call('user_adquired_datasets', '/dashboad/adquired', ckan_icon='shopping-cart',
+        m.connect.assert_any_call('user_adquired_datasets', '/dashboard/adquired', ckan_icon='shopping-cart',
                                   controller='ckanext.privatedatasets.controllers.ui_controller:AdquiredDatasetsControllerUI',
                                   action='user_adquired_datasets', conditions=dict(method=['GET']))
 

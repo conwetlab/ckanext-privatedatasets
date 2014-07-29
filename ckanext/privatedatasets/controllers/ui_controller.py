@@ -19,7 +19,7 @@ class AdquiredDatasetsControllerUI(base.BaseController):
         context = {
             'model': model,
             'session': model.Session,
-            'user': plugins.toolkit.c.user
+            'user': plugins.toolkit.c.user,
         }
 
         # Get user information
