@@ -154,7 +154,12 @@ class TestSelenium(unittest.TestCase):
             adquire_url_final = '' if adquire_url is None else adquire_url
             self.assertEqual(adquire_url_final, driver.find_element_by_id('field-adquire_url').get_attribute('value'))
             self.assertEqual('True' if searchable else 'False', Select(driver.find_element_by_id('field-searchable')).first_selected_option.text)
-            self.assertEqual('\n'.join(allowed_users), driver.find_element_by_css_selector('#s2id_field-allowed_users_str > ul.select2-choices').text)
+            
+            # Test that the allowed users lists is as expected (order is not important)
+            current_users = driver.find_element_by_css_selector('#s2id_field-allowed_users_str > ul.select2-choices').text.split('\n')
+            self.assertEquals(len(allowed_users), len(current_users))
+            for user in current_users:
+                self.assertIn(user, allowed_users)
         else:
             self.assert_fields_disabled(['field-searchable', 'field-allowed_users_str', 'field-adquire_url'])
 
@@ -302,44 +307,79 @@ class TestSelenium(unittest.TestCase):
         self.assertEquals(self.base_url + 'dataset', self.base_url + expected_url)
 
     @parameterized.expand([
-        (True,  True, ['user1'],          ['user2']),
-        (False, True, ['user1'],          ['user2']),
-        (True,  True, ['user1', 'user2'], ['user3']),
-        (False, True, ['user1', 'user2'], ['user3']),
-        (True,  True, ['user1', 'user2'], ['user2']),
-        (True,  True, ['user1', 'user2'], ['user3', 'user4']),
-        (False, True, ['user1', 'user2'], ['user3', 'user4']),
+
+        # Allowed users contains just one user
+        ([{'private': True,  'searchable': True,  'allowed_users': ['user1']}],          ['user2']),
+        ([{'private': False, 'searchable': True,  'allowed_users': ['user1']}],          ['user2']),
+        ([{'private': True,  'searchable': False, 'allowed_users': ['user1']}],          ['user2']),
+        ([{'private': False, 'searchable': False, 'allowed_users': ['user1']}],          ['user2']),
+
+        # Allowed users contains more than one user
+        ([{'private': True,  'searchable': True,  'allowed_users': ['user1', 'user2']}], ['user3']),
+        ([{'private': False, 'searchable': True,  'allowed_users': ['user1', 'user2']}], ['user3']),
+        ([{'private': True,  'searchable': False, 'allowed_users': ['user1', 'user2']}], ['user3']),
+        ([{'private': False, 'searchable': False, 'allowed_users': ['user1', 'user2']}], ['user3']),
+
+        # User added is already in the list
+        ([{'private': True,  'searchable': True,  'allowed_users': ['user1', 'user2']}], ['user2']),
+        ([{'private': True,  'searchable': False, 'allowed_users': ['user1', 'user2']}], ['user2']),
+
+        # Some users
+        ([{'private': True,  'searchable': True,  'allowed_users': ['user1', 'user2']}], ['user3', 'user4']),
+        ([{'private': False, 'searchable': True,  'allowed_users': ['user1', 'user2']}], ['user3', 'user4']),
+        ([{'private': True,  'searchable': False, 'allowed_users': ['user1', 'user2']}], ['user3', 'user4']),
+        ([{'private': False, 'searchable': False, 'allowed_users': ['user1', 'user2']}], ['user3', 'user4']),
+
+        # Complex test
+        ([{'private': True,  'searchable': False, 'allowed_users': ['user1', 'user2']},
+          {'private': True,  'searchable': True,  'allowed_users': ['user5', 'user6']},
+          {'private': True,  'searchable': True,  'allowed_users': ['user7', 'user8']},
+          {'private': False, 'searchable': True,  'allowed_users': ['user9', 'user1']}], ['user3', 'user4'])
+
     ])
-    def test_add_users_via_api_action(self, private, searchable, initial_users, users_via_api):
+    def test_add_users_via_api_action(self, datasets, users_via_api):
         # Create a default user
         user = 'user1'
         self.default_register(user)
         self.login(user, user)
 
-        # Create the dataset
-        pkg_name = 'Dataset 3'
-        url_path = get_dataset_url(pkg_name)
         adquire_url = 'http://upm.es'
-        self.create_ds(pkg_name, 'Example description', ['tag1'], private, searchable, initial_users,
-                       adquire_url, 'http://upm.es', 'UPM Main', 'Example Description', 'CSV')
+        dataset_default_name = 'Dataset %d'
+
+        # Create the dataset
+        for i, dataset in enumerate(datasets):
+            pkg_name = dataset_default_name % i
+            self.create_ds(pkg_name, 'Example description', ['tag1'], dataset['private'], dataset['searchable'],
+                           dataset['allowed_users'], adquire_url, 'http://upm.es', 'UPM Main', 'Example Description', 'CSV')
 
         # Make the requests
         for user in users_via_api:
-            content = {'customer_name': user, 'resources': [{'url': self.base_url + 'dataset/' + url_path}]}
+
+            resources = []
+            for i, dataset in enumerate(datasets):
+                resources.append({'url': self.base_url + 'dataset/' + get_dataset_url(dataset_default_name % i)})
+
+            content = {'customer_name': user, 'resources': resources}
             req = requests.post(self.base_url + 'api/action/package_adquired', data=json.dumps(content),
                                 headers={'content-type': 'application/json'})
-            if not private:
-                result = json.loads(req.text)['result']['warns'][0]
-                self.assertEquals('%s(allowed_users): This field is only valid when you create a private dataset' % url_path, result)
 
-        # Final users
-        if private:
-            final_users = list(initial_users)
-            for user in users_via_api:
-                if user not in final_users:
-                    final_users.append(user)
-        else:
-            final_users = []
+            result = json.loads(req.text)['result']
+            for i, dataset in enumerate(datasets):
+                if not dataset['private']:
+                    url_path = get_dataset_url(dataset_default_name % i)
+                    self.assertIn('%s(allowed_users): This field is only valid when you create a private dataset' % url_path, result['warns'])
 
         # Check the dataset
-        self.check_ds_values(url_path, private, searchable, final_users, adquire_url)
+        for i, dataset in enumerate(datasets):
+
+            if dataset['private']:
+                final_users = list(dataset['allowed_users'])
+                for user in users_via_api:
+                    if user not in final_users:
+                        final_users.append(user)
+            else:
+                final_users = []
+
+            pkg_name = dataset_default_name % i
+            url_path = get_dataset_url(pkg_name)
+            self.check_ds_values(url_path, dataset['private'], dataset['searchable'], final_users, adquire_url)
