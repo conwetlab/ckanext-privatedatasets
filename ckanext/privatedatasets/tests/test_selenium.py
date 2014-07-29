@@ -6,9 +6,11 @@ from subprocess import Popen
 import ckan.lib.search.index as search_index
 import ckan.model as model
 import ckanext.privatedatasets.db as db
+import json
 import os
 import unittest
 import re
+import requests
 
 
 def get_dataset_url(dataset_name):
@@ -143,9 +145,9 @@ class TestSelenium(unittest.TestCase):
         driver.find_element_by_xpath('(//button[@name=\'save\'])[4]').click()
         driver.find_element_by_xpath('(//button[@name=\'save\'])[4]').click()
 
-    def check_ds_values(self, name, private, searchable, allowed_users, adquire_url):
+    def check_ds_values(self, url, private, searchable, allowed_users, adquire_url):
         driver = self.driver
-        driver.get(self.base_url + 'dataset/edit/dataset-1')
+        driver.get(self.base_url + 'dataset/edit/' + url)
         self.assertEqual('Private' if private else 'Public', Select(driver.find_element_by_id('field-private')).first_selected_option.text)
 
         if private:
@@ -236,7 +238,8 @@ class TestSelenium(unittest.TestCase):
         self.login(users[0], users[0])
         pkg_name = 'Dataset 1'
         url = get_dataset_url(pkg_name)
-        self.create_ds(pkg_name, 'Example description', ['tag1', 'tag2', 'tag3'], private, searchable, allowed_users, adquire_url, 'http://upm.es', 'UPM Main', 'Example Description', 'CSV')
+        self.create_ds(pkg_name, 'Example description', ['tag1', 'tag2', 'tag3'], private, searchable,
+                       allowed_users, adquire_url, 'http://upm.es', 'UPM Main', 'Example Description', 'CSV')
         self.check_ds_values(url, private, searchable, allowed_users, adquire_url)
         self.check_user_access(pkg_name, url, True, True, private, searchable, adquire_url)
         self.check_adquired(pkg_name, url, False, private)
@@ -288,3 +291,46 @@ class TestSelenium(unittest.TestCase):
         driver.get(self.base_url + 'dashboard/adquired')
         driver.find_element_by_link_text(link).click()
         self.assertEquals(self.base_url + 'dataset', self.base_url + expected_url)
+
+    @parameterized.expand([
+        (True,  True, ['user1'],          ['user2']),
+        (False, True, ['user1'],          ['user2']),
+        (True,  True, ['user1', 'user2'], ['user3']),
+        (False, True, ['user1', 'user2'], ['user3']),
+        (True,  True, ['user1', 'user2'], ['user2']),
+        (True,  True, ['user1', 'user2'], ['user3', 'user4']),
+        (False, True, ['user1', 'user2'], ['user3', 'user4']),
+    ])
+    def test_add_users_via_api_action(self, private, searchable, initial_users, users_via_api):
+        # Create a default user
+        user = 'user1'
+        self.default_register(user)
+        self.login(user, user)
+
+        # Create the dataset
+        pkg_name = 'Dataset 3'
+        url_path = get_dataset_url(pkg_name)
+        adquire_url = 'http://upm.es'
+        self.create_ds(pkg_name, 'Example description', ['tag1'], private, searchable, initial_users,
+                       adquire_url, 'http://upm.es', 'UPM Main', 'Example Description', 'CSV')
+
+        # Make the requests
+        for user in users_via_api:
+            content = {'customer_name': user, 'resources': [{'url': self.base_url + 'dataset/' + url_path}]}
+            req = requests.post(self.base_url + 'api/action/package_adquired', data=json.dumps(content),
+                                headers={'content-type': 'application/json'})
+            if not private:
+                result = json.loads(req.text)['result']['warns'][0]
+                self.assertEquals('%s(allowed_users): This field is only valid when you create a private dataset' % url_path, result)
+
+        # Final users
+        if private:
+            final_users = list(initial_users)
+            for user in users_via_api:
+                if user not in final_users:
+                    final_users.append(user)
+        else:
+            final_users = []
+
+        # Check the dataset
+        self.check_ds_values(url_path, private, searchable, final_users, adquire_url)
