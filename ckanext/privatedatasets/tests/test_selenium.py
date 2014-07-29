@@ -12,7 +12,7 @@ import re
 
 
 def get_dataset_url(dataset_name):
-    dataset_name.replace(' ', '-').lower()
+    return dataset_name.replace(' ', '-').lower()
 
 
 class TestSelenium(unittest.TestCase):
@@ -268,14 +268,4 @@ class TestSelenium(unittest.TestCase):
         # Check the error message
         msg_error = self.driver.find_element_by_xpath('//div[@id=\'content\']/div[3]/div/section/div/form/div/ul/li').text
         self.assertEquals('Allowed users: %s' % expected_msg, msg_error)
-
-
-
-
-
-
-
-
-
-
 
