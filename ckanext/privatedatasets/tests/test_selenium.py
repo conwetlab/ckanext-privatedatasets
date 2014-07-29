@@ -174,25 +174,29 @@ class TestSelenium(unittest.TestCase):
             # Access the dataset
             driver.find_element_by_link_text(dataset).click()
 
-            if not adquired and private:
-                xpath = '//div[@id=\'content\']/div/div'
-                buy_msg = 'This private dataset can be adquired. To do so, please click here'
-                if adquire_url is not None:
-                    self.assertTrue(driver.find_element_by_xpath(xpath).text.startswith(buy_msg))
-                    self.assertEquals(adquire_url, driver.find_element_by_link_text('here').get_attribute('href'))
-                    xpath += '[2]'  # The unauthorized message is in a different Path
-                else:
-                    src = driver.page_source
-                    self.assertEquals(None, re.search(buy_msg, src))
-
-                self.assertTrue('/user/login' in driver.current_url)
-                self.assertTrue(driver.find_element_by_xpath(xpath).text.startswith('Unauthorized to read package %s' % dataset_url))
-
-            else:
-                self.assertEquals(self.base_url + 'dataset/%s' % dataset_url, driver.current_url)
         else:
             # If the dataset is not searchable, a link to it could not be found in the dataset search page
             self.assertEquals(None, re.search(dataset_url, driver.page_source))
+
+            # Access the dataset
+            driver.get(self.base_url + 'dataset/' + dataset_url)
+
+        if not adquired and private:
+            xpath = '//div[@id=\'content\']/div/div'
+            buy_msg = 'This private dataset can be adquired. To do so, please click here'
+            if adquire_url is not None:
+                self.assertTrue(driver.find_element_by_xpath(xpath).text.startswith(buy_msg))
+                self.assertEquals(adquire_url, driver.find_element_by_link_text('here').get_attribute('href'))
+                xpath += '[2]'  # The unauthorized message is in a different Path
+            else:
+                src = driver.page_source
+                self.assertEquals(None, re.search(buy_msg, src))
+
+            self.assertTrue('/user/login' in driver.current_url)
+            self.assertTrue(driver.find_element_by_xpath(xpath).text.startswith('Unauthorized to read package %s' % dataset_url))
+
+        else:
+            self.assertEquals(self.base_url + 'dataset/%s' % dataset_url, driver.current_url)
 
     def check_adquired(self, dataset, dataset_url, adquired, private):
         driver = self.driver
