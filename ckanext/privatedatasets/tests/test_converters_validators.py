@@ -166,3 +166,46 @@ class ConvertersValidatorsTest(unittest.TestCase):
 
         # Check that the table has been initialized properly
         conv_val.db.init_db.assert_called_once_with(context['model'])
+
+    @parameterized.expand([
+        (None, False),
+        ('', False),
+        ('http://google.es', False),
+        ('https://google.es', False),
+        ('http://google.es:80', False),
+        ('https://google.es:443', False),
+        ('http://google.es/path/path2/path3', False),
+        ('https://google.es/path/path2/path3', False),
+        ('http://google.es/path/path2/path3?aaaa=bbbb&cccc=dddd', False),
+        ('https://google.es/path/path2/path3?aaaa=bbbb&cccc=dddd', False),
+        ('http://google.es:80/path/path2/path3?aaaa=bbbb&cccc=dddd', False),
+        ('https://google.es:443/path/path2/path3?aaaa=bbbb&cccc=dddd', False),
+        ('http://goo-gl3.epa.es:80/path/path2/path3?aaaa=bbbb&cccc=dddd', False),
+        ('https://go-ogl2.epa.es:443/path/path2/path3?aaaa=bbbb&cccc=dddd', False),
+        ('http://192.168.0.1:80/path/path2/path3?aaaa=bbbb&cccc=dddd', False),
+        ('https://192.168.0.1:443/path/path2/path3?aaaa=bbbb&cccc=dddd', False),
+        ('ftp://google.es', True),
+        ('http://google*.com', True),
+        ('http://google+.com', True),
+        ('http://google/.com', True),
+        ('google', True),
+        ('http://google', True),
+        ('http://google:es', True),
+        ('www.google.es', True)
+    ])
+    def test_url_validator(self, url, expected_error):
+        key = ('url',)
+        data = {key: url}
+
+        # Call the function
+        errors = {key: []}
+        conv_val.url_checker(key, data, errors, {})
+
+        # Check the errors array
+        if expected_error:
+            self.assertEquals('The URL "%s" is not valid.' % url, errors[key][0])
+            expected_length = 1
+        else:
+            expected_length = 0
+
+        self.assertEquals(expected_length, len(errors[key]))
