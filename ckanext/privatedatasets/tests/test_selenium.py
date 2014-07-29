@@ -1,15 +1,14 @@
 from nose_parameterized import parameterized
-from pylons import config
 from selenium import webdriver
 from selenium.webdriver.support.ui import Select
 from subprocess import Popen
 
+import ckan.lib.search.index as search_index
 import ckan.model as model
 import ckanext.privatedatasets.db as db
 import os
 import unittest
 import re
-import requests
 
 
 class TestSelenium(unittest.TestCase):
@@ -26,10 +25,8 @@ class TestSelenium(unittest.TestCase):
         cls._process.terminate()
 
     def clearBBDD(self):
-        ckan_site_id = config.get('ckan.site_id')
-
         # Clean Solr
-        requests.get("http://localhost:8983/solr/update?stream.body=%3Cdelete%3E%3Cquery%3Esite_id:" + ckan_site_id + "%3C/query%3E%3C/delete%3E&commit=true")
+        search_index.clear_index()
 
         # Clean the database
         model.repo.rebuild_db()
