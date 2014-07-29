@@ -254,15 +254,24 @@ class TestSelenium(unittest.TestCase):
             self.check_adquired(pkg_name, url, adquired, private)
 
     @parameterized.expand([
-        (['a']  ,          'Name must be at least 2 characters long'),
-        (['a a'],          'Url must be purely lowercase alphanumeric (ascii) characters and these symbols: -_'),
-        (['upm', 'a'],     'Name must be at least 2 characters long'),
-        (['upm', 'a a a'], 'Url must be purely lowercase alphanumeric (ascii) characters and these symbols: -_'),
-        (['upm', 'a?-vz'], 'Url must be purely lowercase alphanumeric (ascii) characters and these symbols: -_'),
+        (['a']  ,          'http://upm.es',      'Allowed users: Name must be at least 2 characters long'),
+        (['a a'],          'http://upm.es',      'Allowed users: Url must be purely lowercase alphanumeric (ascii) characters and these symbols: -_'),
+        (['upm', 'a'],     'http://upm.es',      'Allowed users: Name must be at least 2 characters long'),
+        (['upm', 'a a a'], 'http://upm.es',      'Allowed users: Url must be purely lowercase alphanumeric (ascii) characters and these symbols: -_'),
+        (['upm', 'a?-vz'], 'http://upm.es',      'Allowed users: Url must be purely lowercase alphanumeric (ascii) characters and these symbols: -_'),
         (['thisisaveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryverylongname'],
-                           'Name must be a maximum of 100 characters long'),
+                           'http://upm.es',      'Allowed users: Name must be a maximum of 100 characters long'),
+        (['conwet'],       'ftp://google.es',    'Adquire URL: The URL "ftp://google.es" is not valid.'),
+        (['conwet'],       'http://google*.com', 'Adquire URL: The URL "http://google*.com" is not valid.'),
+        (['conwet'],       'http://google+.com', 'Adquire URL: The URL "http://google+.com" is not valid.'),
+        (['conwet'],       'http://google/.com', 'Adquire URL: The URL "http://google/.com" is not valid.'),
+        (['conwet'],       'google',             'Adquire URL: The URL "google" is not valid.'),
+        (['conwet'],       'http://google',      'Adquire URL: The URL "http://google" is not valid.'),
+        (['conwet'],       'http://google:es',   'Adquire URL: The URL "http://google:es" is not valid.'),
+        (['conwet'],       'www.google.es',      'Adquire URL: The URL "www.google.es" is not valid.')
+
     ])
-    def test_invalid_allowed_users(self, allowed_users, expected_msg):
+    def test_invalid_fields(self, allowed_users, adquire_url, expected_msg):
         # Create a default user
         user = 'user1'
         self.default_register(user)
@@ -270,11 +279,11 @@ class TestSelenium(unittest.TestCase):
         # Create the dataset
         self.login(user, user)
         pkg_name = 'Dataset 2'
-        self.create_ds_first_page(pkg_name, 'Example description', ['tag1'], True, True, allowed_users, 'http://upm.es')
+        self.create_ds_first_page(pkg_name, 'Example description', ['tag1'], True, True, allowed_users, adquire_url)
 
         # Check the error message
         msg_error = self.driver.find_element_by_xpath('//div[@id=\'content\']/div[3]/div/section/div/form/div/ul/li').text
-        self.assertEquals('Allowed users: %s' % expected_msg, msg_error)
+        self.assertEquals(expected_msg, msg_error)
 
     @parameterized.expand([
         ('Adquire Dataset',  'dataset'),
