@@ -24,7 +24,7 @@ class AdquiredDatasetsControllerUI(base.BaseController):
 
         # Get user information
         try:
-            c.user_dict = plugins.toolkit.get_action('user_show')(context, {'user_obj': c.userobj})
+            c.user_dict = plugins.toolkit.get_action('user_show')(context.copy(), {'user_obj': c.userobj})
             c.user_dict['adquired_datasets'] = []
         except plugins.toolkit.ObjectNotFound:
             plugins.toolkit.abort(404, _('User not found'))
@@ -37,7 +37,7 @@ class AdquiredDatasetsControllerUI(base.BaseController):
         # Get the datasets
         for dataset in query:
             try:
-                dataset_dict = plugins.toolkit.get_action('package_show')(context, {'id': dataset.package_id})
+                dataset_dict = plugins.toolkit.get_action('package_show')(context.copy(), {'id': dataset.package_id})
                 # Only packages with state == 'active' can be shown
                 if dataset_dict.get('state', None) == 'active':
                     c.user_dict['adquired_datasets'].append(dataset_dict)
