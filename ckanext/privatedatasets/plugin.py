@@ -38,6 +38,7 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
                                       conv_val.private_datasets_metadata_checker],
             constants.ADQUIRE_URL: [tk.get_validator('ignore_missing'),
                                     conv_val.private_datasets_metadata_checker,
+                                    conv_val.url_checker,
                                     tk.get_converter('convert_to_extras')],
             constants.SEARCHABLE: [tk.get_validator('ignore_missing'),
                                    conv_val.private_datasets_metadata_checker,
