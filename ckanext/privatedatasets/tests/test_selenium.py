@@ -158,6 +158,10 @@ class TestSelenium(unittest.TestCase):
             
             # Test that the allowed users lists is as expected (order is not important)
             current_users = driver.find_element_by_css_selector('#s2id_field-allowed_users_str > ul.select2-choices').text.split('\n')
+            # ''.split('\n') ==> ['']
+            if len(current_users) == 1 and current_users[0] == '':
+                current_users = []
+            # Check the array
             self.assertEquals(len(allowed_users), len(current_users))
             for user in current_users:
                 self.assertIn(user, allowed_users)
