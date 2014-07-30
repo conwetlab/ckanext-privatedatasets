@@ -407,11 +407,11 @@ class TestSelenium(unittest.TestCase):
             self.check_ds_values(url_path, dataset['private'], dataset['searchable'], final_users, adquire_url)
 
     @parameterized.expand([
-        (['user1', 'user2', 'user3'], [{'name': 'CoNWeT', 'users': ['user2']}], True,  True,  [],          'http://store.conwet.com/'),
+        (['user1', 'user2', 'user3'], [{'name': 'CoNWeT', 'users': ['user2']}], True,  True,  [],        'http://store.conwet.com/'),
         (['user1', 'user2', 'user3'], [{'name': 'CoNWeT', 'users': ['user2']}], True,  True,  []),
         (['user1', 'user2', 'user3'], [{'name': 'CoNWeT', 'users': ['user2']}], False, True,  []),
         (['user1', 'user2', 'user3'], [{'name': 'CoNWeT', 'users': ['user2']}], True,  False, []),
-        (['user1', 'user2', 'user3'], [{'name': 'CoNWeT', 'users': ['user2']}], True,  True,  ['user3'],          'http://store.conwet.com/'),
+        (['user1', 'user2', 'user3'], [{'name': 'CoNWeT', 'users': ['user2']}], True,  True,  ['user3'], 'http://store.conwet.com/'),
         (['user1', 'user2', 'user3'], [{'name': 'CoNWeT', 'users': ['user2']}], True,  True,  ['user3']),
         (['user1', 'user2', 'user3'], [{'name': 'CoNWeT', 'users': ['user2']}], False, True,  ['user3']),
         (['user1', 'user2', 'user3'], [{'name': 'CoNWeT', 'users': ['user2']}], True,  False, ['user3']),
@@ -420,7 +420,18 @@ class TestSelenium(unittest.TestCase):
         (['user1', 'user2', 'user3', 'user4', 'user5', 'user6'], [{'name': 'CoNWeT', 'users': ['user2', 'user3']}], True,  True,  ['user4', 'user5'], 'http://store.conwet.com/'),
         (['user1', 'user2', 'user3', 'user4', 'user5', 'user6'], [{'name': 'CoNWeT', 'users': ['user2', 'user3']}], True,  True,  ['user4', 'user5']),
         (['user1', 'user2', 'user3', 'user4', 'user5', 'user6'], [{'name': 'CoNWeT', 'users': ['user2', 'user3']}], False, True,  ['user4', 'user5']),
-        (['user1', 'user2', 'user3', 'user4', 'user5', 'user6'], [{'name': 'CoNWeT', 'users': ['user2', 'user3']}], True,  False, ['user4', 'user5'])
+        (['user1', 'user2', 'user3', 'user4', 'user5', 'user6'], [{'name': 'CoNWeT', 'users': ['user2', 'user3']}], True,  False, ['user4', 'user5']),
+        (['user1', 'user2', 'user3', 'user4', 'user5', 'user6'], [{'name': 'CoNWeT', 'users': ['user2', 'user3']}], True,  False, ['user4', 'user5']),
+
+        # Even if user6 is in another organization, he/she won't be able to access the dataset
+        (['user1', 'user2', 'user3', 'user4', 'user5', 'user6'], [{'name': 'CoNWeT', 'users': ['user2', 'user3']}, 
+                                                                  {'name': 'UPM',    'users': ['user6']}],            True,  True,  ['user4', 'user5']),
+        (['user1', 'user2', 'user3', 'user4', 'user5', 'user6'], [{'name': 'CoNWeT', 'users': ['user2', 'user3']}, 
+                                                                  {'name': 'UPM',    'users': ['user6']}],            True,  False, ['user4', 'user5']),
+        (['user1', 'user2', 'user3', 'user4', 'user5', 'user6'], [{'name': 'CoNWeT', 'users': ['user2', 'user3']}, 
+                                                                  {'name': 'UPM',    'users': ['user6']}],            False, True,  ['user4', 'user5']),
+        (['user1', 'user2', 'user3', 'user4', 'user5', 'user6'], [{'name': 'CoNWeT', 'users': ['user2', 'user3']}, 
+                                                                  {'name': 'UPM',    'users': ['user6']}],            True,  False, ['user4', 'user5']),
 
     ])
     def test_organization(self, users, orgs, private, searchable, adquiring_users, adquire_url=None):
