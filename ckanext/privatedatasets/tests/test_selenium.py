@@ -94,6 +94,23 @@ class TestSelenium(unittest.TestCase):
         driver.find_element_by_id('field-remember').click()
         driver.find_element_by_css_selector('button.btn.btn-primary').click()
 
+    def create_organization(self, name, description, users):
+        driver = self.driver
+        driver.get(self.base_url)
+        driver.find_element_by_link_text('Organizations').click()
+        driver.find_element_by_link_text('Add Organization').click()
+        driver.find_element_by_id('field-name').clear()
+        driver.find_element_by_id('field-name').send_keys(name)
+        driver.find_element_by_id('field-description').clear()
+        driver.find_element_by_id('field-description').send_keys(description)
+        driver.find_element_by_name('save').click()
+        driver.find_element_by_link_text('Manage').click()
+        driver.find_element_by_link_text('Members').click()
+        for user in users:
+            driver.find_element_by_link_text('Add Member').click()
+            driver.find_element_by_id('username').send_keys(user)
+            driver.find_element_by_name('submit').click()
+
     def create_ds_first_page(self, name, description, tags, private, searchable, allowed_users, adquire_url):
         # FIRST PAGE: Dataset properties
         driver = self.driver
@@ -107,6 +124,7 @@ class TestSelenium(unittest.TestCase):
         driver.find_element_by_id('field-tags').clear()
         driver.find_element_by_id('field-tags').send_keys(','.join(tags))
         Select(driver.find_element_by_id('field-private')).select_by_visible_text('Private' if private else 'Public')
+        # WARN: The organization is set by default
 
         # If the dataset is private, we should complete the fields
         # If the dataset is public, these fields will be disabled (we'll check it)
@@ -154,7 +172,7 @@ class TestSelenium(unittest.TestCase):
             adquire_url_final = '' if adquire_url is None else adquire_url
             self.assertEqual(adquire_url_final, driver.find_element_by_id('field-adquire_url').get_attribute('value'))
             self.assertEqual('True' if searchable else 'False', Select(driver.find_element_by_id('field-searchable')).first_selected_option.text)
-            
+
             # Test that the allowed users lists is as expected (order is not important)
             current_users = driver.find_element_by_css_selector('#s2id_field-allowed_users_str > ul.select2-choices').text.split('\n')
             # ''.split('\n') ==> ['']
@@ -167,7 +185,7 @@ class TestSelenium(unittest.TestCase):
         else:
             self.assert_fields_disabled(['field-searchable', 'field-allowed_users_str', 'field-adquire_url'])
 
-    def check_user_access(self, dataset, dataset_url, owner, adquired, private, searchable, adquire_url=None):
+    def check_user_access(self, dataset, dataset_url, owner, adquired, in_org, private, searchable, adquire_url=None):
         driver = self.driver
         driver.find_element_by_link_text('Datasets').click()
 
@@ -175,7 +193,7 @@ class TestSelenium(unittest.TestCase):
             xpath = '//div[@id=\'content\']/div[3]/div/section/div/ul/li/div/h3/span'
 
             # Check the label
-            if not adquired and private:
+            if not adquired and private and not in_org:
                 self.assertEqual('PRIVATE', driver.find_element_by_xpath(xpath).text)
             elif adquired and not owner and private:
                 self.assertEqual('ADQUIRED', driver.find_element_by_xpath(xpath).text)
@@ -192,7 +210,7 @@ class TestSelenium(unittest.TestCase):
             # Access the dataset
             driver.get(self.base_url + 'dataset/' + dataset_url)
 
-        if not adquired and private:
+        if not adquired and private and not in_org:
             xpath = '//div[@id=\'content\']/div/div'
             buy_msg = 'This private dataset can be adquired. To do so, please click here'
             if adquire_url is not None:
@@ -250,7 +268,7 @@ class TestSelenium(unittest.TestCase):
         self.create_ds(pkg_name, 'Example description', ['tag1', 'tag2', 'tag3'], private, searchable,
                        allowed_users, adquire_url, 'http://upm.es', 'UPM Main', 'Example Description', 'CSV')
         self.check_ds_values(url, private, searchable, allowed_users, adquire_url)
-        self.check_user_access(pkg_name, url, True, True, private, searchable, adquire_url)
+        self.check_user_access(pkg_name, url, True, True, False, private, searchable, adquire_url)
         self.check_adquired(pkg_name, url, False, private)
 
         # Rest of users
@@ -259,7 +277,7 @@ class TestSelenium(unittest.TestCase):
             self.logout()
             self.login(user, user)
             adquired = user in allowed_users
-            self.check_user_access(pkg_name, url, False, adquired, private, searchable, adquire_url)
+            self.check_user_access(pkg_name, url, False, adquired, False, private, searchable, adquire_url)
             self.check_adquired(pkg_name, url, adquired, private)
 
     @parameterized.expand([
@@ -387,3 +405,50 @@ class TestSelenium(unittest.TestCase):
             pkg_name = dataset_default_name % i
             url_path = get_dataset_url(pkg_name)
             self.check_ds_values(url_path, dataset['private'], dataset['searchable'], final_users, adquire_url)
+
+    @parameterized.expand([
+        (['user1', 'user2', 'user3'], [{'name': 'CoNWeT', 'users': ['user2']}], True,  True,  [],          'http://store.conwet.com/'),
+        (['user1', 'user2', 'user3'], [{'name': 'CoNWeT', 'users': ['user2']}], True,  True,  []),
+        (['user1', 'user2', 'user3'], [{'name': 'CoNWeT', 'users': ['user2']}], False, True,  []),
+        (['user1', 'user2', 'user3'], [{'name': 'CoNWeT', 'users': ['user2']}], True,  False, []),
+        (['user1', 'user2', 'user3'], [{'name': 'CoNWeT', 'users': ['user2']}], True,  True,  ['user3'],          'http://store.conwet.com/'),
+        (['user1', 'user2', 'user3'], [{'name': 'CoNWeT', 'users': ['user2']}], True,  True,  ['user3']),
+        (['user1', 'user2', 'user3'], [{'name': 'CoNWeT', 'users': ['user2']}], False, True,  ['user3']),
+        (['user1', 'user2', 'user3'], [{'name': 'CoNWeT', 'users': ['user2']}], True,  False, ['user3']),
+
+        # More complex
+        (['user1', 'user2', 'user3', 'user4', 'user5', 'user6'], [{'name': 'CoNWeT', 'users': ['user2', 'user3']}], True,  True,  ['user4', 'user5'], 'http://store.conwet.com/'),
+        (['user1', 'user2', 'user3', 'user4', 'user5', 'user6'], [{'name': 'CoNWeT', 'users': ['user2', 'user3']}], True,  True,  ['user4', 'user5']),
+        (['user1', 'user2', 'user3', 'user4', 'user5', 'user6'], [{'name': 'CoNWeT', 'users': ['user2', 'user3']}], False, True,  ['user4', 'user5']),
+        (['user1', 'user2', 'user3', 'user4', 'user5', 'user6'], [{'name': 'CoNWeT', 'users': ['user2', 'user3']}], True,  False, ['user4', 'user5'])
+
+    ])
+    def test_organization(self, users, orgs, private, searchable, adquiring_users, adquire_url=None):
+        # Create users
+        for user in users:
+            self.default_register(user)
+
+        self.login(users[0], users[0])
+
+        # Create the organizations
+        for org in orgs:
+            self.create_organization(org['name'], 'Example Description', org['users'])
+
+        # Create the dataset
+        pkg_name = 'Dataset 1'
+        url = get_dataset_url(pkg_name)
+        self.create_ds(pkg_name, 'Example description', ['tag1', 'tag2', 'tag3'], private, searchable,
+                       adquiring_users, adquire_url, 'http://upm.es', 'UPM Main', 'Example Description', 'CSV')
+        self.check_ds_values(url, private, searchable, adquiring_users, adquire_url)
+        self.check_user_access(pkg_name, url, True, True, True, private, searchable, adquire_url)
+        self.check_adquired(pkg_name, url, False, private)
+
+        # Rest of users
+        rest_users = users[1:]
+        for user in rest_users:
+            self.logout()
+            self.login(user, user)
+            adquired = user in adquiring_users
+            in_org = user in orgs[0]['users']
+            self.check_user_access(pkg_name, url, False, adquired, in_org, private, searchable, adquire_url)
+            self.check_adquired(pkg_name, url, adquired, private)
