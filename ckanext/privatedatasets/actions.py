@@ -48,7 +48,7 @@ def package_adquired(context, request_data):
                 dataset = plugins.toolkit.get_action('package_show')(context_pkg_show, {'id': dataset_id})
 
                 # This operation can only be performed with private datasets
-                if dataset['private'] is True:
+                if dataset.get('private', None) is True:
 
                     # Create the array if it does not exist
                     if constants.ALLOWED_USERS not in dataset or dataset[constants.ALLOWED_USERS] is None:
