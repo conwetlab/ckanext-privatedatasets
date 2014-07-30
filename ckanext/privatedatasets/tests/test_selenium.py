@@ -11,7 +11,6 @@ import os
 import unittest
 import re
 import requests
-import time
 
 
 def get_dataset_url(dataset_name):
