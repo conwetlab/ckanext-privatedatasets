@@ -89,7 +89,7 @@ class ActionsTest(unittest.TestCase):
             if data_dict['id'] in datasets_not_found:
                 raise actions.plugins.toolkit.ObjectNotFound()
             else:
-                dataset = {'id': data_dict['id']}
+                dataset = {'id': data_dict['id'], 'private': True}
                 if allowed_users is not None:
                     dataset['allowed_users'] = list(allowed_users)
                 return dataset
@@ -165,7 +165,10 @@ class ActionsTest(unittest.TestCase):
         for user_datasets in parse_result['users_datasets']:
             for dataset_id in user_datasets['datasets']:
                 # The show function is always called
-                package_show.assert_any_call({'ignore_auth': True, 'updating_via_cb': True}, {'id': dataset_id})
+                context_show = context.copy()
+                context_show['ignore_auth'] = True
+                context_show['updating_via_cb'] = True
+                package_show.assert_any_call(context_show, {'id': dataset_id})
 
                 # The update function is called only when the show function does not throw an exception and
                 # when the user is not in the list of allowed users.
@@ -174,4 +177,7 @@ class ActionsTest(unittest.TestCase):
                     expected_allowed_users = list(allowed_users)
                     expected_allowed_users.append(user_datasets['user'])
 
-                    package_update.assert_any_call({'ignore_auth': True}, {'id': dataset_id, 'allowed_users': expected_allowed_users})
+                    context_update = context.copy()
+                    context_update['ignore_auth'] = True
+
+                    package_update.assert_any_call(context_update, {'id': dataset_id, 'allowed_users': expected_allowed_users, 'private': True})

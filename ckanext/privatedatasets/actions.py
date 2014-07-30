@@ -42,18 +42,28 @@ def package_adquired(context, request_data):
         for dataset_id in user_info['datasets']:
             try:
 
-                dataset = plugins.toolkit.get_action('package_show')({'ignore_auth': True, constants.CONTEXT_CALLBACK: True}, {'id': dataset_id})
+                context_pkg_show = context.copy()
+                context_pkg_show['ignore_auth'] = True
+                context_pkg_show[constants.CONTEXT_CALLBACK] = True
+                dataset = plugins.toolkit.get_action('package_show')(context_pkg_show, {'id': dataset_id})
 
-                # Create the array if it does not exist
-                if constants.ALLOWED_USERS not in dataset or dataset[constants.ALLOWED_USERS] is None:
-                    dataset[constants.ALLOWED_USERS] = []
+                # This operation can only be performed with private datasets
+                if dataset['private'] is True:
 
-                # Add the user only if it is not in the list
-                if user_info['user'] not in dataset[constants.ALLOWED_USERS]:
-                    dataset[constants.ALLOWED_USERS].append(user_info['user'])
-                    plugins.toolkit.get_action('package_update')({'ignore_auth': True}, dataset)
+                    # Create the array if it does not exist
+                    if constants.ALLOWED_USERS not in dataset or dataset[constants.ALLOWED_USERS] is None:
+                        dataset[constants.ALLOWED_USERS] = []
+
+                    # Add the user only if it is not in the list
+                    if user_info['user'] not in dataset[constants.ALLOWED_USERS]:
+                        dataset[constants.ALLOWED_USERS].append(user_info['user'])
+                        context_pkg_update = context.copy()
+                        context_pkg_update['ignore_auth'] = True
+                        plugins.toolkit.get_action('package_update')(context_pkg_update, dataset)
+                    else:
+                        log.warn('The user %s is already allowed to access the %s dataset' % (user_info['user'], dataset_id))
                 else:
-                    log.warn('The user %s is already allowed to access the %s dataset' % (user_info['user'], dataset_id))
+                    warns.append('Unable to upload the dataset %s: It\'s a public dataset' % dataset_id)
 
             except plugins.toolkit.ObjectNotFound:
                 # If a dataset does not exist in the instance, an error message will be returned to the user.

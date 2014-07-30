@@ -11,6 +11,7 @@ import os
 import unittest
 import re
 import requests
+import time
 
 
 def get_dataset_url(dataset_name):
@@ -367,7 +368,7 @@ class TestSelenium(unittest.TestCase):
             for i, dataset in enumerate(datasets):
                 if not dataset['private']:
                     url_path = get_dataset_url(dataset_default_name % i)
-                    self.assertIn('%s(allowed_users): This field is only valid when you create a private dataset' % url_path, result['warns'])
+                    self.assertIn('Unable to upload the dataset %s: It\'s a public dataset' % url_path, result['warns'])
 
         # Check the dataset
         for i, dataset in enumerate(datasets):
