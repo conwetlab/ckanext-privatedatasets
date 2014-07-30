@@ -89,7 +89,7 @@ class ActionsTest(unittest.TestCase):
             if data_dict['id'] in datasets_not_found:
                 raise actions.plugins.toolkit.ObjectNotFound()
             else:
-                dataset = {'id': data_dict['id'], 'private': True}
+                dataset = {'id': data_dict['id'], 'private': data_dict['id'] not in not_updatable_datasets}
                 if allowed_users is not None:
                     dataset['allowed_users'] = list(allowed_users)
                 return dataset
@@ -150,8 +150,9 @@ class ActionsTest(unittest.TestCase):
             for dataset_id in user_datasets['datasets']:
                 if dataset_id in datasets_not_found:
                     warns.append('Dataset %s was not found in this instance' % dataset_id)
-                elif dataset_id in not_updatable_datasets and allowed_users is not None and user_datasets['user'] not in allowed_users:
-                    warns.append('%s(%s): %s' % (dataset_id, 'allowed_users', ADD_USERS_ERROR))
+                elif dataset_id in not_updatable_datasets:
+                    #warns.append('%s(%s): %s' % (dataset_id, 'allowed_users', ADD_USERS_ERROR))
+                    warns.append('Unable to upload the dataset %s: It\'s a public dataset' % dataset_id)
 
         expected_result = {'warns': warns} if len(warns) > 0 else None
 
@@ -172,7 +173,7 @@ class ActionsTest(unittest.TestCase):
 
                 # The update function is called only when the show function does not throw an exception and
                 # when the user is not in the list of allowed users.
-                if dataset_id not in datasets_not_found and allowed_users is not None and user_datasets['user'] not in allowed_users:
+                if dataset_id not in datasets_not_found and allowed_users is not None and user_datasets['user'] not in allowed_users and dataset_id not in not_updatable_datasets:
                     # Calculate the list of allowed_users
                     expected_allowed_users = list(allowed_users)
                     expected_allowed_users.append(user_datasets['user'])
