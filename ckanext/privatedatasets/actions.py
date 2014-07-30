@@ -48,6 +48,9 @@ def package_adquired(context, request_data):
                 dataset = plugins.toolkit.get_action('package_show')(context_pkg_show, {'id': dataset_id})
 
                 # This operation can only be performed with private datasets
+                # This check is redundant since the package_update function will throw an exception
+                # if a list of allowed users is included in a public dataset. However, this check
+                # should be performed in order to avoid strange future exceptions
                 if dataset.get('private', None) is True:
 
                     # Create the array if it does not exist
