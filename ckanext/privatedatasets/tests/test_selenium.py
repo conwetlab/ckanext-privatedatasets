@@ -424,7 +424,7 @@ class TestSelenium(unittest.TestCase):
 
         # Even if user6 is in another organization, he/she won't be able to access the dataset
         (['user1', 'user2', 'user3', 'user4', 'user5', 'user6'], [{'name': 'CoNWeT', 'users': ['user2', 'user3']}, 
-                                                                  {'name': 'UPM',    'users': ['user6']}],            True,  True,  ['user4', 'user5'], 'http://store.conwet.com'),
+                                                                  {'name': 'UPM',    'users': ['user6']}],            True,  True,  ['user4', 'user5'], 'http://store.conwet.com/'),
         (['user1', 'user2', 'user3', 'user4', 'user5', 'user6'], [{'name': 'CoNWeT', 'users': ['user2', 'user3']}, 
                                                                   {'name': 'UPM',    'users': ['user6']}],            True,  True,  ['user4', 'user5']),
         (['user1', 'user2', 'user3', 'user4', 'user5', 'user6'], [{'name': 'CoNWeT', 'users': ['user2', 'user3']}, 
