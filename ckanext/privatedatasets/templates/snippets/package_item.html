@@ -17,7 +17,7 @@ Example:
 {% set truncate_title = truncate_title or 80 %}
 {% set title = package.title or package.name %}
 {% set notes = h.markdown_extract(package.notes, extract_length=truncate) %}
-{% set adquired =  h.privatedatasets_adquired(package) %}
+{% set adquired =  h.is_dataset_adquired(package) %}
 {% set owner = h.is_owner(package) %}
 
 {% resource 'privatedatasets/custom.css' %}

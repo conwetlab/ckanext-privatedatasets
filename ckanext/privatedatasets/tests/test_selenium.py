@@ -51,13 +51,10 @@ class TestSelenium(unittest.TestCase):
         self.driver.implicitly_wait(5)
         self.driver.set_window_size(1024, 768)
         self.base_url = 'http://127.0.0.1:5000/'
-        self.verificationErrors = []
-        self.accept_next_alert = True
 
     def tearDown(self):
         self.clearBBDD()
         self.driver.quit()
-        self.assertEqual([], self.verificationErrors)
 
     def assert_fields_disabled(self, fields):
         for field in fields:
@@ -104,6 +101,8 @@ class TestSelenium(unittest.TestCase):
         driver.find_element_by_id('field-description').clear()
         driver.find_element_by_id('field-description').send_keys(description)
         driver.find_element_by_name('save').click()
+        
+        # Add users
         driver.find_element_by_link_text('Manage').click()
         driver.find_element_by_link_text('Members').click()
         for user in users:
@@ -395,15 +394,12 @@ class TestSelenium(unittest.TestCase):
         for i, dataset in enumerate(datasets):
 
             if dataset['private']:
-                final_users = list(dataset['allowed_users'])
-                for user in users_via_api:
-                    if user not in final_users:
-                        final_users.append(user)
+                final_users = set(dataset['allowed_users'])
+                final_users.update(users_via_api)
             else:
                 final_users = []
 
-            pkg_name = dataset_default_name % i
-            url_path = get_dataset_url(pkg_name)
+            url_path = get_dataset_url(dataset_default_name % i)
             self.check_ds_values(url_path, dataset['private'], dataset['searchable'], final_users, adquire_url)
 
     @parameterized.expand([
