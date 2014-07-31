@@ -81,10 +81,10 @@ class PluginTest(unittest.TestCase):
         self.assertEquals([], self.privateDatasets.package_types())
 
     @parameterized.expand([
-        ('privatedatasets_adquired', plugin.helpers.is_adquired),
-        ('get_allowed_users_str',    plugin.helpers.get_allowed_users_str),
-        ('is_owner',                 plugin.helpers.is_owner),
-        ('can_read',                 plugin.helpers.can_read)
+        ('is_dataset_adquired',   plugin.helpers.is_dataset_adquired),
+        ('get_allowed_users_str', plugin.helpers.get_allowed_users_str),
+        ('is_owner',              plugin.helpers.is_owner),
+        ('can_read',              plugin.helpers.can_read)
     ])
     def test_helpers_functions(self, function_name, expected_function):
         helpers_functions = self.privateDatasets.get_helpers()

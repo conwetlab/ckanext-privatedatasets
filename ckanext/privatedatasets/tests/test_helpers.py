@@ -29,7 +29,7 @@ class HelpersTest(unittest.TestCase):
         (False, None,   False),
         (True,  None,   False),
     ])
-    def test_is_adquired(self, db_adquired, user, adquired):
+    def test_is_dataset_adquired(self, db_adquired, user, adquired):
         # Configure test
         helpers.tk.c.user = user
         pkg_dict = {'id': 'package_id'}
@@ -44,7 +44,7 @@ class HelpersTest(unittest.TestCase):
         helpers.db.AllowedUser.get = MagicMock(return_value=db_response)
 
         # Check the function returns the expected result
-        self.assertEquals(adquired, helpers.is_adquired(pkg_dict))
+        self.assertEquals(adquired, helpers.is_dataset_adquired(pkg_dict))
 
         # Check that the database has been initialized properly
         helpers.db.init_db.assert_called_once_with(helpers.model)
