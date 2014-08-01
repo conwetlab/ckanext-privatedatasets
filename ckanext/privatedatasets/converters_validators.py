@@ -13,6 +13,7 @@ def private_datasets_metadata_checker(key, data, errors, context):
     private_val = data.get(('private',))
 
     # Avoid missing value
+    # "if not private_val:" is not valid because private_val can be False
     if not isinstance(private_val, basestring) and not isinstance(private_val, bool):
         private_val = None
 
@@ -61,11 +62,9 @@ def get_allowed_users(key, data, errors, context):
     db.init_db(context['model'])
 
     users = db.AllowedUser.get(package_id=pkg_id)
-    counter = 0
 
-    for user in users:
-        data[(key[0], counter)] = user.user_name
-        counter += 1
+    for i, user in enumerate(users):
+        data[(key[0], i)] = user.user_name
 
 
 def url_checker(key, data, errors, context):

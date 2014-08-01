@@ -101,7 +101,7 @@ class TestSelenium(unittest.TestCase):
         driver.find_element_by_id('field-description').clear()
         driver.find_element_by_id('field-description').send_keys(description)
         driver.find_element_by_name('save').click()
-        
+
         # Add users
         driver.find_element_by_link_text('Manage').click()
         driver.find_element_by_link_text('Members').click()
@@ -232,11 +232,16 @@ class TestSelenium(unittest.TestCase):
         driver.find_element_by_link_text('Adquired Datasets').click()
 
         if adquired and private:
+            # This message could not be shown when the user has adquired at least one dataset
+            self.assertEquals(None, re.search('You haven\'t adquired any datasets.', driver.page_source))
+            # Access the dataset
             driver.find_element_by_link_text(dataset).click()
             self.assertEquals(self.base_url + 'dataset/%s' % dataset_url, driver.current_url)
         else:
             # If the user has not adquired the dataset, a link to this dataset could not be in the adquired dataset list
             self.assertEquals(None, re.search(dataset_url, driver.page_source))
+            # When a user has not adquired any dataset, a message will be shown to inform the user
+            self.assertNotEquals(None, re.search('You haven\'t adquired any datasets.', driver.page_source))
 
     def default_register(self, user):
         self.register(user, user, '%s@conwet.com' % user, user)

@@ -84,7 +84,7 @@ def package_update(context, data_dict):
 @tk.auth_allow_anonymous_access
 def resource_show(context, data_dict):
     # This function is needed since CKAN resource_show function uses the default package_show
-    # function instead the one defined in the plugin.
+    # function instead of the one defined in the plugin.
     # A bug is openend in order to be able to remove this function
     # https://github.com/ckan/ckan/issues/1818
     # It's fixed now, so this function can be deleted when the new version is released.

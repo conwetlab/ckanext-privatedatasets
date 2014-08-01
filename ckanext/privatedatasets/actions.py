@@ -21,8 +21,9 @@ def package_adquired(context, request_data):
 
     if class_path != '':
         try:
-            class_package = class_path.split(':')[0]
-            class_name = class_path.split(':')[1]
+            cls = class_path.split(':')
+            class_package = cls[0]
+            class_name = cls[1]
             parser_cls = getattr(importlib.import_module(class_package), class_name)
             parser = parser_cls()
         except Exception as e:
