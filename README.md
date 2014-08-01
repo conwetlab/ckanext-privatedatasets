@@ -21,14 +21,12 @@ Since each service can send notifications in a different way, the extension allo
 
 If you want to create your own parser, you have to:
 
-1. Create a class with a method called `parse_notification`
-2. Import `request` from `ckan.common` in order to be able to read the notification: `from ckan.common import request`.
-3. Parse the notification as you like. You can read the body by accesing `request.body`.
-4. Return a dictionary with the following structure. The `errors` field contains the list of errors arised when the notification was parsed while the `users_datasets` is the lists of datasets available for each user (each element of this list is a dictionary with two fields: `user` and `datasets`). If the `error` field is present and it is **not** empty, the `users_datasets` field will **not** be processed.
+1. Create a class with a method called `parse_notification`. This method will recieve one argument that will include the notification body.
+2. Parse the notification as you like. You can raise a CKAN's default exception (`ValidationError`, `ObjectNotFound`, `NotAuthorized`, `ValidationError`, `SearchError`, `SearchQueryError` or `SearchIndexError`) if you find an error parsing the notification.
+3. Return a dictionary with the structure attached below. The `users_datasets` is the lists of datasets available for each user (each element of this list is a dictionary with two fields: `user` and `datasets`). 
 
 ```
-{'errors': ['...', '...', '...']
- 'users_datasets': [{'user': 'user_name', 'datasets': ['ds1', 'ds2', ...]},
+{'users_datasets': [{'user': 'user_name', 'datasets': ['ds1', 'ds2', ...]},
                     {'user': 'user_name2', 'datasets': ['ds1', 'ds4', ...] }]}
 ```
 

@@ -17,7 +17,8 @@ Example:
 {% set truncate_title = truncate_title or 80 %}
 {% set title = package.title or package.name %}
 {% set notes = h.markdown_extract(package.notes, extract_length=truncate) %}
-{% set adquired =  h.privatedatasets_adquired(package) %}
+{% set adquired =  h.is_dataset_adquired(package) %}
+{% set owner = h.is_owner(package) %}
 
 {% resource 'privatedatasets/custom.css' %}
 
@@ -25,16 +26,22 @@ Example:
   {% block package_item_content %}
     <div class="dataset-content">
       <h3 class="dataset-heading">
-        {% if package.private and not adquired %}
+        {% if package.private and not h.can_read(package) %}
           <span class="dataset-private label label-inverse">
             <i class="icon-lock"></i>
             {{ _('Private') }}
           </span>
         {% endif %}
-        {% if adquired %}
+        {% if adquired and not owner %}
           <span class="dataset-private label label-adquired">
             <i class="icon-shopping-cart"></i>
             {{ _('Adquired') }}
+          </span>
+        {% endif %}
+        {% if owner %}
+          <span class="dataset-private label label-owner">
+            <i class="icon-user"></i>
+            {{ _('Owner') }}
           </span>
         {% endif %}
         {{ h.link_to(h.truncate(title, truncate_title), h.url_for(controller='package', action='read', id=package.name)) }}

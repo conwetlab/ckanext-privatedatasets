@@ -1,4 +1,4 @@
-import ckan.lib.helpers as helpers
+import ckan.plugins.toolkit as tk
 import re
 
 from urlparse import urlparse
@@ -7,19 +7,29 @@ from ckan.common import request
 
 class FiWareNotificationParser(object):
 
-    def parse_notification(self):
+    def parse_notification(self, request_data):
 
         my_host = request.host
 
+        fields = ['customer_name', 'resources']
+
+        for field in fields:
+            if not field in request_data:
+                raise tk.ValidationError({'message': '%s not found in the request' % field})
+
         # Parse the body
-        content = helpers.json.loads(request.body, encoding='utf-8')
-        resources = content['resources']
-        user_name = content['customer_name']
+        resources = request_data['resources']
+        user_name = request_data['customer_name']
         datasets = []
-        errors = []
+
+        if not isinstance(user_name, basestring):
+            raise tk.ValidationError({'message': 'Invalid customer_name format'})
+
+        if not isinstance(resources, list):
+            raise tk.ValidationError({'message': 'Invalid resources format'})
 
         for resource in resources:
-            if 'url' in resource:
+            if isinstance(resource, dict) and 'url' in resource:
                 parsed_url = urlparse(resource['url'])
                 dataset_name = re.findall('^/dataset/([^/]+).*$', parsed_url.path)
 
@@ -27,8 +37,9 @@ class FiWareNotificationParser(object):
                     if parsed_url.netloc == my_host:
                         datasets.append(dataset_name[0])
                     else:
-                        errors.append('Dataset %s is associated with the CKAN instance located at %s' % (dataset_name[0], parsed_url.netloc))
+                        raise tk.ValidationError({'message': 'Dataset %s is associated with the CKAN instance located at %s'
+                                                 % (dataset_name[0], parsed_url.netloc)})
+            else:
+                raise tk.ValidationError({'message': 'Invalid resource format'})
 
-        return {'errors': errors,
-                'users_datasets': [{'user': user_name, 'datasets': datasets}]
-                }
+        return {'users_datasets': [{'user': user_name, 'datasets': datasets}]}
