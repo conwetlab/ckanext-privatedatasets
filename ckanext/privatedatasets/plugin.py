@@ -208,6 +208,7 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
         package_id = pkg_dict['id']
 
         # Get current users
+        db.init_db(context['model'])
         users = db.AllowedUser.get(package_id=package_id)
 
         # Delete all the users

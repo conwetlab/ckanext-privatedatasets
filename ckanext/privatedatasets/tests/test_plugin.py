@@ -169,6 +169,7 @@ class PluginTest(unittest.TestCase):
         self.assertEquals(expected_pkg_dict, result)                    # Check the result
 
         # Assert that the get method has been called
+        plugin.db.init_db.assert_called_once_with(context['model'])
         plugin.db.AllowedUser.get.assert_called_once_with(package_id=pkg_id)
 
         # Check that all the users has been deleted
@@ -232,7 +233,7 @@ class PluginTest(unittest.TestCase):
         ('private', 'False', 'private'),
         ('public',  'True',  'public')
     ])
-    def test_before_index(self, initialCapacity, searchable, finalCapacity):
+    def test_packagecontroller_before_index(self, initialCapacity, searchable, finalCapacity):
         pkg_dict = {'capacity': initialCapacity, 'name': 'a', 'description': 'This is a test'}
         if searchable is not None:
             pkg_dict['extras_searchable'] = searchable
@@ -271,6 +272,10 @@ class PluginTest(unittest.TestCase):
         context = {'user': 'test', 'auth_user_obj': {'id': 1}, 'session': MagicMock(), 'model': MagicMock()}
         pkg_dict = {'id': 'package_id', 'allowed_users': new_users}
         function(context, pkg_dict)
+
+        # Check that the database has been called
+        plugin.db.init_db.assert_called_once_with(context['model'])
+        plugin.db.AllowedUser.get.assert_called_once_with(package_id=pkg_dict['id'])
 
         def _test_calls(user_list, function):
             self.assertEquals(len(user_list), function.call_count)
@@ -317,7 +322,7 @@ class PluginTest(unittest.TestCase):
         (['a', 'b', 'c'], [],              ['a', 'b', 'c'], []),
         (['a', 'b'],      ['a', 'b', 'c'], [],              ['c'])
     ])
-    def test_after_create(self, new_users, current_users, users_to_add, users_to_delete):
+    def test_packagecontroller_after_create(self, new_users, current_users, users_to_add, users_to_delete):
         self._aux_test_after_create_update(self.privateDatasets.after_create, new_users, current_users, users_to_add, users_to_delete)
 
     @parameterized.expand([
@@ -339,5 +344,5 @@ class PluginTest(unittest.TestCase):
         (['a', 'b', 'c'], [],              ['a', 'b', 'c'], []),
         (['a', 'b'],      ['a', 'b', 'c'], [],              ['c'])
     ])
-    def test_after_update(self, new_users, current_users, users_to_add, users_to_delete):
+    def test_packagecontroller_after_update(self, new_users, current_users, users_to_add, users_to_delete):
         self._aux_test_after_create_update(self.privateDatasets.after_update, new_users, current_users, users_to_add, users_to_delete)
