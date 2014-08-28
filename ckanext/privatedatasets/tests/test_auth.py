@@ -41,7 +41,7 @@ class AuthTest(unittest.TestCase):
     def test_decordators(self):
         self.assertEquals(True, getattr(auth.package_show, 'auth_allow_anonymous_access', False))
         self.assertEquals(True, getattr(auth.resource_show, 'auth_allow_anonymous_access', False))
-        self.assertEquals(True, getattr(auth.package_adquired, 'auth_allow_anonymous_access', False))
+        self.assertEquals(True, getattr(auth.package_acquired, 'auth_allow_anonymous_access', False))
 
     @parameterized.expand([
         # Anonymous user (public)
@@ -80,7 +80,7 @@ class AuthTest(unittest.TestCase):
         (1,    2,    'test', True,  'active', 'conwet', False, False, 'google.es', '/dataset/testds', False),
         (1,    2,    'test', True,  'active', 'conwet', False, False, 'google.es', '/',               False)    ])
     def test_auth_package_show(self, creator_user_id, user_obj_id, user, private, state, owner_org,
-                               owner_member, db_auth, adquire_url, request_path, authorized):
+                               owner_member, db_auth, acquire_url, request_path, authorized):
 
         # Configure the mocks
         returned_package = MagicMock()
@@ -100,8 +100,8 @@ class AuthTest(unittest.TestCase):
 
         auth.db.AllowedUser.get = MagicMock(return_value=db_response)
 
-        if adquire_url:
-            returned_package.extras['adquire_url'] = adquire_url
+        if acquire_url:
+            returned_package.extras['acquire_url'] = acquire_url
 
         auth.logic_auth.get_package_object = MagicMock(return_value=returned_package)
         auth.new_authz.has_user_permission_for_group_or_org = MagicMock(return_value=owner_member)
@@ -229,5 +229,5 @@ class AuthTest(unittest.TestCase):
             result = auth.resource_show(context, {})
             self.assertEquals(authorized_pkg, result['success'])
 
-    def test_package_adquired(self):
-        self.assertTrue(auth.package_adquired({}, {}))
+    def test_package_acquired(self):
+        self.assertTrue(auth.package_acquired({}, {}))

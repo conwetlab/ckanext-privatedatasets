@@ -3,7 +3,7 @@ import ckan.plugins.toolkit as tk
 import db
 
 
-def is_dataset_adquired(pkg_dict):
+def is_dataset_acquired(pkg_dict):
 
     db.init_db(model)
 

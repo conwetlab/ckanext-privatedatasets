@@ -41,15 +41,15 @@ def package_show(context, data_dict):
                 authorized = True
 
         if not authorized:
-            # Show a flash message with the URL to adquire the dataset
+            # Show a flash message with the URL to acquire the dataset
             # This message only can be shown when the user tries to access the dataset via its URL (/dataset/...)
             # The message cannot be displayed in other pages that uses the package_show function such as
             # the user profile page
 
-            if hasattr(package, 'extras') and 'adquire_url' in package.extras and request.path.startswith('/dataset/')\
-                    and package.extras['adquire_url'] != '':
-                helpers.flash_notice(_('This private dataset can be adquired. To do so, please click ' +
-                                       '<a target="_blank" href="%s">here</a>') % package.extras['adquire_url'],
+            if hasattr(package, 'extras') and 'acquire_url' in package.extras and request.path.startswith('/dataset/')\
+                    and package.extras['acquire_url'] != '':
+                helpers.flash_notice(_('This private dataset can be acquired. To do so, please click ' +
+                                       '<a target="_blank" href="%s">here</a>') % package.extras['acquire_url'],
                                      allow_html=True)
 
             return {'success': False, 'msg': _('User %s not authorized to read package %s') % (user, package.id)}
@@ -111,6 +111,6 @@ def resource_show(context, data_dict):
 
 
 @tk.auth_allow_anonymous_access
-def package_adquired(context, data_dict):
+def package_acquired(context, data_dict):
     # TODO: Improve security
     return {'success': True}

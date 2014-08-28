@@ -110,7 +110,7 @@ class TestSelenium(unittest.TestCase):
             driver.find_element_by_id('username').send_keys(user)
             driver.find_element_by_name('submit').click()
 
-    def create_ds_first_page(self, name, description, tags, private, searchable, allowed_users, adquire_url):
+    def create_ds_first_page(self, name, description, tags, private, searchable, allowed_users, acquire_url):
         # FIRST PAGE: Dataset properties
         driver = self.driver
         driver.get(self.base_url)
@@ -131,17 +131,17 @@ class TestSelenium(unittest.TestCase):
             Select(driver.find_element_by_id('field-searchable')).select_by_visible_text('True' if searchable else 'False')
             driver.find_element_by_id('field-allowed_users_str').clear()
             driver.find_element_by_id('field-allowed_users_str').send_keys(','.join(allowed_users))
-            driver.find_element_by_id('field-adquire_url').clear()
-            if adquire_url:
-                driver.find_element_by_id('field-adquire_url').send_keys(adquire_url)
+            driver.find_element_by_id('field-acquire_url').clear()
+            if acquire_url:
+                driver.find_element_by_id('field-acquire_url').send_keys(acquire_url)
         else:
-            self.assert_fields_disabled(['field-searchable', 'field-allowed_users_str', 'field-adquire_url'])
+            self.assert_fields_disabled(['field-searchable', 'field-allowed_users_str', 'field-acquire_url'])
 
         driver.find_element_by_name('save').click()
 
-    def create_ds(self, name, description, tags, private, searchable, allowed_users, adquire_url, resource_url, resource_name, resource_description, resource_format):
+    def create_ds(self, name, description, tags, private, searchable, allowed_users, acquire_url, resource_url, resource_name, resource_description, resource_format):
         driver = self.driver
-        self.create_ds_first_page(name, description, tags, private, searchable, allowed_users, adquire_url)
+        self.create_ds_first_page(name, description, tags, private, searchable, allowed_users, acquire_url)
 
         # SECOND PAGE: Add Resources
         try:
@@ -162,14 +162,14 @@ class TestSelenium(unittest.TestCase):
         driver.find_element_by_xpath('(//button[@name=\'save\'])[4]').click()
         driver.find_element_by_xpath('(//button[@name=\'save\'])[4]').click()
 
-    def check_ds_values(self, url, private, searchable, allowed_users, adquire_url):
+    def check_ds_values(self, url, private, searchable, allowed_users, acquire_url):
         driver = self.driver
         driver.get(self.base_url + 'dataset/edit/' + url)
         self.assertEqual('Private' if private else 'Public', Select(driver.find_element_by_id('field-private')).first_selected_option.text)
 
         if private:
-            adquire_url_final = '' if adquire_url is None else adquire_url
-            self.assertEqual(adquire_url_final, driver.find_element_by_id('field-adquire_url').get_attribute('value'))
+            acquire_url_final = '' if acquire_url is None else acquire_url
+            self.assertEqual(acquire_url_final, driver.find_element_by_id('field-acquire_url').get_attribute('value'))
             self.assertEqual('True' if searchable else 'False', Select(driver.find_element_by_id('field-searchable')).first_selected_option.text)
 
             # Test that the allowed users lists is as expected (order is not important)
@@ -182,9 +182,9 @@ class TestSelenium(unittest.TestCase):
             for user in current_users:
                 self.assertIn(user, allowed_users)
         else:
-            self.assert_fields_disabled(['field-searchable', 'field-allowed_users_str', 'field-adquire_url'])
+            self.assert_fields_disabled(['field-searchable', 'field-allowed_users_str', 'field-acquire_url'])
 
-    def check_user_access(self, dataset, dataset_url, owner, adquired, in_org, private, searchable, adquire_url=None):
+    def check_user_access(self, dataset, dataset_url, owner, acquired, in_org, private, searchable, acquire_url=None):
         driver = self.driver
         driver.find_element_by_link_text('Datasets').click()
 
@@ -192,10 +192,10 @@ class TestSelenium(unittest.TestCase):
             xpath = '//div[@id=\'content\']/div[3]/div/section/div/ul/li/div/h3/span'
 
             # Check the label
-            if not adquired and private and not in_org:
+            if not acquired and private and not in_org:
                 self.assertEqual('PRIVATE', driver.find_element_by_xpath(xpath).text)
-            elif adquired and not owner and private:
-                self.assertEqual('ADQUIRED', driver.find_element_by_xpath(xpath).text)
+            elif acquired and not owner and private:
+                self.assertEqual('ACQUIRED', driver.find_element_by_xpath(xpath).text)
             elif owner:
                 self.assertEqual('OWNER', driver.find_element_by_xpath(xpath).text)
 
@@ -209,12 +209,12 @@ class TestSelenium(unittest.TestCase):
             # Access the dataset
             driver.get(self.base_url + 'dataset/' + dataset_url)
 
-        if not adquired and private and not in_org:
+        if not acquired and private and not in_org:
             xpath = '//div[@id=\'content\']/div/div'
-            buy_msg = 'This private dataset can be adquired. To do so, please click here'
-            if adquire_url is not None:
+            buy_msg = 'This private dataset can be acquired. To do so, please click here'
+            if acquire_url is not None:
                 self.assertTrue(driver.find_element_by_xpath(xpath).text.startswith(buy_msg))
-                self.assertEquals(adquire_url, driver.find_element_by_link_text('here').get_attribute('href'))
+                self.assertEquals(acquire_url, driver.find_element_by_link_text('here').get_attribute('href'))
                 xpath += '[2]'  # The unauthorized message is in a different Path
             else:
                 src = driver.page_source
@@ -226,22 +226,22 @@ class TestSelenium(unittest.TestCase):
         else:
             self.assertEquals(self.base_url + 'dataset/%s' % dataset_url, driver.current_url)
 
-    def check_adquired(self, dataset, dataset_url, adquired, private):
+    def check_acquired(self, dataset, dataset_url, acquired, private):
         driver = self.driver
         driver.get(self.base_url + 'dashboard')
-        driver.find_element_by_link_text('Adquired Datasets').click()
+        driver.find_element_by_link_text('Acquired Datasets').click()
 
-        if adquired and private:
-            # This message could not be shown when the user has adquired at least one dataset
-            self.assertEquals(None, re.search('You haven\'t adquired any datasets.', driver.page_source))
+        if acquired and private:
+            # This message could not be shown when the user has acquired at least one dataset
+            self.assertEquals(None, re.search('You haven\'t acquired any datasets.', driver.page_source))
             # Access the dataset
             driver.find_element_by_link_text(dataset).click()
             self.assertEquals(self.base_url + 'dataset/%s' % dataset_url, driver.current_url)
         else:
-            # If the user has not adquired the dataset, a link to this dataset could not be in the adquired dataset list
+            # If the user has not acquired the dataset, a link to this dataset could not be in the acquired dataset list
             self.assertEquals(None, re.search(dataset_url, driver.page_source))
-            # When a user has not adquired any dataset, a message will be shown to inform the user
-            self.assertNotEquals(None, re.search('You haven\'t adquired any datasets.', driver.page_source))
+            # When a user has not acquired any dataset, a message will be shown to inform the user
+            self.assertNotEquals(None, re.search('You haven\'t acquired any datasets.', driver.page_source))
 
     def default_register(self, user):
         self.register(user, user, '%s@conwet.com' % user, user)
@@ -260,7 +260,7 @@ class TestSelenium(unittest.TestCase):
         (['user1', 'user2', 'user3', 'user4'], False, True,  ['user3', 'user4']),
         (['user1', 'user2', 'user3', 'user4'], True,  False, ['user2', 'user4']),
     ])
-    def test_basic(self, users, private, searchable, allowed_users, adquire_url=None):
+    def test_basic(self, users, private, searchable, allowed_users, acquire_url=None):
         # Create users
         for user in users:
             self.default_register(user)
@@ -270,19 +270,19 @@ class TestSelenium(unittest.TestCase):
         pkg_name = 'Dataset 1'
         url = get_dataset_url(pkg_name)
         self.create_ds(pkg_name, 'Example description', ['tag1', 'tag2', 'tag3'], private, searchable,
-                       allowed_users, adquire_url, 'http://upm.es', 'UPM Main', 'Example Description', 'CSV')
-        self.check_ds_values(url, private, searchable, allowed_users, adquire_url)
-        self.check_user_access(pkg_name, url, True, True, False, private, searchable, adquire_url)
-        self.check_adquired(pkg_name, url, False, private)
+                       allowed_users, acquire_url, 'http://upm.es', 'UPM Main', 'Example Description', 'CSV')
+        self.check_ds_values(url, private, searchable, allowed_users, acquire_url)
+        self.check_user_access(pkg_name, url, True, True, False, private, searchable, acquire_url)
+        self.check_acquired(pkg_name, url, False, private)
 
         # Rest of users
         rest_users = users[1:]
         for user in rest_users:
             self.logout()
             self.login(user, user)
-            adquired = user in allowed_users
-            self.check_user_access(pkg_name, url, False, adquired, False, private, searchable, adquire_url)
-            self.check_adquired(pkg_name, url, adquired, private)
+            acquired = user in allowed_users
+            self.check_user_access(pkg_name, url, False, acquired, False, private, searchable, acquire_url)
+            self.check_acquired(pkg_name, url, acquired, private)
 
     @parameterized.expand([
         # (['a']  ,          'http://upm.es',      'Allowed users: Name must be at least 2 characters long'),
@@ -292,17 +292,17 @@ class TestSelenium(unittest.TestCase):
         (['upm', 'a?-vz'], 'http://upm.es',      'Allowed users: Url must be purely lowercase alphanumeric (ascii) characters and these symbols: -_'),
         (['thisisaveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryverylongname'],
                            'http://upm.es',      'Allowed users: Name must be a maximum of 100 characters long'),
-        (['conwet'],       'ftp://google.es',    'Adquire URL: The URL "ftp://google.es" is not valid.'),
-        # (['conwet'],       'http://google*.com', 'Adquire URL: The URL "http://google*.com" is not valid.'),
-        # (['conwet'],       'http://google+.com', 'Adquire URL: The URL "http://google+.com" is not valid.'),
-        # (['conwet'],       'http://google/.com', 'Adquire URL: The URL "http://google/.com" is not valid.'),
-        (['conwet'],       'google',             'Adquire URL: The URL "google" is not valid.'),
-        (['conwet'],       'http://google',      'Adquire URL: The URL "http://google" is not valid.'),
-        # (['conwet'],       'http://google:es',   'Adquire URL: The URL "http://google:es" is not valid.'),
-        (['conwet'],       'www.google.es',      'Adquire URL: The URL "www.google.es" is not valid.')
+        (['conwet'],       'ftp://google.es',    'Acquire URL: The URL "ftp://google.es" is not valid.'),
+        # (['conwet'],       'http://google*.com', 'Acquire URL: The URL "http://google*.com" is not valid.'),
+        # (['conwet'],       'http://google+.com', 'Acquire URL: The URL "http://google+.com" is not valid.'),
+        # (['conwet'],       'http://google/.com', 'Acquire URL: The URL "http://google/.com" is not valid.'),
+        (['conwet'],       'google',             'Acquire URL: The URL "google" is not valid.'),
+        (['conwet'],       'http://google',      'Acquire URL: The URL "http://google" is not valid.'),
+        # (['conwet'],       'http://google:es',   'Acquire URL: The URL "http://google:es" is not valid.'),
+        (['conwet'],       'www.google.es',      'Acquire URL: The URL "www.google.es" is not valid.')
 
     ])
-    def test_invalid_fields(self, allowed_users, adquire_url, expected_msg):
+    def test_invalid_fields(self, allowed_users, acquire_url, expected_msg):
         # Create a default user
         user = 'user1'
         self.default_register(user)
@@ -310,15 +310,15 @@ class TestSelenium(unittest.TestCase):
         # Create the dataset
         self.login(user, user)
         pkg_name = 'Dataset 2'
-        self.create_ds_first_page(pkg_name, 'Example description', ['tag1'], True, True, allowed_users, adquire_url)
+        self.create_ds_first_page(pkg_name, 'Example description', ['tag1'], True, True, allowed_users, acquire_url)
 
         # Check the error message
         msg_error = self.driver.find_element_by_xpath('//div[@id=\'content\']/div[3]/div/section/div/form/div/ul/li').text
         self.assertEquals(expected_msg, msg_error)
 
     @parameterized.expand([
-        ('Adquire Dataset',  'dataset'),
-        ('Adquire one now?', 'dataset')
+        ('Acquire Dataset',  'dataset'),
+        ('Acquire one now?', 'dataset')
     ])
     def test_dashboard_basic_links(self, link, expected_url):
         # Create a default user
@@ -326,9 +326,9 @@ class TestSelenium(unittest.TestCase):
         self.default_register(user)
         self.login(user, user)
 
-        # Enter the adquired dataset tab
+        # Enter the acquired dataset tab
         driver = self.driver
-        driver.get(self.base_url + 'dashboard/adquired')
+        driver.get(self.base_url + 'dashboard/acquired')
         driver.find_element_by_link_text(link).click()
         self.assertEquals(self.base_url + 'dataset', self.base_url + expected_url)
 
@@ -369,14 +369,14 @@ class TestSelenium(unittest.TestCase):
         self.default_register(user)
         self.login(user, user)
 
-        adquire_url = 'http://upm.es'
+        acquire_url = 'http://upm.es'
         dataset_default_name = 'Dataset %d'
 
         # Create the dataset
         for i, dataset in enumerate(datasets):
             pkg_name = dataset_default_name % i
             self.create_ds(pkg_name, 'Example description', ['tag1'], dataset['private'], dataset['searchable'],
-                           dataset['allowed_users'], adquire_url, 'http://upm.es', 'UPM Main', 'Example Description', 'CSV')
+                           dataset['allowed_users'], acquire_url, 'http://upm.es', 'UPM Main', 'Example Description', 'CSV')
 
         # Make the requests
         for user in users_via_api:
@@ -386,7 +386,7 @@ class TestSelenium(unittest.TestCase):
                 resources.append({'url': self.base_url + 'dataset/' + get_dataset_url(dataset_default_name % i)})
 
             content = {'customer_name': user, 'resources': resources}
-            req = requests.post(self.base_url + 'api/action/package_adquired', data=json.dumps(content),
+            req = requests.post(self.base_url + 'api/action/package_acquired', data=json.dumps(content),
                                 headers={'content-type': 'application/json'})
 
             result = json.loads(req.text)['result']
@@ -405,7 +405,7 @@ class TestSelenium(unittest.TestCase):
                 final_users = []
 
             url_path = get_dataset_url(dataset_default_name % i)
-            self.check_ds_values(url_path, dataset['private'], dataset['searchable'], final_users, adquire_url)
+            self.check_ds_values(url_path, dataset['private'], dataset['searchable'], final_users, acquire_url)
 
     @parameterized.expand([
         # (['user1', 'user2', 'user3'], [{'name': 'CoNWeT', 'users': ['user2']}], True,  True,  [],        'http://store.conwet.com/'),
@@ -433,7 +433,7 @@ class TestSelenium(unittest.TestCase):
         (['user1', 'user2', 'user3', 'user4', 'user5', 'user6'], [{'name': 'CoNWeT', 'users': ['user2', 'user3']}, 
                                                                   {'name': 'UPM',    'users': ['user6']}],            False, True,  ['user4', 'user5']),
     ])
-    def test_organization(self, users, orgs, private, searchable, adquiring_users, adquire_url=None):
+    def test_organization(self, users, orgs, private, searchable, adquiring_users, acquire_url=None):
         # Create users
         for user in users:
             self.default_register(user)
@@ -448,17 +448,17 @@ class TestSelenium(unittest.TestCase):
         pkg_name = 'Dataset 1'
         url = get_dataset_url(pkg_name)
         self.create_ds(pkg_name, 'Example description', ['tag1', 'tag2', 'tag3'], private, searchable,
-                       adquiring_users, adquire_url, 'http://upm.es', 'UPM Main', 'Example Description', 'CSV')
-        self.check_ds_values(url, private, searchable, adquiring_users, adquire_url)
-        self.check_user_access(pkg_name, url, True, True, True, private, searchable, adquire_url)
-        self.check_adquired(pkg_name, url, False, private)
+                       adquiring_users, acquire_url, 'http://upm.es', 'UPM Main', 'Example Description', 'CSV')
+        self.check_ds_values(url, private, searchable, adquiring_users, acquire_url)
+        self.check_user_access(pkg_name, url, True, True, True, private, searchable, acquire_url)
+        self.check_acquired(pkg_name, url, False, private)
 
         # Rest of users
         rest_users = users[1:]
         for user in rest_users:
             self.logout()
             self.login(user, user)
-            adquired = user in adquiring_users
+            acquired = user in adquiring_users
             in_org = user in orgs[0]['users']
-            self.check_user_access(pkg_name, url, False, adquired, in_org, private, searchable, adquire_url)
-            self.check_adquired(pkg_name, url, adquired, private)
+            self.check_user_access(pkg_name, url, False, acquired, in_org, private, searchable, acquire_url)
+            self.check_acquired(pkg_name, url, acquired, private)

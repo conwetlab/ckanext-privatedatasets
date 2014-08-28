@@ -42,7 +42,7 @@ class PluginTest(unittest.TestCase):
         ('package_show',     plugin.auth.package_show),
         ('package_update',   plugin.auth.package_update),
         ('package_show',     plugin.auth.package_show),
-        ('package_adquired', plugin.auth.package_adquired)
+        ('package_acquired', plugin.auth.package_acquired)
     ])
     def test_auth_function(self, function_name, expected_function):
         auth_functions = self.privateDatasets.get_auth_functions()
@@ -63,12 +63,12 @@ class PluginTest(unittest.TestCase):
         self.privateDatasets.before_map(m)
 
         # Test that the connect method has been called
-        m.connect.assert_any_call('user_adquired_datasets', '/dashboard/adquired', ckan_icon='shopping-cart',
-                                  controller='ckanext.privatedatasets.controllers.ui_controller:AdquiredDatasetsControllerUI',
-                                  action='user_adquired_datasets', conditions=dict(method=['GET']))
+        m.connect.assert_any_call('user_acquired_datasets', '/dashboard/acquired', ckan_icon='shopping-cart',
+                                  controller='ckanext.privatedatasets.controllers.ui_controller:AcquiredDatasetsControllerUI',
+                                  action='user_acquired_datasets', conditions=dict(method=['GET']))
 
     @parameterized.expand([
-        ('package_adquired', plugin.actions.package_adquired)
+        ('package_acquired', plugin.actions.package_acquired)
     ])
     def test_actions_function(self, function_name, expected_function):
         actions = self.privateDatasets.get_actions()
@@ -81,7 +81,7 @@ class PluginTest(unittest.TestCase):
         self.assertEquals([], self.privateDatasets.package_types())
 
     @parameterized.expand([
-        ('is_dataset_adquired',   plugin.helpers.is_dataset_adquired),
+        ('is_dataset_acquired',   plugin.helpers.is_dataset_acquired),
         ('get_allowed_users_str', plugin.helpers.get_allowed_users_str),
         ('is_owner',              plugin.helpers.is_owner),
         ('can_read',              plugin.helpers.can_read)
@@ -111,7 +111,7 @@ class PluginTest(unittest.TestCase):
 
         fields = {
             'private': [plugin.tk.get_validator('ignore_missing'), plugin.tk.get_validator('boolean_validator')],
-            'adquire_url': [plugin.tk.get_validator('ignore_missing'), plugin.tk.get_converter('convert_to_extras'),
+            'acquire_url': [plugin.tk.get_validator('ignore_missing'), plugin.tk.get_converter('convert_to_extras'),
                             plugin.conv_val.url_checker, plugin.conv_val.private_datasets_metadata_checker],
             'searchable': [plugin.tk.get_validator('ignore_missing'), plugin.tk.get_validator('boolean_validator'),
                            plugin.tk.get_converter('convert_to_extras'), plugin.conv_val.private_datasets_metadata_checker],
@@ -126,10 +126,10 @@ class PluginTest(unittest.TestCase):
 
         returned_schema = self.privateDatasets.show_package_schema()
    
-        fields = ['searchable', 'adquire_url']
+        fields = ['searchable', 'acquire_url']
 
         fields = {
-            'adquire_url': [plugin.tk.get_validator('ignore_missing'), plugin.tk.get_converter('convert_from_extras')],
+            'acquire_url': [plugin.tk.get_validator('ignore_missing'), plugin.tk.get_converter('convert_from_extras')],
             'searchable': [plugin.tk.get_validator('ignore_missing'), plugin.tk.get_converter('convert_from_extras')],
             'allowed_users': [plugin.tk.get_validator('ignore_missing'), plugin.conv_val.get_allowed_users]
         }
@@ -212,13 +212,13 @@ class PluginTest(unittest.TestCase):
             user.sysadmin = sysadmin
             context['auth_user_obj'] = user
 
-        pkg_dict = {'creator_user_id': creator_id, 'allowed_users': ['a', 'b', 'c'], 'searchable': True, 'adquire_url': 'http://google.es'}
+        pkg_dict = {'creator_user_id': creator_id, 'allowed_users': ['a', 'b', 'c'], 'searchable': True, 'acquire_url': 'http://google.es'}
 
         # Call the function
         result = self.privateDatasets.after_show(context, pkg_dict)    # Call the function
 
         # Check the final result
-        fields = ['allowed_users', 'searchable', 'adquire_url']
+        fields = ['allowed_users', 'searchable', 'acquire_url']
         for field in fields:
             if fields_expected:
                 self.assertTrue(field in result)
