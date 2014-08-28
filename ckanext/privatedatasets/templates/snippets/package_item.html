@@ -17,7 +17,7 @@ Example:
 {% set truncate_title = truncate_title or 80 %}
 {% set title = package.title or package.name %}
 {% set notes = h.markdown_extract(package.notes, extract_length=truncate) %}
-{% set adquired =  h.is_dataset_adquired(package) %}
+{% set acquired =  h.is_dataset_acquired(package) %}
 {% set owner = h.is_owner(package) %}
 
 {% resource 'privatedatasets/custom.css' %}
@@ -32,10 +32,10 @@ Example:
             {{ _('Private') }}
           </span>
         {% endif %}
-        {% if adquired and not owner %}
-          <span class="dataset-private label label-adquired">
+        {% if acquired and not owner %}
+          <span class="dataset-private label label-acquired">
             <i class="icon-shopping-cart"></i>
-            {{ _('Adquired') }}
+            {{ _('Acquired') }}
           </span>
         {% endif %}
         {% if owner %}

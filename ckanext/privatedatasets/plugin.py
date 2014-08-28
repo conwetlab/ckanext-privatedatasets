@@ -36,7 +36,7 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
             constants.ALLOWED_USERS: [conv_val.allowed_users_convert,
                                       tk.get_validator('ignore_missing'),
                                       conv_val.private_datasets_metadata_checker],
-            constants.ADQUIRE_URL: [tk.get_validator('ignore_missing'),
+            constants.ACQUIRE_URL: [tk.get_validator('ignore_missing'),
                                     conv_val.private_datasets_metadata_checker,
                                     conv_val.url_checker,
                                     tk.get_converter('convert_to_extras')],
@@ -63,7 +63,7 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
         schema.update({
             constants.ALLOWED_USERS: [conv_val.get_allowed_users,
                                       tk.get_validator('ignore_missing')],
-            constants.ADQUIRE_URL: [tk.get_converter('convert_from_extras'),
+            constants.ACQUIRE_URL: [tk.get_converter('convert_from_extras'),
                                     tk.get_validator('ignore_missing')],
             constants.SEARCHABLE: [tk.get_converter('convert_from_extras'),
                                    tk.get_validator('ignore_missing')]
@@ -88,7 +88,7 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
         return {'package_show': auth.package_show,
                 'package_update': auth.package_update,
                 'resource_show': auth.resource_show,
-                constants.PACKAGE_ADQUIRED: auth.package_adquired}
+                constants.PACKAGE_ACQUIRED: auth.package_acquired}
 
     ######################################################################
     ############################ ICONFIGURER #############################
@@ -107,10 +107,10 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
     ######################################################################
 
     def before_map(self, m):
-        # DataSet adquired notification
-        m.connect('user_adquired_datasets', '/dashboard/adquired', ckan_icon='shopping-cart',
-                  controller='ckanext.privatedatasets.controllers.ui_controller:AdquiredDatasetsControllerUI',
-                  action='user_adquired_datasets', conditions=dict(method=['GET']))
+        # DataSet acquired notification
+        m.connect('user_acquired_datasets', '/dashboard/acquired', ckan_icon='shopping-cart',
+                  controller='ckanext.privatedatasets.controllers.ui_controller:AcquiredDatasetsControllerUI',
+                  action='user_acquired_datasets', conditions=dict(method=['GET']))
 
         return m
 
@@ -119,7 +119,7 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
     ######################################################################
 
     def get_actions(self):
-        return {constants.PACKAGE_ADQUIRED: actions.package_adquired}
+        return {constants.PACKAGE_ACQUIRED: actions.package_acquired}
 
     ######################################################################
     ######################### IPACKAGECONTROLLER #########################
@@ -191,12 +191,12 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
         user_obj = context.get('auth_user_obj')
         updating_via_api = context.get(constants.CONTEXT_CALLBACK, False)
 
-        # allowed_users, searchable and adquire_url fileds can be only viewed by:
+        # allowed_users, searchable and acquire_url fileds can be only viewed by:
         # * the dataset creator
         # * the sysadmin
         # * users allowed to update the allowed_users list via the notification API
         if not updating_via_api and (not user_obj or (pkg_dict['creator_user_id'] != user_obj.id and not user_obj.sysadmin)):
-            attrs = [constants.ALLOWED_USERS, constants.SEARCHABLE, constants.ADQUIRE_URL]
+            attrs = [constants.ALLOWED_USERS, constants.SEARCHABLE, constants.ACQUIRE_URL]
             for attr in attrs:
                 if attr in pkg_dict:
                     del pkg_dict[attr]
@@ -223,7 +223,7 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
     ######################################################################
 
     def get_helpers(self):
-        return {'is_dataset_adquired': helpers.is_dataset_adquired,
+        return {'is_dataset_acquired': helpers.is_dataset_acquired,
                 'get_allowed_users_str': helpers.get_allowed_users_str,
                 'is_owner': helpers.is_owner,
                 'can_read': helpers.can_read}

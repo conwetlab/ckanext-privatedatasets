@@ -60,11 +60,11 @@ class ActionsTest(unittest.TestCase):
         # Call the function
         if expected_error:
             with self.assertRaises(actions.plugins.toolkit.ValidationError) as cm:
-                actions.package_adquired({}, {})
+                actions.package_acquired({}, {})
             self.assertEqual(cm.exception.error_dict['message'], expected_error)
         else:
             # Exception is not risen
-            self.assertEquals(None, actions.package_adquired({}, {}))
+            self.assertEquals(None, actions.package_acquired({}, {}))
 
         # Checks
         self.assertEquals(0, actions.plugins.toolkit.get_action.call_count)
@@ -142,7 +142,7 @@ class ActionsTest(unittest.TestCase):
 
         # Call the function
         context = {'user': 'user1', 'model': 'model', 'auth_obj': {'id': 1}}
-        result = actions.package_adquired(context, users_info)
+        result = actions.package_acquired(context, users_info)
 
         # Calculate the list of warns
         warns = []
@@ -161,7 +161,7 @@ class ActionsTest(unittest.TestCase):
 
         # Check that the initial functions (check_access and parse_notification) has been called properly
         parse_notification.assert_called_once_with(users_info)
-        actions.plugins.toolkit.check_access.assert_called_once_with('package_adquired', context, users_info)
+        actions.plugins.toolkit.check_access.assert_called_once_with('package_acquired', context, users_info)
 
         for user_datasets in parse_result['users_datasets']:
             for dataset_id in user_datasets['datasets']:

@@ -9,9 +9,9 @@ from ckan.common import _
 log = logging.getLogger(__name__)
 
 
-class AdquiredDatasetsControllerUI(base.BaseController):
+class AcquiredDatasetsControllerUI(base.BaseController):
 
-    def user_adquired_datasets(self):
+    def user_acquired_datasets(self):
 
         db.init_db(model)
 
@@ -25,13 +25,13 @@ class AdquiredDatasetsControllerUI(base.BaseController):
         # Get user information
         try:
             c.user_dict = plugins.toolkit.get_action('user_show')(context.copy(), {'user_obj': c.userobj})
-            c.user_dict['adquired_datasets'] = []
+            c.user_dict['acquired_datasets'] = []
         except plugins.toolkit.ObjectNotFound:
             plugins.toolkit.abort(404, _('User not found'))
         except plugins.toolkit.NotAuthorized:
             plugins.toolkit.abort(401, _('Not authorized to see this page'))
 
-        # Get the datasets adquired by the user
+        # Get the datasets acquired by the user
         query = db.AllowedUser.get(user_name=context['user'])
 
         # Get the datasets
@@ -40,8 +40,8 @@ class AdquiredDatasetsControllerUI(base.BaseController):
                 dataset_dict = plugins.toolkit.get_action('package_show')(context.copy(), {'id': dataset.package_id})
                 # Only packages with state == 'active' can be shown
                 if dataset_dict.get('state', None) == 'active':
-                    c.user_dict['adquired_datasets'].append(dataset_dict)
+                    c.user_dict['acquired_datasets'].append(dataset_dict)
             except Exception:
                 continue
 
-        return plugins.toolkit.render('user/dashboard_adquired.html')
+        return plugins.toolkit.render('user/dashboard_acquired.html')

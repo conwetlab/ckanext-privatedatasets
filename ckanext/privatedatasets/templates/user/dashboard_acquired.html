@@ -1,0 +1,19 @@
+{% extends "user/dashboard.html" %}
+
+{% block dashboard_activity_stream_context %}{% endblock %}
+
+{% block page_primary_action %}
+  {% link_for _('Acquire Dataset'), controller='package', action='search', class_="btn btn-primary", icon="shopping-cart" %}
+{% endblock %}
+
+{% block primary_content_inner %}
+  <h2 class="hide-heading">{{ _('Acquired Datasets') }}</h2>
+  {% if c.user_dict.acquired_datasets %}
+    {% snippet 'snippets/package_list.html', packages=c.user_dict.acquired_datasets %}
+  {% else %}
+    <p class="empty">
+      {{ _('You haven\'t acquired any datasets.') }}
+      {% link_for _('Acquire one now?'), controller='package', action='search' %}
+    </p>
+  {% endif %}
+{% endblock %}

@@ -9,12 +9,12 @@ log = logging.getLogger(__name__)
 PARSER_CONFIG_PROP = 'ckan.privatedatasets.parser'
 
 
-def package_adquired(context, request_data):
+def package_acquired(context, request_data):
 
     log.info('Notification Request received')
 
     # Check access
-    plugins.toolkit.check_access(constants.PACKAGE_ADQUIRED, context, request_data)
+    plugins.toolkit.check_access(constants.PACKAGE_ACQUIRED, context, request_data)
 
     # Get the parser from the configuration
     class_path = config.get(PARSER_CONFIG_PROP, '')

@@ -10,7 +10,7 @@ class UIControllerTest(unittest.TestCase):
     def setUp(self):
 
         # Get the instance
-        self.instanceUI = controller.AdquiredDatasetsControllerUI()
+        self.instanceUI = controller.AcquiredDatasetsControllerUI()
 
         # Load the mocks
         self._plugins = controller.plugins
@@ -43,7 +43,7 @@ class UIControllerTest(unittest.TestCase):
         controller.plugins.toolkit.get_action = MagicMock(return_value=user_show)
 
         # Call the function
-        self.instanceUI.user_adquired_datasets()
+        self.instanceUI.user_acquired_datasets()
 
         # Assertations
         expected_context = {
@@ -106,7 +106,7 @@ class UIControllerTest(unittest.TestCase):
         controller.db.AllowedUser.get = MagicMock(return_value=query_res)
 
         # Call the function
-        returned = self.instanceUI.user_adquired_datasets()
+        returned = self.instanceUI.user_acquired_datasets()
 
         # Check that the database has been initialized properly
         controller.db.init_db.assert_called_once_with(controller.model)
@@ -130,16 +130,16 @@ class UIControllerTest(unittest.TestCase):
 
         # Check that the template receives the correct datasets
         expected_user_dict = user_dict.copy()
-        expected_user_dict['adquired_datasets'] = []
+        expected_user_dict['acquired_datasets'] = []
         for i in pkgs_ids:
             if i not in package_errors and i not in deleted_packages:
                 pkg = default_package.copy()
                 pkg['pkg_id'] = i
                 pkg['state'] = 'deleted' if i in deleted_packages else 'active'
-                expected_user_dict['adquired_datasets'].append(pkg)
+                expected_user_dict['acquired_datasets'].append(pkg)
 
         self.assertEquals(expected_user_dict, controller.plugins.toolkit.c.user_dict)
 
         # Check that the render method has been called and that its result has been returned
         self.assertEquals(controller.plugins.toolkit.render.return_value, returned)
-        controller.plugins.toolkit.render.assert_called_once_with('user/dashboard_adquired.html')
+        controller.plugins.toolkit.render.assert_called_once_with('user/dashboard_acquired.html')
