@@ -32,6 +32,12 @@ If you want to create your own parser, you have to:
 
 Finally, you have to modify your config file and specify in the `ckan.privatedatasets.parser` the location of your own parser. 
 
+At this point, you will be able to add users via API by accessing the following URL:
+
+```
+http://<CKAN_SERVER>:<CKAN_PORT>/api/action/dataset_acquired
+```
+
 Tests
 -----
 This sofware contains a set of test to detect errors and failures. You can run this tests by running the following command:
