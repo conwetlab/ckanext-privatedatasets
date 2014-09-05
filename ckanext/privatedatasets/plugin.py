@@ -210,11 +210,11 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
         user_obj = context.get('auth_user_obj')
         updating_via_api = context.get(constants.CONTEXT_CALLBACK, False)
 
-        # allowed_users, searchable and acquire_url fileds can be only viewed by:
+        # allowed_users, searchable and acquire_url fileds can be only viewed by (and only if the dataset is private):
         # * the dataset creator
         # * the sysadmin
         # * users allowed to update the allowed_users list via the notification API
-        if not updating_via_api and (not user_obj or (pkg_dict['creator_user_id'] != user_obj.id and not user_obj.sysadmin)):
+        if pkg_dict.get('private') is False or not updating_via_api and (not user_obj or (pkg_dict['creator_user_id'] != user_obj.id and not user_obj.sysadmin)):
             attrs = [constants.ALLOWED_USERS, constants.SEARCHABLE, constants.ACQUIRE_URL]
             for attr in attrs:
                 if attr in pkg_dict:
