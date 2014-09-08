@@ -14,7 +14,7 @@
  * License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with CKAN Private Dataset Extension Platform. If not, see
+ * along with CKAN Private Dataset Extension. If not, see
  * <http://www.gnu.org/licenses/>.
  *
  */
