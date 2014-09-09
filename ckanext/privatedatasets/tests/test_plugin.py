@@ -204,24 +204,40 @@ class PluginTest(unittest.TestCase):
             self.assertTrue(found)
 
     @parameterized.expand([
-        (True,  1, 1,    False, True),
-        (True,  1, 2,    False, True),
-        (True,  1, 1,    True,  True),
-        (True,  1, 2,    True,  True),
-        (True,  1, None, None,  True),
-        (True,  1, 1,    None,  True),
-        (True,  1, None, True,  True),
-        (True,  1, None, False, True),
-        (False, 1, 1,    False, True),
-        (False, 1, 2,    False, False),
-        (False, 1, 1,    True,  True),
-        (False, 1, 2,    True,  True),
-        (False, 1, None, None,  False),
-        (False, 1, 1,    None,  True),
-        (False, 1, None, True,  True),
-        (False, 1, None, False, False),
+        (True,  1, 1,    False, True,  True),
+        (True,  1, 2,    False, True,  True),
+        (True,  1, 1,    True,  True,  True),
+        (True,  1, 2,    True,  True,  True),
+        (True,  1, None, None,  True,  True),
+        (True,  1, 1,    None,  True,  True),
+        (True,  1, None, True,  True,  True),
+        (True,  1, None, False, True,  True),
+        (False, 1, 1,    False, True,  True),
+        (False, 1, 2,    False, True,  False),
+        (False, 1, 1,    True,  True,  True),
+        (False, 1, 2,    True,  True,  True),
+        (False, 1, None, None,  True,  False),
+        (False, 1, 1,    None,  True,  True),
+        (False, 1, None, True,  True,  True),
+        (False, 1, None, False, True,  False),
+        (True,  1, 1,    False, False, False),
+        (True,  1, 2,    False, False, False),
+        (True,  1, 1,    True,  False, False),
+        (True,  1, 2,    True,  False, False),
+        (True,  1, None, None,  False, False),
+        (True,  1, 1,    None,  False, False),
+        (True,  1, None, True,  False, False),
+        (True,  1, None, False, False, False),
+        (False, 1, 1,    False, False, False),
+        (False, 1, 2,    False, False, False),
+        (False, 1, 1,    True,  False, False),
+        (False, 1, 2,    True,  False, False),
+        (False, 1, None, None,  False, False),
+        (False, 1, 1,    None,  False, False),
+        (False, 1, None, True,  False, False),
+        (False, 1, None, False, False, False),
     ])
-    def test_packagecontroller_after_show(self, update_via_api, creator_id, user_id, sysadmin, fields_expected):
+    def test_packagecontroller_after_show(self, update_via_api, creator_id, user_id, sysadmin, private, fields_expected):
         
         context = {'updating_via_cb': update_via_api}
 
@@ -231,7 +247,7 @@ class PluginTest(unittest.TestCase):
             user.sysadmin = sysadmin
             context['auth_user_obj'] = user
 
-        pkg_dict = {'creator_user_id': creator_id, 'allowed_users': ['a', 'b', 'c'], 'searchable': True, 'acquire_url': 'http://google.es'}
+        pkg_dict = {'creator_user_id': creator_id, 'allowed_users': ['a', 'b', 'c'], 'searchable': True, 'acquire_url': 'http://google.es', 'private': private}
 
         # Call the function
         result = self.privateDatasets.after_show(context, pkg_dict)    # Call the function
