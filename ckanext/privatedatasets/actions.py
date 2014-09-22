@@ -30,7 +30,7 @@ PARSER_CONFIG_PROP = 'ckan.privatedatasets.parser'
 
 def package_acquired(context, request_data):
 
-    log.info('Notification Request received')
+    log.info('Notification received: %s' % request_data)
 
     # Check access
     plugins.toolkit.check_access(constants.PACKAGE_ACQUIRED, context, request_data)
@@ -83,9 +83,11 @@ def package_acquired(context, request_data):
                         context_pkg_update = context.copy()
                         context_pkg_update['ignore_auth'] = True
                         plugins.toolkit.get_action('package_update')(context_pkg_update, dataset)
+                        log.info('Allowed Users added correctly')
                     else:
                         log.warn('The user %s is already allowed to access the %s dataset' % (user_info['user'], dataset_id))
                 else:
+                    log.warn('Dataset %s is public. Allowed Users cannot be added')
                     warns.append('Unable to upload the dataset %s: It\'s a public dataset' % dataset_id)
 
             except plugins.toolkit.ObjectNotFound:
@@ -98,7 +100,9 @@ def package_acquired(context, request_data):
                 # only valid for private datasets outside an organization. In this case, a wanr will return
                 # but the process will continue
                 # WARN: This exception should not be risen anymore since public datasets are not updated.
-                warns.append('%s(%s): %s' % (dataset_id, constants.ALLOWED_USERS, e.error_dict[constants.ALLOWED_USERS][0]))
+                message = '%s(%s): %s' % (dataset_id, constants.ALLOWED_USERS, e.error_dict[constants.ALLOWED_USERS][0])
+                log.warn(message)
+                warns.append(message)
 
     # Return warnings that inform about non-existing datasets
     if len(warns) > 0:
