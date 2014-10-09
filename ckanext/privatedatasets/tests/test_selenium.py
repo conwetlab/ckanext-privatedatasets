@@ -169,7 +169,6 @@ class TestSelenium(unittest.TestCase):
         except Exception:
             pass
 
-        # THIRD PAGE: Metadata
         driver.find_element_by_id('field-image-url').clear()
         driver.find_element_by_id('field-image-url').send_keys(resource_url)
         driver.find_element_by_id('field-name').clear()
@@ -179,6 +178,8 @@ class TestSelenium(unittest.TestCase):
         driver.find_element_by_id('s2id_autogen1').clear()
         driver.find_element_by_id('s2id_autogen1').send_keys(resource_format)
         driver.find_element_by_xpath('(//button[@name=\'save\'])[4]').click()
+
+        # THIRD PAGE: Metadata
         driver.find_element_by_xpath('(//button[@name=\'save\'])[4]').click()
 
     def check_ds_values(self, url, private, searchable, allowed_users, acquire_url):
