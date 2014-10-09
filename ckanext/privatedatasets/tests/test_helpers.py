@@ -135,3 +135,15 @@ class HelpersTest(unittest.TestCase):
 
         # Call the function
         self.assertEquals(expected_value, helpers.show_acquire_url_on_create())
+
+    @parameterized.expand([
+        (None,    False),
+        ('True',  True),
+        ('False', False)
+    ])
+    def test_show_acquire_url_on_edit(self, config_value, expected_value):
+        if config_value is not None:
+            helpers.config['ckan.privatedatasets.show_acquire_url_on_edit'] = config_value
+
+        # Call the function
+        self.assertEquals(expected_value, helpers.show_acquire_url_on_edit())

@@ -86,8 +86,10 @@
   {{ form.input('allowed_users_str', label=_('Allowed Users'), id='field-allowed_users_str', placeholder=_('Allowed Users'), value=h.get_allowed_users_str(data.allowed_users), error=errors.custom_text, classes=['control-full'], attrs=users_attrs) }}
 
   
-  {% if editing or not editing and h.show_acquire_url_on_create()  %}
+  {% if editing and h.show_acquire_url_on_edit() or not editing and h.show_acquire_url_on_create()  %}
     {{ form.input('acquire_url', label=_('Acquire URL'), id='field-acquire_url', placeholder=_('http://example.com/acquire/'), value=data.acquire_url, error=errors.custom_text, classes=['control-medium']) }}
+  {% else %}
+      <input type="hidden" name="acquire_url" id="acquire_url" value="{{ data.acquire_url }}" />
   {% endif %}
 
   {% if data.id and h.check_access('package_delete', {'id': data.id}) and data.state != 'active' %}

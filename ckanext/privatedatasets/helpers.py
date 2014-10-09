@@ -64,3 +64,7 @@ def get_config_bool_value(config_name, default_value=False):
 
 def show_acquire_url_on_create():
     return get_config_bool_value('ckan.privatedatasets.show_acquire_url_on_create')
+
+
+def show_acquire_url_on_edit():
+    return get_config_bool_value('ckan.privatedatasets.show_acquire_url_on_edit')

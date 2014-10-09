@@ -247,4 +247,5 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
                 'is_owner': helpers.is_owner,
                 'can_read': helpers.can_read,
                 'show_acquire_url_on_create': helpers.show_acquire_url_on_create,
+                'show_acquire_url_on_edit': helpers.show_acquire_url_on_edit
                 }
