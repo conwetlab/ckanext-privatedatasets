@@ -245,4 +245,6 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
         return {'is_dataset_acquired': helpers.is_dataset_acquired,
                 'get_allowed_users_str': helpers.get_allowed_users_str,
                 'is_owner': helpers.is_owner,
-                'can_read': helpers.can_read}
+                'can_read': helpers.can_read,
+                'show_acquire_url_on_create': helpers.show_acquire_url_on_create,
+                }
