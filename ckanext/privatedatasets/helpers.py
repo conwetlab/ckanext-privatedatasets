@@ -21,6 +21,8 @@ import ckan.model as model
 import ckan.plugins.toolkit as tk
 import db
 
+from pylons import config
+
 
 def is_dataset_acquired(pkg_dict):
 
@@ -52,3 +54,17 @@ def can_read(pkg_dict):
         return tk.check_access('package_show', context, pkg_dict)
     except tk.NotAuthorized:
         return False
+
+
+def get_config_bool_value(config_name, default_value=False):
+    value = config.get(config_name, default_value)
+    value = value if type(value) == bool else value != 'False'
+    return value
+
+
+def show_acquire_url_on_create():
+    return get_config_bool_value('ckan.privatedatasets.show_acquire_url_on_create')
+
+
+def show_acquire_url_on_edit():
+    return get_config_bool_value('ckan.privatedatasets.show_acquire_url_on_edit')

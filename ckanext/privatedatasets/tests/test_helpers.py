@@ -37,10 +37,14 @@ class HelpersTest(unittest.TestCase):
         self._db = helpers.db
         helpers.db = MagicMock()
 
+        self._config = helpers.config
+        helpers.config = {}
+
     def tearDown(self):
         helpers.model = self._model
         helpers.tk = self._tk
         helpers.db = self._db
+        helpers.config = self._config
 
     @parameterized.expand([
         (False, 'user', False),
@@ -119,3 +123,27 @@ class HelpersTest(unittest.TestCase):
         # Assert called with
         context = {'user': helpers.tk.c.user, 'userobj': helpers.tk.c.userobj, 'model': helpers.model}
         helpers.tk.check_access.assert_called_once_with('package_show', context, package)
+
+    @parameterized.expand([
+        (None,    False),
+        ('True',  True),
+        ('False', False)
+    ])
+    def test_show_acquire_url_on_create(self, config_value, expected_value):
+        if config_value is not None:
+            helpers.config['ckan.privatedatasets.show_acquire_url_on_create'] = config_value
+
+        # Call the function
+        self.assertEquals(expected_value, helpers.show_acquire_url_on_create())
+
+    @parameterized.expand([
+        (None,    False),
+        ('True',  True),
+        ('False', False)
+    ])
+    def test_show_acquire_url_on_edit(self, config_value, expected_value):
+        if config_value is not None:
+            helpers.config['ckan.privatedatasets.show_acquire_url_on_edit'] = config_value
+
+        # Call the function
+        self.assertEquals(expected_value, helpers.show_acquire_url_on_edit())

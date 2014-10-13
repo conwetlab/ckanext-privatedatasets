@@ -14,6 +14,7 @@
   {% set organizations_available = h.organizations_available('create_dataset') %}
   {% set user_is_sysadmin = h.check_access('sysadmin') %}
   {% set show_organizations_selector = organizations_available and (user_is_sysadmin or dataset_is_draft) %}
+  {% set editing =  'id' in data %}
 
   {% if show_organizations_selector and show_visibility_selector %}
     <div>
@@ -77,7 +78,6 @@
   {% endblock %}
 
 
-
   {% if show_organizations_selector and show_visibility_selector %}
     </div>
   {% endif %}
@@ -85,7 +85,12 @@
   {% set users_attrs = {'data-module': 'autocomplete', 'data-module-tags': '', 'data-module-source': '/api/2/util/user/autocomplete?q=?'} %}
   {{ form.input('allowed_users_str', label=_('Allowed Users'), id='field-allowed_users_str', placeholder=_('Allowed Users'), value=h.get_allowed_users_str(data.allowed_users), error=errors.custom_text, classes=['control-full'], attrs=users_attrs) }}
 
-  {{ form.input('acquire_url', label=_('Acquire URL'), id='field-acquire_url', placeholder=_('http://example.com/acquire/'), value=data.acquire_url, error=errors.custom_text, classes=['control-medium']) }}
+  
+  {% if editing and h.show_acquire_url_on_edit() or not editing and h.show_acquire_url_on_create()  %}
+    {{ form.input('acquire_url', label=_('Acquire URL'), id='field-acquire_url', placeholder=_('http://example.com/acquire/'), value=data.acquire_url, error=errors.custom_text, classes=['control-medium']) }}
+  {% else %}
+      <input type="hidden" name="acquire_url" id="acquire_url" value="{{ data.acquire_url }}" />
+  {% endif %}
 
   {% if data.id and h.check_access('package_delete', {'id': data.id}) and data.state != 'active' %}
     <div class="control-group">
