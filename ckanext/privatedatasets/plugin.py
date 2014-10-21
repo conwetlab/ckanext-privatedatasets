@@ -198,6 +198,8 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
                      'validate': False,
                      'use_cache': False},
                     {'id': package_id})
+                # Prevent acquired datasets jumping to the first position
+                new_pkg_dict['metadata_modified'] = new_pkg_dict['revision_timestamp']
                 self.indexer.update_dict(new_pkg_dict)
 
         return pkg_dict
