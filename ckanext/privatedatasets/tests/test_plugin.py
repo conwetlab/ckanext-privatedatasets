@@ -282,8 +282,10 @@ class PluginTest(unittest.TestCase):
         package_id = 'package_id'
 
         # Configure mocks
-        default_dict = {'a': '0', 'b': 1, 'm': True}
-        package_show = MagicMock(return_value=default_dict)
+        default_dict = {'a': '0', 'b': 1, 'm': True, 'revision_timestamp': '2000'}
+        expected_dict = default_dict.copy()
+        expected_dict['metadata_modified'] = default_dict['revision_timestamp']
+        package_show = MagicMock(return_value=default_dict.copy())
         plugin.tk.get_action = MagicMock(return_value=package_show)
 
         # Each time 'AllowedUser' is called, we must get a new instance
@@ -336,7 +338,7 @@ class PluginTest(unittest.TestCase):
             self.assertEquals(0, self.privateDatasets.indexer.update_dict.call_count)
         else:
             # Check that the cache has been updated
-            self.privateDatasets.indexer.update_dict.assert_called_once_with(default_dict)
+            self.privateDatasets.indexer.update_dict.assert_called_once_with(expected_dict)
 
     @parameterized.expand([
         # One element
