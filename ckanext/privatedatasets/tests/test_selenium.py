@@ -30,6 +30,7 @@ import os
 import unittest
 import re
 import requests
+import time
 
 
 def get_dataset_url(dataset_name):
@@ -67,7 +68,7 @@ class TestSelenium(unittest.TestCase):
         self.clearBBDD()
 
         self.driver = webdriver.Firefox()
-        self.driver.implicitly_wait(5)
+        self.driver.implicitly_wait(5000000)
         self.driver.set_window_size(1024, 768)
         self.base_url = 'http://127.0.0.1:5000/'
 
@@ -177,10 +178,12 @@ class TestSelenium(unittest.TestCase):
         driver.find_element_by_id('field-description').send_keys(resource_description)
         driver.find_element_by_id('s2id_autogen1').clear()
         driver.find_element_by_id('s2id_autogen1').send_keys(resource_format)
-        driver.find_element_by_xpath('(//button[@name=\'save\'])[4]').click()
+        save_elements = driver.find_elements_by_name('save')
+        save_elements[len(save_elements) - 1].click()
 
         # THIRD PAGE: Metadata
-        driver.find_element_by_xpath('(//button[@name=\'save\'])[4]').click()
+        save_elements = driver.find_elements_by_name('save')
+        save_elements[len(save_elements) - 1].click()
 
     def modify_ds(self, url, name, description, tags, private, searchable, allowed_users, acquire_url):
         driver = self.driver
@@ -328,6 +331,7 @@ class TestSelenium(unittest.TestCase):
 
     ])
     def test_invalid_fields(self, allowed_users, acquire_url, expected_msg):
+
         # Create a default user
         user = 'user1'
         self.default_register(user)
@@ -335,6 +339,14 @@ class TestSelenium(unittest.TestCase):
         # Create the dataset
         self.login(user, user)
         pkg_name = 'Dataset 2'
+
+        # Go the page to create the dataset
+        driver = self.driver
+        driver.get(self.base_url)
+        driver.find_element_by_link_text('Datasets').click()
+        driver.find_element_by_link_text('Add Dataset').click()
+
+        # Fill the requested information
         self.fill_ds_general_info(pkg_name, 'Example description', ['tag1'], True, True, allowed_users, acquire_url)
 
         # Check the error message
@@ -505,6 +517,6 @@ class TestSelenium(unittest.TestCase):
                        [], 'http://example.com', 'http://upm.es', 'UPM Main', 'Example Description', 'CSV')
 
         self.modify_ds(url, pkg_name, description, tags, False, None, None, None)
-        expected_url = '%sdataset/%s' % (self.base_url, url)
+        expected_url = 'dataset/%s' % url
         current_url = self.driver.current_url
         self.assertIn(expected_url, current_url)    # Maybe the current URL include some parameters
