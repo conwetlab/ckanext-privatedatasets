@@ -27,6 +27,7 @@
 this.ckan.module('allowed-users', function ($, _) {
   return {
     initialize: function() {
+      this.original_acquire_url = $('[name=acquire_url]').val();
       $('#field-private').on('change', this._onChange);
       this._onChange(); //Initial
     },
@@ -34,17 +35,19 @@ this.ckan.module('allowed-users', function ($, _) {
       var ds_private = $('#field-private').val();
 
       if (ds_private == 'True') {
-        $('#field-allowed_users_str').prop('disabled', false);  //Enable
-        $('#field-acquire_url').prop('disabled', false);        //Enable
-        $('#field-searchable').prop('disabled', false);         //Enable
+        $('#field-allowed_users_str').prop('disabled', false);      //Enable
+        $('#field-acquire_url').prop('disabled', false);            //Enable
+        $('#field-searchable').prop('disabled', false);             //Enable
+        $('[name=acquire_url]').val(this.original_acquire_url);     //Set previous acquire URL
       } else {
-        $('#field-allowed_users_str').prop('disabled', true);  //Disable
-        $('#field-acquire_url').prop('disabled', true);        //Disable
-        $('#field-searchable').prop('disabled', true);         //Disable
+        $('#field-allowed_users_str').prop('disabled', true);       //Disable
+        $('#field-acquire_url').prop('disabled', true);             //Disable
+        $('#field-searchable').prop('disabled', true);              //Disable
         
         //Remove previous values
         $('#field-allowed_users_str').select2('val', '');
-        $('#field-acquire_url').val('');
+        this.original_acquire_url = $('[name=acquire_url]').val();  //Get previous value
+        $('[name=acquire_url]').val('');                            //Acquire URL should be reseted
         $('#field-searchable').val('True');
       }
     }

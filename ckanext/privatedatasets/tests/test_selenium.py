@@ -129,7 +129,7 @@ class TestSelenium(unittest.TestCase):
             driver.find_element_by_id('username').send_keys(user)
             driver.find_element_by_name('submit').click()
 
-    def create_ds_first_page(self, name, description, tags, private, searchable, allowed_users, acquire_url):
+    def fill_ds_general_info(self, name, description, tags, private, searchable, allowed_users, acquire_url):
         # FIRST PAGE: Dataset properties
         driver = self.driver
         driver.get(self.base_url)
@@ -160,7 +160,7 @@ class TestSelenium(unittest.TestCase):
 
     def create_ds(self, name, description, tags, private, searchable, allowed_users, acquire_url, resource_url, resource_name, resource_description, resource_format):
         driver = self.driver
-        self.create_ds_first_page(name, description, tags, private, searchable, allowed_users, acquire_url)
+        self.fill_ds_general_info(name, description, tags, private, searchable, allowed_users, acquire_url)
 
         # SECOND PAGE: Add Resources
         try:
@@ -181,6 +181,11 @@ class TestSelenium(unittest.TestCase):
 
         # THIRD PAGE: Metadata
         driver.find_element_by_xpath('(//button[@name=\'save\'])[4]').click()
+
+    def modify_ds(self, url, name, description, tags, private, searchable, allowed_users, acquire_url):
+        driver = self.driver
+        driver.get('%sdataset/edit/%s' % (self.base_url, url))
+        self.fill_ds_general_info(name, description, tags, private, searchable, allowed_users, acquire_url)
 
     def check_ds_values(self, url, private, searchable, allowed_users, acquire_url):
         driver = self.driver
@@ -330,7 +335,7 @@ class TestSelenium(unittest.TestCase):
         # Create the dataset
         self.login(user, user)
         pkg_name = 'Dataset 2'
-        self.create_ds_first_page(pkg_name, 'Example description', ['tag1'], True, True, allowed_users, acquire_url)
+        self.fill_ds_general_info(pkg_name, 'Example description', ['tag1'], True, True, allowed_users, acquire_url)
 
         # Check the error message
         msg_error = self.driver.find_element_by_xpath('//div[@id=\'content\']/div[3]/div/section/div/form/div/ul/li').text
@@ -482,3 +487,28 @@ class TestSelenium(unittest.TestCase):
             in_org = user in orgs[0]['users']
             self.check_user_access(pkg_name, url, False, acquired, in_org, private, searchable, acquire_url)
             self.check_acquired(pkg_name, url, acquired, private)
+
+    def test_bug_16(self):
+        """
+        Private datasets cannot be turned to public datasets when the Acquisition URL is set
+        """
+        user = 'user1'
+        self.default_register(user)
+
+        # The user creates a dataset
+        self.login(user, user)
+        pkg_name = 'Dataset 1'
+        description = 'Example Description'
+        tags = ['tag1', 'tag2', 'tag3']
+        url = get_dataset_url(pkg_name)
+        self.create_ds(pkg_name, 'Example description', ['tag1', 'tag2', 'tag3'], True, True,
+                       [], 'http://example.com', 'http://upm.es', 'UPM Main', 'Example Description', 'CSV')
+
+        self.modify_ds(self, url, pkg_name, description, tags, False, None, None, None)
+        expected_url = 'dataset/%s' % url
+        current_url = self.driver.current_url
+        self.assertEquals(expected_url, current_url)
+
+
+        
+
