@@ -132,9 +132,6 @@ class TestSelenium(unittest.TestCase):
     def fill_ds_general_info(self, name, description, tags, private, searchable, allowed_users, acquire_url):
         # FIRST PAGE: Dataset properties
         driver = self.driver
-        driver.get(self.base_url)
-        driver.find_element_by_link_text('Datasets').click()
-        driver.find_element_by_link_text('Add Dataset').click()
         driver.find_element_by_id('field-title').clear()
         driver.find_element_by_id('field-title').send_keys(name)
         driver.find_element_by_id('field-notes').clear()
@@ -160,6 +157,9 @@ class TestSelenium(unittest.TestCase):
 
     def create_ds(self, name, description, tags, private, searchable, allowed_users, acquire_url, resource_url, resource_name, resource_description, resource_format):
         driver = self.driver
+        driver.get(self.base_url)
+        driver.find_element_by_link_text('Datasets').click()
+        driver.find_element_by_link_text('Add Dataset').click()
         self.fill_ds_general_info(name, description, tags, private, searchable, allowed_users, acquire_url)
 
         # SECOND PAGE: Add Resources
@@ -504,11 +504,7 @@ class TestSelenium(unittest.TestCase):
         self.create_ds(pkg_name, 'Example description', ['tag1', 'tag2', 'tag3'], True, True,
                        [], 'http://example.com', 'http://upm.es', 'UPM Main', 'Example Description', 'CSV')
 
-        self.modify_ds(self, url, pkg_name, description, tags, False, None, None, None)
-        expected_url = 'dataset/%s' % url
+        self.modify_ds(url, pkg_name, description, tags, False, None, None, None)
+        expected_url = '%sdataset/%s' % (self.base_url, url)
         current_url = self.driver.current_url
-        self.assertEquals(expected_url, current_url)
-
-
-        
-
+        self.assertIn(expected_url, current_url)    # Maybe the current URL include some parameters
