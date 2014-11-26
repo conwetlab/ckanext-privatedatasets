@@ -102,7 +102,6 @@ Afterwards, you will need to filter the notification callback to be callable onl
         SSLCACertificateFile    <PATH_TO_THE_CA_FILE_CREATED_PREVIOUSLY>
         SSLVerifyClient         require
     </Location>
-
 ```
 
 Finally, you must restart your Apache server. To do so, execute the following command:
