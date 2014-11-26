@@ -89,13 +89,13 @@ crlDistributionPoints = @crl
 URI=http://testca.local/ca.crl
 ```
 
-Then, you should create your CA using the previous config file. To do so, you can execure the following line:
+Then, you should create your CA using the previous config file. To do so, you can execure the following line (replace `<PATH_TO_SSL_CONFIG_FILE>` by the real path of your OpenSSL config file):
 
 ```
 $ openssl req -config <PATH_TO_SSL_CONFIG_FILE> -newkey rsa:2048 -nodes -keyform PEM -keyout ca.key -x509 -days 3650 -extensions certauth -outform PEM -out ca.cer
 ```
 
-Afterwards, you will need to filter the notification callback to be callable only by those entities that use a valid certificate (the one signed by the CA created previously). To achieve this, edit the file `/etc/apache2/sites-available/ckan_default` and add the following lines inmediatly after the SSL configuration:
+Afterwards, you will need to filter the notification callback to be callable only by those entities that use a valid certificate (the one signed by the CA created previously). To achieve this, edit the file `/etc/apache2/sites-available/ckan_default` and add the following lines inmediatly after the SSL configuration (replace `<PATH_TO_SSL_CONFIG_FILE>` by the real path of your OpenSSL config file):
 
 ```
     <Location /api/action/dataset_acquired>
@@ -111,12 +111,12 @@ Finally, you must restart your Apache server. To do so, execute the following co
 $ sudo service apache2 restart
 ```
 
-From now own, you should consider that a valid certificate will be required to call the notification callback. To generate a new certificate you can execute the following lines:
+From now own, you should consider that a valid certificate will be required to call the notification callback. To generate a new certificate you can execute the following lines (replace `<PATH_TO_SSL_CONFIG_FILE>` by the real path of your OpenSSL config file):
 
 ```
 $ openssl genrsa -out client.key 2048
-$ openssl req -config ./openssl.cnf -new -key client.key -out client.req
-$ openssl x509 -req -in client.req -CA ca.cer -CAkey ca.key -set_serial 101 -extfile openssl.cnf -extensions client -days 365 -outform PEM -out client.cer
+$ openssl req -config <PATH_TO_SSL_CONFIG_FILE> -new -key client.key -out client.req
+$ openssl x509 -req -in client.req -CA ca.cer -CAkey ca.key -set_serial 101 -extfile <PATH_TO_SSL_CONFIG_FILE> -extensions client -days 365 -outform PEM -out client.cer
 $ openssl pkcs12 -export -inkey client.key -in client.cer -out client.p12
 ```
 
