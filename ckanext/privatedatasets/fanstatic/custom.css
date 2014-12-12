@@ -5,3 +5,9 @@
 .label-owner {
     background-color: #e0051e;
 }
+
+.divider {
+    margin-left:10px;
+    height:auto;
+    display:inline-block;
+}
