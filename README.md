@@ -1,10 +1,10 @@
-CKAN Private Datasets [![Build Status](http://hercules.ls.fi.upm.es/jenkins/buildStatus/icon?job=ckan_privatedatasets-develop)](http://hercules.ls.fi.upm.es/jenkins/job/ckan_privatedatasets-develop/)
+CKAN Private Datasets [![Build Status](https://build.conwet.fi.upm.es/jenkins/buildStatus/icon?job=ckan_privatedatasets-develop)](https://build.conwet.fi.upm.es/jenkins/job/ckan_privatedatasets-develop/)
 =====================
 
 This CKAN extension allows a user to create private datasets that only certain users will be able to see. When a dataset is being created, it's possible to specify the list of users that can see this dataset. In addition, the extension provides an HTTP API that allows to add users programatically. 
 
 Installation
-------------
+-----------
 Install this extension in your CKAN is instance is as easy as intall any other CKAN extension.
 
 * Download the source from this GitHub repo.
@@ -19,7 +19,7 @@ Install this extension in your CKAN is instance is as easy as intall any other C
 * That's All!
 
 Creating a notification parser
-------------------------------
+---------------------------
 Since each service can send notifications in a different way, the extension allows developers to create their own notifications parser. As default, we provide you a basic parser based on the notifications sent by the [FiWare Store](https://github.com/conwetlab/wstore/). 
 
 If you want to create your own parser, you have to:
@@ -41,6 +41,10 @@ At this point, you will be able to add users via API by accessing the following 
 http://<CKAN_SERVER>:<CKAN_PORT>/api/action/dataset_acquired
 ```
 
+Securing the Notifications
+-----------------------
+In some cases, you will want to ensure that notifications are only performed by a certain entity (user, machine, ...). To do that, we relay on HTTPs so
+
 Tests
 -----
 This sofware contains a set of test to detect errors and failures. You can run this tests by running the following command:
@@ -53,4 +57,3 @@ You can also generate coverage reports by running:
 ```
 nosetests --ckan --with-xunit --with-pylons=test.ini ckanext/privatedatasets/tests/ --with-coverage --cover-package=ckanext.privatedatasets --cover-inclusive --cover-erase . --cover-xml
 ```
-
