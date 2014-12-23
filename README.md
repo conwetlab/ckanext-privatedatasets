@@ -1,4 +1,4 @@
-CKAN Private Datasets [![Build Status](http://hercules.ls.fi.upm.es/jenkins/buildStatus/icon?job=ckan_privatedatasets-develop)](http://hercules.ls.fi.upm.es/jenkins/job/ckan_privatedatasets-develop/)
+CKAN Private Datasets [![Build Status](https://build.conwet.fi.upm.es/jenkins/buildStatus/icon?job=ckan_privatedatasets-develop)](https://build.conwet.fi.upm.es/jenkins/job/ckan_privatedatasets-develop/)
 =====================
 
 This CKAN extension allows a user to create private datasets that only certain users will be able to see. When a dataset is being created, it's possible to specify the list of users that can see this dataset. In addition, the extension provides an HTTP API that allows to add users programatically. 
@@ -12,7 +12,7 @@ Install this extension in your CKAN is instance is as easy as intall any other C
 * Install the extension by running `python setup.py develop`
 * Modify your configuration file (generally in `/etc/ckan/default/production.ini`) and add `privatedatasets` in the `ckan.plugins` setting. 
 * In the same config file, specify the location of your parser by adding the `ckan.privatedatasets.parser` setting. For example, to set the [FiWareNotificationParser](https://github.com/conwetlab/ckanext-privatedatasets/blob/master/ckanext/privatedatasets/parsers/fiware.py) as notification parser, add the following line: `ckan.privatedatasets.parser = ckanext.privatedatasets.parsers.fiware:FiWareNotificationParser`.
-* If you want you can also add some preferences to set if the Acquire URL should be shown when the user is creating and/or editing a dataset:
+* If you want you can also add some preferences to set if the Acquire URL should be shown when the user is to create and/or editing a dataset:
   * To show the Acquire URL when the user is **creating** a dataset, you should set the following preference: `ckan.privatedatasets.show_acquire_url_on_create = True`. By default, the value of this preference is set to `False`.
   * To show the Acquire URL when the user is **editing** a dataset, you should set the following preference: `ckan.privatedatasets.show_acquire_url_on_edit = True`. By default, the value of this preference is set to `False`.
 * In some cases you will want to secure the notification callback in order to filter the entities (user, machines...) that can send them. To do so, you can follow the instructions in the section [Securing the Notification Callback](#securing-the-notification-callback). 
@@ -133,4 +133,3 @@ You can also generate coverage reports by running:
 ```
 nosetests --ckan --with-xunit --with-pylons=test.ini ckanext/privatedatasets/tests/ --with-coverage --cover-package=ckanext.privatedatasets --cover-inclusive --cover-erase . --cover-xml
 ```
-

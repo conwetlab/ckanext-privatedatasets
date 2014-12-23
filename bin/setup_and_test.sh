@@ -13,7 +13,7 @@ CACHE_DIR=~/.cache
 echo "Downloading CKAN..."
 git clone https://github.com/ckan/ckan
 cd ckan
-git checkout release-v2.2
+git checkout release-v2.2.2
 cd $WD
 
 
