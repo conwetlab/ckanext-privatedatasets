@@ -18,6 +18,7 @@
 # along with CKAN Private Dataset Extension.  If not, see <http://www.gnu.org/licenses/>.
 
 ALLOWED_USERS = 'allowed_users'
+ACQUISITIONS_LIST = 'acquisitions_list'
 ALLOWED_USERS_STR = 'allowed_users_str'
 SEARCHABLE = 'searchable'
 ACQUIRE_URL = 'acquire_url'

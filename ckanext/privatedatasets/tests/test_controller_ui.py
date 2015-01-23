@@ -38,9 +38,6 @@ class UIControllerTest(unittest.TestCase):
         self._model = controller.model
         controller.model = MagicMock()
 
-        self._db = controller.db
-        controller.db = MagicMock()
-
         # Set exceptions
         controller.plugins.toolkit.ObjectNotFound = self._plugins.toolkit.ObjectNotFound
         controller.plugins.toolkit.NotAuthorized = self._plugins.toolkit.NotAuthorized
@@ -49,7 +46,6 @@ class UIControllerTest(unittest.TestCase):
         # Unmock
         controller.plugins = self._plugins
         controller.model = self._model
-        controller.db = self._db
 
     @parameterized.expand([
         (controller.plugins.toolkit.ObjectNotFound, 404),
@@ -74,61 +70,25 @@ class UIControllerTest(unittest.TestCase):
         user_show.assert_called_once_with(expected_context, {'user_obj': controller.plugins.toolkit.c.userobj})
         controller.plugins.toolkit.abort.assert_called_once_with(expected_status, ANY)
 
-    @parameterized.expand([
-        ({},),
-        ({2: controller.plugins.toolkit.ObjectNotFound},),
-        ({1: controller.plugins.toolkit.NotAuthorized},),
-        ({1: controller.plugins.toolkit.NotAuthorized, 2: controller.plugins.toolkit.ObjectNotFound},),
-        ({},                                                                                          [1]),
-        ({},                                                                                          [3, 2]),
-        ({1: controller.plugins.toolkit.NotAuthorized},                                               [2]),
-        ({1: controller.plugins.toolkit.NotAuthorized, 2: controller.plugins.toolkit.ObjectNotFound}, [1, 3]),
-    ])
-    def test_no_error_loading_users(self, package_errors={}, deleted_packages=[]):
+    def test_no_error_loading_users(self):
 
-        pkgs_ids = [0, 1, 2, 3]
         user = 'example_user_test'
         controller.plugins.toolkit.c.user = user
 
-        # get_action mock
-        default_package = {'pkg_id': 0, 'test': 'ok', 'res': 'ta'}
-
-        def _package_show(context, data_dict):
-            if data_dict['id'] in package_errors:
-                raise package_errors[data_dict['id']]('ERROR')
-            else:
-                pkg = default_package.copy()
-                pkg['pkg_id'] = data_dict['id']
-                pkg['state'] = 'deleted' if data_dict['id'] in deleted_packages else 'active'
-                return pkg
-
-        user_dict = {'user_name': 'test', 'another_val': 'example value'}
-        package_show = MagicMock(side_effect=_package_show)
-        user_show = MagicMock(return_value=user_dict.copy())
-
+        # actions
+        default_user = {'user_name': 'test', 'another_val': 'example value'}
+        user_show = MagicMock(return_value=default_user)
+        acquisitions_list = MagicMock()
         def _get_action(action):
-            if action == 'package_show':
-                return package_show
-            elif action == 'user_show':
+            if action == 'user_show':
                 return user_show
+            else:
+                return acquisitions_list
 
         controller.plugins.toolkit.get_action = MagicMock(side_effect=_get_action)
 
-        # query mock
-        query_res = []
-        for i in pkgs_ids:
-            pkg = MagicMock()
-            pkg.package_id = i
-            pkg.user_name = user
-            query_res.append(pkg)
-
-        controller.db.AllowedUser.get = MagicMock(return_value=query_res)
-
         # Call the function
         returned = self.instanceUI.user_acquired_datasets()
-
-        # Check that the database has been initialized properly
-        controller.db.init_db.assert_called_once_with(controller.model)
 
         # User_show called correctly
         expected_context = {
@@ -140,24 +100,10 @@ class UIControllerTest(unittest.TestCase):
         user_show.assert_called_once_with(expected_context, {'user_obj': controller.plugins.toolkit.c.userobj})
 
         # Query called correctry
-        controller.db.AllowedUser.get.assert_called_once_with(user_name=user)
-
-        # Assert that the package_show has been called properly
-        self.assertEquals(len(pkgs_ids), package_show.call_count)
-        for i in pkgs_ids:
-            package_show.assert_any_call(expected_context, {'id': i})
-
-        # Check that the template receives the correct datasets
-        expected_user_dict = user_dict.copy()
-        expected_user_dict['acquired_datasets'] = []
-        for i in pkgs_ids:
-            if i not in package_errors and i not in deleted_packages:
-                pkg = default_package.copy()
-                pkg['pkg_id'] = i
-                pkg['state'] = 'deleted' if i in deleted_packages else 'active'
-                expected_user_dict['acquired_datasets'].append(pkg)
-
-        self.assertEquals(expected_user_dict, controller.plugins.toolkit.c.user_dict)
+        expected_user = default_user.copy()
+        expected_user['acquired_datasets'] = acquisitions_list.return_value
+        acquisitions_list.assert_called_with(expected_context, None)
+        self.assertEquals(expected_user, controller.plugins.toolkit.c.user_dict)
 
         # Check that the render method has been called and that its result has been returned
         self.assertEquals(controller.plugins.toolkit.render.return_value, returned)

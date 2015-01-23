@@ -43,11 +43,15 @@ class ActionsTest(unittest.TestCase):
         self._plugins = actions.plugins
         actions.plugins = MagicMock()
 
+        self._db = actions.db
+        actions.db = MagicMock()
+
     def tearDown(self):
         # Unmock
         actions.config = self._config
         actions.importlib = self._importlib
         actions.plugins = self._plugins
+        actions.db = self._db
 
     @parameterized.expand([
         ('',              None,       False, False, '%s not configured' % PARSER_CONFIG_PROP),
@@ -201,3 +205,82 @@ class ActionsTest(unittest.TestCase):
                     context_update['ignore_auth'] = True
 
                     package_update.assert_any_call(context_update, {'id': dataset_id, 'allowed_users': expected_allowed_users, 'private': True})
+
+
+    @parameterized.expand([
+        (None,               {},),
+        ({},                 {2: actions.plugins.toolkit.ObjectNotFound},),
+        ({'user': 'fiware'}, {1: actions.plugins.toolkit.NotAuthorized},),
+        (None,               {1: actions.plugins.toolkit.NotAuthorized, 2: actions.plugins.toolkit.ObjectNotFound},),
+        ({},                 {},                                                                                    [1]),
+        ({'user': 'fiware'}, {},                                                                                    [3, 2]),
+        (None,               {1: actions.plugins.toolkit.NotAuthorized},                                            [2]),
+        ({},                 {1: actions.plugins.toolkit.NotAuthorized, 2: actions.plugins.toolkit.ObjectNotFound}, [1, 3]),
+    ])
+    def test_acquisitions_list(self, data_dict, package_errors={}, deleted_packages=[]):
+
+        pkgs_ids = [0, 1, 2, 3]
+        user = 'example_user_test'
+        actions.plugins.toolkit.c.user = user
+
+        # get_action mock
+        default_package = {'pkg_id': 0, 'test': 'ok', 'res': 'ta'}
+
+        def _package_show(context, data_dict):
+            if data_dict['id'] in package_errors:
+                raise package_errors[data_dict['id']]('ERROR')
+            else:
+                pkg = default_package.copy()
+                pkg['pkg_id'] = data_dict['id']
+                pkg['state'] = 'deleted' if data_dict['id'] in deleted_packages else 'active'
+                return pkg
+
+        package_show = MagicMock(side_effect=_package_show)
+        actions.plugins.toolkit.get_action.return_value = package_show
+
+        # query mock
+        query_res = []
+        for i in pkgs_ids:
+            pkg = MagicMock()
+            pkg.package_id = i
+            pkg.user_name = user
+            query_res.append(pkg)
+
+        actions.db.AllowedUser.get = MagicMock(return_value=query_res)
+
+        # Context
+        context = {
+            'model': MagicMock(),
+            'user': 'default_user'
+        }
+
+        # Call the function
+        result = actions.acquisitions_list(context, data_dict)
+
+        # Asset that check_access has been called
+        actions.plugins.toolkit.chec_access(actions.constants.ACQUISITIONS_LIST, context, data_dict)
+
+        # Check that the database has been initialized properly
+        actions.db.init_db.assert_called_once_with(context['model'])
+
+        # Set expected user
+        expected_user = data_dict['user'] if data_dict is not None and 'user' in data_dict else context['user']
+
+        # Query called correctry
+        actions.db.AllowedUser.get.assert_called_once_with(user_name=expected_user)
+
+        # Assert that the package_show has been called properly
+        self.assertEquals(len(pkgs_ids), package_show.call_count)
+        for i in pkgs_ids:
+            package_show.assert_any_call(context, {'id': i})
+
+        # Check that the template receives the correct datasets
+        expected_acquired_datasets = []
+        for i in pkgs_ids:
+            if i not in package_errors and i not in deleted_packages:
+                pkg = default_package.copy()
+                pkg['pkg_id'] = i
+                pkg['state'] = 'deleted' if i in deleted_packages else 'active'
+                expected_acquired_datasets.append(pkg)
+
+        self.assertEquals(expected_acquired_datasets, result)

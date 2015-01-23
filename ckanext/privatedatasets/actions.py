@@ -19,6 +19,7 @@
 
 import ckan.plugins as plugins
 import ckanext.privatedatasets.constants as constants
+import db
 import importlib
 import logging
 import pylons.config as config
@@ -29,6 +30,28 @@ PARSER_CONFIG_PROP = 'ckan.privatedatasets.parser'
 
 
 def package_acquired(context, request_data):
+    '''
+    API action to be called every time a user acquires a dataset in an external service.
+    
+    This API should be called to add the user to the list of allowed users. 
+    
+    Since each service can provide a different way of pushing the data, the received
+    data will be forwarded to the parser set in the preferences. This parser should 
+    return a dict similar to the following one:
+        {'errors': ["...", "...", ...]
+         'users_datasets': [{'user': 'user_name', 'datasets': ['ds1', 'ds2', ...]}, ...]}
+    1) 'errors' contains the list of errors. It should be empty if no errors arised
+       while the notification is parsed
+    2) 'users_datasets' is the lists of datasets available for each user (each element 
+       of this list is a dictionary with two fields: user and datasets).
+
+    :parameter request_data: Depends on the parser
+    :type request_data: dict
+
+    :return: A list of warnings or None if the list of warnings is empty
+    :rtype: dict
+
+    '''
 
     log.info('Notification received: %s' % request_data)
 
@@ -107,3 +130,59 @@ def package_acquired(context, request_data):
     # Return warnings that inform about non-existing datasets
     if len(warns) > 0:
         return {'warns': warns}
+
+def acquisitions_list(context, data_dict):
+    '''
+    API to retrieve the list of datasets that have been acquired by a certain user
+
+    :parameter user: The user whose acquired dataset you want to retrieve. This parameter
+        is optional. If you don't include this identifier, the system will use the one
+        of the user that is performing the request
+    :type user: string
+
+    :return: The list of datarequest that has been acquired by the specified user
+    :rtype: list
+    '''
+
+    if data_dict is None:
+        data_dict = {}
+
+    if 'user' not in data_dict and 'user' in context:
+        data_dict['user'] = context['user']
+
+    plugins.toolkit.check_access(constants.ACQUISITIONS_LIST, context.copy(), data_dict)
+
+    # Init db
+    db.init_db(context['model'])
+
+    # Init the result array
+    result = []
+
+    # Check that the user exists
+    try:
+        plugins.toolkit.get_validator('user_name_exists')(data_dict['user'], context.copy())
+    except Exception:
+        raise plugins.toolkit.ValidationError('User %s does not exist' % data_dict['user'])
+
+    # Get the datasets acquired by the user
+    query = db.AllowedUser.get(user_name=data_dict['user'])
+
+    # Get the datasets
+    for dataset in query:
+        try:
+            dataset_show_func = 'dataset_show'
+            func_data_dict = {'id': dataset.package_id}
+            internal_context = context.copy()
+
+            # Check that the the dataset can be accessed and get its data
+            # FIX: If the check_access function is not called, an exception is risen.
+            plugins.toolkit.check_access(dataset_show_func, internal_context, func_data_dict)
+            dataset_dict = plugins.toolkit.get_action(dataset_show_func)(internal_context, func_data_dict)
+            
+            # Only packages with state == 'active' can be shown
+            if dataset_dict.get('state', None) == 'active':
+                result.append(dataset_dict)
+        except Exception:
+            pass
+
+    return result

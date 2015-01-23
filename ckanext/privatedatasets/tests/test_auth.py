@@ -249,4 +249,12 @@ class AuthTest(unittest.TestCase):
             self.assertEquals(authorized_pkg, result['success'])
 
     def test_package_acquired(self):
-        self.assertTrue(auth.package_acquired({}, {}))
+        self.assertTrue(auth.package_acquired({}, {})['success'])
+
+    @parameterized.expand([
+        ({'user': 'user_1'}, {'user': 'user_1'}, True),
+        ({'user': 'user_2'}, {'user': 'user_1'}, False),
+    ])
+    def test_acquisitions_list(self, context, data_dict, expected_result):
+        self.assertEquals(expected_result, auth.acquisitions_list(context, data_dict)['success'])
+
