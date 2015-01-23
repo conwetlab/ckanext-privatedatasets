@@ -133,3 +133,7 @@ def resource_show(context, data_dict):
 def package_acquired(context, data_dict):
     # TODO: Improve security
     return {'success': True}
+
+def acquisitions_list(context, data_dict):
+    # Users can get only their acquisitions list
+    return {'success': context['user'] == data_dict['user']}

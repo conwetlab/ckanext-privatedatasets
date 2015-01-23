@@ -107,7 +107,8 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
         return {'package_show': auth.package_show,
                 'package_update': auth.package_update,
                 'resource_show': auth.resource_show,
-                constants.PACKAGE_ACQUIRED: auth.package_acquired}
+                constants.PACKAGE_ACQUIRED: auth.package_acquired,
+                constants.ACQUISITIONS_LIST: auth.acquisitions_list}
 
     ######################################################################
     ############################ ICONFIGURER #############################
@@ -138,7 +139,10 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
     ######################################################################
 
     def get_actions(self):
-        return {constants.PACKAGE_ACQUIRED: actions.package_acquired}
+        return {
+            constants.PACKAGE_ACQUIRED: actions.package_acquired,
+            constants.ACQUISITIONS_LIST: actions.acquisitions_list
+        }
 
     ######################################################################
     ######################### IPACKAGECONTROLLER #########################
