@@ -68,7 +68,7 @@ class TestSelenium(unittest.TestCase):
         self.clearBBDD()
 
         self.driver = webdriver.Firefox()
-        self.driver.implicitly_wait(5000000)
+        self.driver.implicitly_wait(5)
         self.driver.set_window_size(1024, 768)
         self.base_url = 'http://127.0.0.1:5000/'
 
