@@ -178,12 +178,10 @@ class TestSelenium(unittest.TestCase):
         driver.find_element_by_id('field-description').send_keys(resource_description)
         driver.find_element_by_id('s2id_autogen1').clear()
         driver.find_element_by_id('s2id_autogen1').send_keys(resource_format)
-        save_elements = driver.find_elements_by_name('save')
-        save_elements[len(save_elements) - 1].click()
+        driver.find_element_by_css_selector('button.btn.btn-primary').click()
 
         # THIRD PAGE: Metadata
-        save_elements = driver.find_elements_by_name('save')
-        save_elements[len(save_elements) - 1].click()
+        driver.find_element_by_css_selector('button.btn.btn-primary').click()
 
     def modify_ds(self, url, name, description, tags, private, searchable, allowed_users, acquire_url):
         driver = self.driver
