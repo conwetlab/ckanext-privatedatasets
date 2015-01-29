@@ -18,6 +18,7 @@
 # along with CKAN Private Dataset Extension.  If not, see <http://www.gnu.org/licenses/>.
 
 import ckan.lib.search as search
+import ckan.model as model
 import ckan.plugins as p
 import ckan.plugins.toolkit as tk
 import auth
@@ -148,6 +149,11 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
     ######################### IPACKAGECONTROLLER #########################
     ######################################################################
 
+    def _delete_pkg_atts(self, pkg_dict, attrs):
+        for attr in attrs:
+            if attr in pkg_dict:
+                del pkg_dict[attr]
+
     def before_index(self, pkg_dict):
 
         if 'extras_' + constants.SEARCHABLE in pkg_dict:
@@ -222,9 +228,7 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
         # * users allowed to update the allowed_users list via the notification API
         if pkg_dict.get('private') is False or not updating_via_api and (not user_obj or (pkg_dict['creator_user_id'] != user_obj.id and not user_obj.sysadmin)):
             attrs = [constants.ALLOWED_USERS, constants.SEARCHABLE, constants.ACQUIRE_URL]
-            for attr in attrs:
-                if attr in pkg_dict:
-                    del pkg_dict[attr]
+            self._delete_pkg_atts(pkg_dict, attrs)
 
         return pkg_dict
 
@@ -242,6 +246,32 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
         session.commit()
 
         return pkg_dict
+
+    def after_search(self, search_results, search_params):
+        for result in search_results['results']:
+            # Extra fields should not be returned 
+            attrs = [constants.ALLOWED_USERS, constants.SEARCHABLE, constants.ACQUIRE_URL]
+            
+            # Additionally, resources should not be included if the user is not allowed
+            # to show the resource
+            context = {
+                'model': model,
+                'session': model.Session,
+                'user': tk.c.user,
+                'user_obj': tk.c.userobj
+            }
+
+            try:
+                tk.check_access('package_show', context, result)
+            except tk.NotAuthorized:
+                # NotAuthorized exception is risen when the user is not allowed
+                # to read the package.
+                attrs.append('resources')
+
+            # Delete 
+            self._delete_pkg_atts(result, attrs)
+
+        return search_results
 
     ######################################################################
     ######################### ITEMPLATESHELPER ###########################

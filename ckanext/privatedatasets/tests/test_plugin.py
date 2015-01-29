@@ -18,6 +18,7 @@
 # along with CKAN Private Dataset Extension.  If not, see <http://www.gnu.org/licenses/>.
 
 import unittest
+import copy
 import ckanext.privatedatasets.plugin as plugin
 
 from mock import MagicMock
@@ -30,6 +31,7 @@ class PluginTest(unittest.TestCase):
         # Create mocks
         self._tk = plugin.tk
         plugin.tk = MagicMock()
+        plugin.tk.NotAuthorized = self._tk.NotAuthorized
 
         self._db = plugin.db
         plugin.db = MagicMock()
@@ -385,3 +387,49 @@ class PluginTest(unittest.TestCase):
     ])
     def test_packagecontroller_after_update(self, new_users, current_users, users_to_add, users_to_delete):
         self._aux_test_after_create_update(self.privateDatasets.after_update, new_users, current_users, users_to_add, users_to_delete)
+
+    @parameterized.expand([
+        (1, True),
+        (1, False),
+        # Complex results
+        (3, True),
+        (3, False)
+    ])
+    def test_packagecontroller_after_search(self, num_seach_results, user_allowed):
+
+        # Create the list with the 
+        remaining_fields = ['other_id', 'name', 'author']
+        # Resources field should be in the result when the user is allowed to show the dataset
+        if user_allowed:
+            remaining_fields.append('resources')
+
+        search_results = {'facets': ['facet1', 'facet2'], 'results': [], 'elements': num_seach_results}
+        # Add resources
+        for _ in range(num_seach_results):
+            search_results['results'].append({
+                'allowed_users': ['user1', 'user2'],
+                'seearchable': True,
+                'acquire_url': 'https://upm.es',
+                'resources': ['resource1', 'resource2'],
+                remaining_fields[0]: 'value1',
+                remaining_fields[1]: 'value2',
+                remaining_fields[2]: 'value3'
+            })
+
+        # Mocking
+        plugin.tk.check_access.side_effect = None if user_allowed else plugin.tk.NotAuthorized
+
+        # Call the function
+        final_search_results =  self.privateDatasets.after_search(copy.deepcopy(search_results), None)
+
+        # Assertations
+        for result in final_search_results['results']:
+            self.assertNotIn('allowed_users', result)
+            self.assertNotIn('searchable', result)
+            self.assertNotIn('acquire_url', result)
+
+            for remaining_field in remaining_fields:
+                self.assertIn(remaining_field, result)
+
+        self.assertEquals(final_search_results['facets'], search_results['facets'])
+        self.assertEquals(final_search_results['elements'], search_results['elements'])
