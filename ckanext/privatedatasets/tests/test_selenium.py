@@ -68,7 +68,7 @@ class TestSelenium(unittest.TestCase):
         self.clearBBDD()
 
         self.driver = webdriver.Firefox()
-        self.driver.implicitly_wait(5000000)
+        self.driver.implicitly_wait(5)
         self.driver.set_window_size(1024, 768)
         self.base_url = 'http://127.0.0.1:5000/'
 
@@ -178,12 +178,10 @@ class TestSelenium(unittest.TestCase):
         driver.find_element_by_id('field-description').send_keys(resource_description)
         driver.find_element_by_id('s2id_autogen1').clear()
         driver.find_element_by_id('s2id_autogen1').send_keys(resource_format)
-        save_elements = driver.find_elements_by_name('save')
-        save_elements[len(save_elements) - 1].click()
+        driver.find_element_by_css_selector('button.btn.btn-primary').click()
 
         # THIRD PAGE: Metadata
-        save_elements = driver.find_elements_by_name('save')
-        save_elements[len(save_elements) - 1].click()
+        driver.find_element_by_css_selector('button.btn.btn-primary').click()
 
     def modify_ds(self, url, name, description, tags, private, searchable, allowed_users, acquire_url):
         driver = self.driver
