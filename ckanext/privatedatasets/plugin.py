@@ -29,6 +29,9 @@ import db
 import helpers as helpers
 
 
+HIDDEN_FIELDS = [constants.ALLOWED_USERS, constants.SEARCHABLE]
+
+
 class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
 
     p.implements(p.IDatasetForm)
@@ -222,12 +225,13 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
         user_obj = context.get('auth_user_obj')
         updating_via_api = context.get(constants.CONTEXT_CALLBACK, False)
 
-        # allowed_users, searchable and acquire_url fileds can be only viewed by (and only if the dataset is private):
+        # allowed_users and searchable fileds can be only viewed by (and only if the dataset is private):
         # * the dataset creator
         # * the sysadmin
         # * users allowed to update the allowed_users list via the notification API
         if pkg_dict.get('private') is False or not updating_via_api and (not user_obj or (pkg_dict['creator_user_id'] != user_obj.id and not user_obj.sysadmin)):
-            attrs = [constants.ALLOWED_USERS, constants.SEARCHABLE, constants.ACQUIRE_URL]
+            # The original list cannot be modified
+            attrs = list(HIDDEN_FIELDS)
             self._delete_pkg_atts(pkg_dict, attrs)
 
         return pkg_dict
@@ -250,8 +254,9 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
     def after_search(self, search_results, search_params):
         for result in search_results['results']:
             # Extra fields should not be returned 
-            attrs = [constants.ALLOWED_USERS, constants.SEARCHABLE, constants.ACQUIRE_URL]
-            
+            # The original list cannot be modified
+            attrs = list(HIDDEN_FIELDS)
+
             # Additionally, resources should not be included if the user is not allowed
             # to show the resource
             context = {

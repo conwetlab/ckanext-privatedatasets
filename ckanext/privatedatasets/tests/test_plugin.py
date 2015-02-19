@@ -257,7 +257,7 @@ class PluginTest(unittest.TestCase):
         result = self.privateDatasets.after_show(context, pkg_dict)    # Call the function
 
         # Check the final result
-        fields = ['allowed_users', 'searchable', 'acquire_url']
+        fields = ['allowed_users', 'searchable']
         for field in fields:
             if fields_expected:
                 self.assertTrue(field in result)
@@ -426,7 +426,7 @@ class PluginTest(unittest.TestCase):
         for result in final_search_results['results']:
             self.assertNotIn('allowed_users', result)
             self.assertNotIn('searchable', result)
-            self.assertNotIn('acquire_url', result)
+            self.assertIn('acquire_url', result)
 
             for remaining_field in remaining_fields:
                 self.assertIn(remaining_field, result)
