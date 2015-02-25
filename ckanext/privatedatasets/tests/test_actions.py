@@ -92,8 +92,9 @@ class ActionsTest(unittest.TestCase):
         # Checks
         self.assertEquals(0, actions.plugins.toolkit.get_action.call_count)
 
-    def configure_mocks(self, parse_result, datasets_not_found=[], not_updatable_datasets=[], allowed_users=None):
-   
+    def configure_mocks(self, parse_result, datasets_not_found=[], not_updatable_datasets=[],
+            allowed_users=None, creator_user={'id': '1234', 'name': 'ckan'}):
+
         actions.config = {PARSER_CONFIG_PROP: 'valid.path:%s' % CLASS_NAME}
 
         # Configure mocks
@@ -112,7 +113,8 @@ class ActionsTest(unittest.TestCase):
             if data_dict['id'] in datasets_not_found:
                 raise actions.plugins.toolkit.ObjectNotFound()
             else:
-                dataset = {'id': data_dict['id'], 'private': data_dict['id'] not in not_updatable_datasets}
+                dataset = {'id': data_dict['id'], 'private': data_dict['id'] not in not_updatable_datasets,
+                           'creator_user_id': creator_user['id']}
                 if allowed_users is not None:
                     dataset['allowed_users'] = list(allowed_users)
                 return dataset
@@ -121,18 +123,24 @@ class ActionsTest(unittest.TestCase):
             if data_dict['id'] in not_updatable_datasets:
                 raise actions.plugins.toolkit.ValidationError({'allowed_users': [ADD_USERS_ERROR]})
 
+        def _user_show(context, data_dict):
+            return {'name': creator_user['name'], 'id': data_dict['id']}
+
         package_show = MagicMock(side_effect=_package_show)
         package_update = MagicMock(side_effect=_package_update)
+        user_show = MagicMock(side_effect=_user_show)
 
         def _get_action(action):
             if action == 'package_update':
                 return package_update
             elif action == 'package_show':
                 return package_show
+            elif action == 'user_show':
+                return user_show
 
         actions.plugins.toolkit.get_action = _get_action
 
-        return parser_instance.parse_notification, package_show, package_update
+        return parser_instance.parse_notification, package_show, package_update, user_show
 
     @parameterized.expand([
         # Simple Test: one user and one dataset
@@ -147,7 +155,7 @@ class ActionsTest(unittest.TestCase):
         ({'user9': ['ds1']}, [],      ['ds1'], ['another_user', 'another_one']),
         ({'user1': ['ds1']}, [],      ['ds1'], ['another_user', 'user_name']),
 
-        # Complex test: some users and some datasets
+        # # Complex test: some users and some datasets
         ({'user1': ['ds1', 'ds2', 'ds3', 'ds4'], 'user2': ['ds5', 'ds6', 'ds7']}, ['ds3', 'ds6'], ['ds4', 'ds7'], []),
         ({'user3': ['ds1', 'ds2', 'ds3', 'ds4'], 'user4': ['ds5', 'ds6', 'ds7']}, ['ds3', 'ds6'], ['ds4', 'ds7'], ['another_user']),
         ({'user5': ['ds1', 'ds2', 'ds3', 'ds4'], 'user6': ['ds5', 'ds6', 'ds7']}, ['ds3', 'ds6'], ['ds4', 'ds7'], ['another_user', 'another_one']),
@@ -156,12 +164,14 @@ class ActionsTest(unittest.TestCase):
     def test_add_users(self, users_info, datasets_not_found, not_updatable_datasets, allowed_users=[]):
 
         parse_result = {'users_datasets': []}
+        creator_user = {'name': 'ckan', 'id': '1234'}
 
         # Transform user_info
         for user in users_info:
             parse_result['users_datasets'].append({'user': user, 'datasets': users_info[user]})
 
-        parse_notification, package_show, package_update = self.configure_mocks(parse_result, datasets_not_found, not_updatable_datasets, allowed_users)
+        parse_notification, package_show, package_update, user_show = self.configure_mocks(parse_result,
+                datasets_not_found, not_updatable_datasets, allowed_users, creator_user)
 
         # Call the function
         context = {'user': 'user1', 'model': 'model', 'auth_obj': {'id': 1}}
@@ -174,7 +184,7 @@ class ActionsTest(unittest.TestCase):
                 if dataset_id in datasets_not_found:
                     warns.append('Dataset %s was not found in this instance' % dataset_id)
                 elif dataset_id in not_updatable_datasets:
-                    #warns.append('%s(%s): %s' % (dataset_id, 'allowed_users', ADD_USERS_ERROR))
+                    # warns.append('%s(%s): %s' % (dataset_id, 'allowed_users', ADD_USERS_ERROR))
                     warns.append('Unable to upload the dataset %s: It\'s a public dataset' % dataset_id)
 
         expected_result = {'warns': warns} if len(warns) > 0 else None
@@ -203,8 +213,9 @@ class ActionsTest(unittest.TestCase):
 
                     context_update = context.copy()
                     context_update['ignore_auth'] = True
+                    context_update['user'] = creator_user['name']
 
-                    package_update.assert_any_call(context_update, {'id': dataset_id, 'allowed_users': expected_allowed_users, 'private': True})
+                    package_update.assert_any_call(context_update, {'id': dataset_id, 'allowed_users': expected_allowed_users, 'private': True, 'creator_user_id': creator_user['id']})
 
 
     @parameterized.expand([
