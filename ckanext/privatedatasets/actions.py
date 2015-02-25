@@ -32,17 +32,17 @@ PARSER_CONFIG_PROP = 'ckan.privatedatasets.parser'
 def package_acquired(context, request_data):
     '''
     API action to be called every time a user acquires a dataset in an external service.
-    
-    This API should be called to add the user to the list of allowed users. 
-    
+
+    This API should be called to add the user to the list of allowed users.
+
     Since each service can provide a different way of pushing the data, the received
-    data will be forwarded to the parser set in the preferences. This parser should 
+    data will be forwarded to the parser set in the preferences. This parser should
     return a dict similar to the following one:
         {'errors': ["...", "...", ...]
          'users_datasets': [{'user': 'user_name', 'datasets': ['ds1', 'ds2', ...]}, ...]}
     1) 'errors' contains the list of errors. It should be empty if no errors arised
        while the notification is parsed
-    2) 'users_datasets' is the lists of datasets available for each user (each element 
+    2) 'users_datasets' is the lists of datasets available for each user (each element
        of this list is a dictionary with two fields: user and datasets).
 
     :parameter request_data: Depends on the parser
@@ -105,6 +105,14 @@ def package_acquired(context, request_data):
                         dataset[constants.ALLOWED_USERS].append(user_info['user'])
                         context_pkg_update = context.copy()
                         context_pkg_update['ignore_auth'] = True
+
+                        # Set creator as the user who is performing the changes
+                        user_show = plugins.toolkit.get_action('user_show')
+                        creator_user_id = dataset.get('creator_user_id', '')
+                        user_show_context = {'ignore_auth': True}
+                        user = user_show(user_show_context, {'id': creator_user_id})
+                        context_pkg_update['user'] = user.get('name', '')
+
                         plugins.toolkit.get_action('package_update')(context_pkg_update, dataset)
                         log.info('Allowed Users added correctly')
                     else:
@@ -178,7 +186,7 @@ def acquisitions_list(context, data_dict):
             # FIX: If the check_access function is not called, an exception is risen.
             plugins.toolkit.check_access(dataset_show_func, internal_context, func_data_dict)
             dataset_dict = plugins.toolkit.get_action(dataset_show_func)(internal_context, func_data_dict)
-            
+
             # Only packages with state == 'active' can be shown
             if dataset_dict.get('state', None) == 'active':
                 result.append(dataset_dict)
