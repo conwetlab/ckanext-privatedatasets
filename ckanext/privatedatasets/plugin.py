@@ -110,7 +110,7 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
     def get_auth_functions(self):
         return {'package_show': auth.package_show,
                 'package_update': auth.package_update,
-                'resource_show': auth.resource_show,
+                # 'resource_show': auth.resource_show,
                 constants.PACKAGE_ACQUIRED: auth.package_acquired,
                 constants.ACQUISITIONS_LIST: auth.acquisitions_list}
 
