@@ -114,9 +114,9 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
                           constants.PACKAGE_ACQUIRED: auth.package_acquired,
                           constants.ACQUISITIONS_LIST: auth.acquisitions_list}
 
-        # resource_show is not required in CKAN 2.3 since it delegates in
+        # resource_show is not required in CKAN 2.3 because it delegates to
         # package_show
-        if tk.check_ckan_version(max_version='2.2'):
+        if not tk.check_ckan_version(min_version='2.3'):
             auth_functions['resource_show'] = auth.resource_show
 
         return auth_functions
