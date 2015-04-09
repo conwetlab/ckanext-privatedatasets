@@ -62,13 +62,19 @@ class PluginTest(unittest.TestCase):
     @parameterized.expand([
         ('package_show',      plugin.auth.package_show),
         ('package_update',    plugin.auth.package_update),
-        ('package_show',      plugin.auth.package_show),
+        ('resource_show',     plugin.auth.resource_show),
+        ('resource_show',     plugin.auth.resource_show,     True,  False),
         ('package_acquired',  plugin.auth.package_acquired),
         ('acquisitions_list', plugin.auth.acquisitions_list)
     ])
-    def test_auth_function(self, function_name, expected_function):
+    def test_auth_function(self, function_name, expected_function, is_ckan_23=False, expected=True):
+        plugin.tk.check_ckan_version = MagicMock(return_value=is_ckan_23)
         auth_functions = self.privateDatasets.get_auth_functions()
-        self.assertEquals(auth_functions[function_name], expected_function)
+
+        if expected:
+            self.assertEquals(auth_functions[function_name], expected_function)
+        else:
+            self.assertNotIn(function_name, auth_functions)
 
     def test_update_config(self):
         # Call the method
