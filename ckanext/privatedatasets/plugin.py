@@ -108,11 +108,18 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
     ######################################################################
 
     def get_auth_functions(self):
-        return {'package_show': auth.package_show,
-                'package_update': auth.package_update,
-                'resource_show': auth.resource_show,
-                constants.PACKAGE_ACQUIRED: auth.package_acquired,
-                constants.ACQUISITIONS_LIST: auth.acquisitions_list}
+        auth_functions = {'package_show': auth.package_show,
+                          'package_update': auth.package_update,
+                          # 'resource_show': auth.resource_show,
+                          constants.PACKAGE_ACQUIRED: auth.package_acquired,
+                          constants.ACQUISITIONS_LIST: auth.acquisitions_list}
+
+        # resource_show is not required in CKAN 2.3 because it delegates to
+        # package_show
+        if not tk.check_ckan_version(min_version='2.3'):
+            auth_functions['resource_show'] = auth.resource_show
+
+        return auth_functions
 
     ######################################################################
     ############################ ICONFIGURER #############################
