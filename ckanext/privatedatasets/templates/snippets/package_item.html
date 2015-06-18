@@ -44,15 +44,17 @@ Example:
             {{ _('Owner') }}
           </span>
         {% endif %}
-        <!-- Customizations FIWARE GETACCESS GETACCESSBUTTON-->
+        
+        <!-- Customizations Acquire Button -->
         {% if package.private and not h.can_read(package) %}
             {{ _(h.truncate(title, truncate_title)) }}
              <div class="divider"/>
-            {{ h.getaccess_button(package) }}
+            {{ h.acquire_button(package) }}
         {% else %}
             {{ h.link_to(h.truncate(title, truncate_title), h.url_for(controller='package', action='read', id=package.name)) }}
         {% endif %}
-        <!-- End of customizations FIWARE GETACCESSBUTTON -->
+        <!-- End of customizations Acquire Button -->
+        
         {% if package.get('state', '').startswith('draft') %}
           <span class="label label-info">{{ _('Draft') }}</span>
         {% elif package.get('state', '').startswith('deleted') %}

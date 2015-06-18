@@ -273,7 +273,7 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
                 # to read the package.
                 attrs.append('resources')
 
-            # Delete 
+            # Delete
             self._delete_pkg_atts(result, attrs)
 
         return search_results
@@ -289,5 +289,5 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
                 'can_read': helpers.can_read,
                 'show_acquire_url_on_create': helpers.show_acquire_url_on_create,
                 'show_acquire_url_on_edit': helpers.show_acquire_url_on_edit,
-                'getaccess_button': helpers.getaccess_button
+                'acquire_button': helpers.acquire_button
                 }
