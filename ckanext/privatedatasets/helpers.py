@@ -23,6 +23,10 @@ import db
 
 from pylons import config
 
+from ckan.common import request
+
+import logging
+log = logging.getLogger(__name__)
 
 def is_dataset_acquired(pkg_dict):
 
@@ -68,3 +72,32 @@ def show_acquire_url_on_create():
 
 def show_acquire_url_on_edit():
     return get_config_bool_value('ckan.privatedatasets.show_acquire_url_on_edit')
+
+
+def snippet(template_name, data=None):
+    ''' This function is used to load html snippets into pages. keywords
+    can be used to pass parameters into the snippet rendering '''
+    return tk.render_snippet(template_name, data)
+
+
+def getaccess_button(package):
+    '''Return a Get Access button for the given package id.
+
+    If the user is not logged in return an empty string instead.
+
+    :param package: the the package to request access when the get access
+        button is clicked
+    :type package: Package
+
+    :returns: a get access button as an HTML snippet
+    :rtype: string
+
+    '''
+
+    if 'acquire_url' in package and request.path.startswith('/dataset')\
+            and package['acquire_url'] != '':
+        url_dest = package['acquire_url']
+        data = {'url_dest': url_dest}
+        return snippet('snippets/fiware_getaccess_button.html', data)
+    else:
+        return ''
