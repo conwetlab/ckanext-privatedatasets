@@ -1,0 +1,15 @@
+{#
+   
+Displays a Get Access button to request access to a private dataset.
+
+ulr_dest	- target url
+
+Example:
+
+  {% snippet 'snippets/fiware_getaccess_button.html', url_dest=url %}
+
+#}
+<a href={{ url_dest }} class="btn btn-mini">
+    <i class="icon-plus-sign"></i>
+    {{ _('Get Access') }}
+</a>
