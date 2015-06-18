@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2014 CoNWeT Lab., Universidad Politécnica de Madrid
+# Copyright (c) 2014-2015 CoNWeT Lab., Universidad Politécnica de Madrid
 
 # This file is part of CKAN Private Dataset Extension.
 
@@ -22,6 +22,11 @@ import ckan.plugins.toolkit as tk
 import db
 
 from pylons import config
+
+from ckan.common import request
+
+import logging
+log = logging.getLogger(__name__)
 
 
 def is_dataset_acquired(pkg_dict):
@@ -68,3 +73,26 @@ def show_acquire_url_on_create():
 
 def show_acquire_url_on_edit():
     return get_config_bool_value('ckan.privatedatasets.show_acquire_url_on_edit')
+
+
+def acquire_button(package):
+    '''
+    Return a Get Access button for the given package id when the dataset has
+    an acquisition URL.
+
+    :param package: the the package to request access when the get access
+        button is clicked
+    :type package: Package
+
+    :returns: a get access button as an HTML snippet
+    :rtype: string
+
+    '''
+
+    if 'acquire_url' in package and request.path.startswith('/dataset')\
+            and package['acquire_url'] != '':
+        url_dest = package['acquire_url']
+        data = {'url_dest': url_dest}
+        return tk.render_snippet('snippets/acquire_button.html', data)
+    else:
+        return ''
