@@ -40,11 +40,15 @@ class HelpersTest(unittest.TestCase):
         self._config = helpers.config
         helpers.config = {}
 
+        self._request = helpers.request
+        helpers.request = MagicMock()
+
     def tearDown(self):
         helpers.model = self._model
         helpers.tk = self._tk
         helpers.db = self._db
         helpers.config = self._config
+        helpers.request = self._request
 
     @parameterized.expand([
         (False, 'user', False),
@@ -147,3 +151,24 @@ class HelpersTest(unittest.TestCase):
 
         # Call the function
         self.assertEquals(expected_value, helpers.show_acquire_url_on_edit())
+
+    @parameterized.expand([
+        ({}, '/dataset', False),
+        ({'acquire_url': 'http://fiware.org'}, '/dataset', True),
+        ({'acquire_url': ''}, '/dataset', False),
+        ({'acquire_url': 'http://fiware.org'}, '/user', False),
+    ])
+    def test_acquire_button(self, package, path, button_expected):
+
+        # Mocking
+        helpers.request.path = path
+
+        # Call the function and check response
+        result = helpers.acquire_button(package)
+
+        if button_expected:
+            helpers.tk.render_snippet.assert_called_once_with('snippets/acquire_button.html', 
+                                                              {'url_dest': package['acquire_url']})
+            self.assertEquals(result, helpers.tk.render_snippet.return_value)
+        else:
+            self.assertEquals(result, '')

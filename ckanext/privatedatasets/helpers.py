@@ -75,14 +75,6 @@ def show_acquire_url_on_edit():
     return get_config_bool_value('ckan.privatedatasets.show_acquire_url_on_edit')
 
 
-def snippet(template_name, data=None):
-    '''
-    This function is used to load html snippets into pages. keywords
-    can be used to pass parameters into the snippet rendering 
-    '''
-    return tk.render_snippet(template_name, data)
-
-
 def acquire_button(package):
     '''
     Return a Get Access button for the given package id when the dataset has
@@ -101,6 +93,6 @@ def acquire_button(package):
             and package['acquire_url'] != '':
         url_dest = package['acquire_url']
         data = {'url_dest': url_dest}
-        return snippet('snippets/acquire_button.html', data)
+        return tk.render_snippet('snippets/acquire_button.html', data)
     else:
         return ''
