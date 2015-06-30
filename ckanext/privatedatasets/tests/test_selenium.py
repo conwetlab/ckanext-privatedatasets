@@ -30,7 +30,6 @@ import os
 import unittest
 import re
 import requests
-import time
 
 
 def get_dataset_url(dataset_name):
@@ -81,7 +80,8 @@ class TestSelenium(unittest.TestCase):
             self.assertFalse(self.driver.find_element_by_id(field).is_enabled())
 
     def logout(self):
-        self.driver.find_element_by_css_selector('i.icon-signout').click()
+        self.driver.delete_all_cookies()
+        self.driver.get(self.base_url)
 
     def register(self, username, fullname, mail, password):
         driver = self.driver
@@ -180,9 +180,6 @@ class TestSelenium(unittest.TestCase):
         driver.find_element_by_id('s2id_autogen1').send_keys(resource_format)
         driver.find_element_by_css_selector('button.btn.btn-primary').click()
 
-        # THIRD PAGE: Metadata
-        driver.find_element_by_css_selector('button.btn.btn-primary').click()
-
     def modify_ds(self, url, name, description, tags, private, searchable, allowed_users, acquire_url):
         driver = self.driver
         driver.get('%sdataset/edit/%s' % (self.base_url, url))
@@ -200,9 +197,10 @@ class TestSelenium(unittest.TestCase):
 
             # Test that the allowed users lists is as expected (order is not important)
             current_users = driver.find_element_by_css_selector('#s2id_field-allowed_users_str > ul.select2-choices').text.split('\n')
+            current_users = current_users[0:-1]
             # ''.split('\n') ==> ['']
-            if len(current_users) == 1 and current_users[0] == '':
-                current_users = []
+            # if len(current_users) == 1 and current_users[0] == '':
+            #     current_users = []
             # Check the array
             self.assertEquals(len(allowed_users), len(current_users))
             for user in current_users:
@@ -225,15 +223,13 @@ class TestSelenium(unittest.TestCase):
             elif owner:
                 self.assertEqual('OWNER', driver.find_element_by_xpath(xpath).text)
 
-            # Access the dataset
-            driver.find_element_by_link_text(dataset).click()
-
+            # When a user cannot access a dataset, the link is no longer provided
         else:
             # If the dataset is not searchable, a link to it could not be found in the dataset search page
             self.assertEquals(None, re.search(dataset_url, driver.page_source))
 
-            # Access the dataset
-            driver.get(self.base_url + 'dataset/' + dataset_url)
+        # Access the dataset
+        driver.get(self.base_url + 'dataset/' + dataset_url)
 
         if not acquired and private and not in_org:
             xpath = '//div[@id=\'content\']/div/div'
@@ -308,14 +304,20 @@ class TestSelenium(unittest.TestCase):
             self.login(user, user)
             acquired = user in allowed_users
             self.check_user_access(pkg_name, url, False, acquired, False, private, searchable, acquire_url)
+
+            # The user is logged out when they try to access a private dataset and they are not included
+            # in the list of allowed users.
+            if not acquired and private:
+                self.login(user, user)
+
             self.check_acquired(pkg_name, url, acquired, private)
 
     @parameterized.expand([
         # (['a']  ,          'http://upm.es',      'Allowed users: Name must be at least 2 characters long'),
         # (['a a'],          'http://upm.es',      'Allowed users: Url must be purely lowercase alphanumeric (ascii) characters and these symbols: -_'),
-        (['upm', 'a'],     'http://upm.es',      'Allowed users: Name must be at least 2 characters long'),
-        (['upm', 'a a a'], 'http://upm.es',      'Allowed users: Url must be purely lowercase alphanumeric (ascii) characters and these symbols: -_'),
-        (['upm', 'a?-vz'], 'http://upm.es',      'Allowed users: Url must be purely lowercase alphanumeric (ascii) characters and these symbols: -_'),
+        (['upm', 'a'],     'http://upm.es',      'Allowed users: Must be at least 2 characters long'),
+        (['upm', 'a a a'], 'http://upm.es',      'Allowed users: Must be purely lowercase alphanumeric (ascii) characters and these symbols: -_'),
+        (['upm', 'a?-vz'], 'http://upm.es',      'Allowed users: Must be purely lowercase alphanumeric (ascii) characters and these symbols: -_'),
         (['thisisaveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryverylongname'],
                            'http://upm.es',      'Allowed users: Name must be a maximum of 100 characters long'),
         (['conwet'],       'ftp://google.es',    'Acquire URL: The URL "ftp://google.es" is not valid.'),
@@ -390,7 +392,6 @@ class TestSelenium(unittest.TestCase):
         ([{'private': False, 'searchable': True,  'allowed_users': ['user1', 'user2']}], ['user3', 'user4']),
         ([{'private': True,  'searchable': False, 'allowed_users': ['user1', 'user2']}], ['user3', 'user4']),
         ([{'private': False, 'searchable': False, 'allowed_users': ['user1', 'user2']}], ['user3', 'user4']),
-
         # Complex test
         ([{'private': True,  'searchable': False, 'allowed_users': ['user1', 'user2']},
           {'private': True,  'searchable': True,  'allowed_users': ['user5', 'user6']},
@@ -496,6 +497,12 @@ class TestSelenium(unittest.TestCase):
             acquired = user in adquiring_users
             in_org = user in orgs[0]['users']
             self.check_user_access(pkg_name, url, False, acquired, in_org, private, searchable, acquire_url)
+
+            # The user is logged out when they try to access a private dataset and they are not included
+            # in the list of allowed users.
+            if not acquired and private and not in_org:
+                self.login(user, user)
+
             self.check_acquired(pkg_name, url, acquired, private)
 
     def test_bug_16(self):
