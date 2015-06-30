@@ -178,7 +178,7 @@ def acquisitions_list(context, data_dict):
     # Get the datasets
     for dataset in query:
         try:
-            dataset_show_func = 'dataset_show'
+            dataset_show_func = 'package_show'
             func_data_dict = {'id': dataset.package_id}
             internal_context = context.copy()
 
