@@ -3,6 +3,8 @@ CKAN Private Datasets [![Build Status](https://build.conwet.fi.upm.es/jenkins/bu
 
 This CKAN extension allows a user to create private datasets that only certain users will be able to see. When a dataset is being created, it's possible to specify the list of users that can see this dataset. In addition, the extension provides an HTTP API that allows to add users programatically. 
 
+This project is part of [FIWARE](http://www.fiware.org).
+
 Installation
 ------------
 Install this extension in your CKAN instance is as easy as intall any other CKAN extension.
