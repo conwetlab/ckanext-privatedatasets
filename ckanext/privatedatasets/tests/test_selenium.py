@@ -30,7 +30,6 @@ import os
 import unittest
 import re
 import requests
-import time
 
 
 def get_dataset_url(dataset_name):
@@ -181,9 +180,6 @@ class TestSelenium(unittest.TestCase):
         driver.find_element_by_id('s2id_autogen1').send_keys(resource_format)
         driver.find_element_by_css_selector('button.btn.btn-primary').click()
 
-        # THIRD PAGE: Metadata
-        # driver.find_element_by_css_selector('button.btn.btn-primary').click()
-
     def modify_ds(self, url, name, description, tags, private, searchable, allowed_users, acquire_url):
         driver = self.driver
         driver.get('%sdataset/edit/%s' % (self.base_url, url))
@@ -227,9 +223,7 @@ class TestSelenium(unittest.TestCase):
             elif owner:
                 self.assertEqual('OWNER', driver.find_element_by_xpath(xpath).text)
 
-            # Access the dataset
-            # driver.find_element_by_link_text(dataset).click()
-
+            # When a user cannot access a dataset, the link is no longer provided
         else:
             # If the dataset is not searchable, a link to it could not be found in the dataset search page
             self.assertEquals(None, re.search(dataset_url, driver.page_source))
