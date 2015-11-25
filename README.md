@@ -17,6 +17,13 @@ Install this extension in your CKAN instance is as easy as install any other CKA
 ```
 pip install ckanext-privatedatasets
 ```
+> **Note**: If you prefer, you can also download the source code and install the extension manually. To do so, execute the following commands:
+> ```
+> $ git clone https://github.com/conwetlab/ckanext-privatedatasets.git
+> $ cd ckanext-privatedatasets
+> $ python setup.py install
+> ```
+
 * Modify your configuration file (generally in `/etc/ckan/default/production.ini`) and add `privatedatasets` in the `ckan.plugins` property.
 ```
 ckan.plugins = privatedatasets <OTHER_PLUGINS>
