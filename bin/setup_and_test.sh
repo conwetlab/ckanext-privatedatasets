@@ -99,9 +99,7 @@ cd ..
 
 echo "Installing ckanext-privatedatasets and its requirements..."
 python setup.py develop
-pip install -r dev-requirements.txt
 
 
 echo "Running tests..."
-nosetests --ckan --with-xunit --with-pylons=test.ini ckanext/privatedatasets/tests/ --with-coverage \
---cover-package=ckanext.privatedatasets --cover-inclusive --cover-erase . --cover-xml
+python setup.py nosetests
