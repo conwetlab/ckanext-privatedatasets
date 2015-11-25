@@ -1,22 +1,33 @@
 CKAN Private Datasets [![Build Status](https://build.conwet.fi.upm.es/jenkins/buildStatus/icon?job=ckan_privatedatasets-develop)](https://build.conwet.fi.upm.es/jenkins/job/ckan_privatedatasets-develop/)
 =====================
 
-This CKAN extension allows a user to create private datasets that only certain users will be able to see. When a dataset is being created, it's possible to specify the list of users that can see this dataset. In addition, the extension provides an HTTP API that allows to add users programatically.
+This CKAN extension allows a user to create private datasets that only certain users will be able to see. When a dataset is being created, it's possible to specify the list of users that can see this dataset. In addition, the extension provides an HTTP API that allows to add users programmatically.
 
 Installation
 ------------
-Install this extension in your CKAN instance is as easy as intall any other CKAN extension.
+Install this extension in your CKAN instance is as easy as install any other CKAN extension.
 
-* Download the source from this GitHub repo.
-* Activate your virtual environment (generally by running `. /usr/lib/ckan/default/bin/activate`)
-* Install the extension by running `python setup.py install`
-* Modify your configuration file (generally in `/etc/ckan/default/production.ini`) and add `privatedatasets` in the `ckan.plugins` setting.
+* Activate your virtual environment
+```
+. /usr/lib/ckan/default/bin/activate
+```
+* Install the extension by running
+```
+pip install ckanext-privatedatasets
+```
+* Modify your configuration file (generally in `/etc/ckan/default/production.ini`) and add `privatedatasets` in the `ckan.plugins` property.
+```
+ckan.plugins = privatedatasets <OTHER_PLUGINS>
+```
 * In the same config file, specify the location of your parser by adding the `ckan.privatedatasets.parser` setting. For example, to set the [FiWareNotificationParser](https://github.com/conwetlab/ckanext-privatedatasets/blob/master/ckanext/privatedatasets/parsers/fiware.py) as notification parser, add the following line: `ckan.privatedatasets.parser = ckanext.privatedatasets.parsers.fiware:FiWareNotificationParser`.
 * If you want you can also add some preferences to set if the Acquire URL should be shown when the user is to create and/or editing a dataset:
   * To show the Acquire URL when the user is **creating** a dataset, you should set the following preference: `ckan.privatedatasets.show_acquire_url_on_create = True`. By default, the value of this preference is set to `False`.
   * To show the Acquire URL when the user is **editing** a dataset, you should set the following preference: `ckan.privatedatasets.show_acquire_url_on_edit = True`. By default, the value of this preference is set to `False`.
 * In some cases you will want to secure the notification callback in order to filter the entities (user, machines...) that can send them. To do so, you can follow the instructions in the section [Securing the Notification Callback](#securing-the-notification-callback).
-* Restart your apache2 reserver (`sudo service apache2 restart`)
+* Restart your apache2 reserver
+```
+sudo service apache2 restart
+```
 * That's All!
 
 Creating a notification parser
@@ -25,7 +36,7 @@ Since each service can send notifications in a different way, the extension allo
 
 If you want to create your own parser, you have to:
 
-1. Create a class with a method called `parse_notification`. This method will recieve one argument that will include the notification body.
+1. Create a class with a method called `parse_notification`. This method will receive one argument that will include the notification body.
 2. Parse the notification as you like. You can raise a CKAN's default exception (`ValidationError`, `ObjectNotFound`, `NotAuthorized`, `ValidationError`, `SearchError`, `SearchQueryError` or `SearchIndexError`) if you find an error parsing the notification.
 3. Return a dictionary with the structure attached below. The `users_datasets` is the lists of datasets available for each user (each element of this list is a dictionary with two fields: `user` and `datasets`).
 
@@ -89,13 +100,13 @@ crlDistributionPoints = @crl
 URI=http://testca.local/ca.crl
 ```
 
-Then, you should create your CA using the previous config file. To do so, you can execure the following line (replace `<PATH_TO_SSL_CONFIG_FILE>` by the real path of your OpenSSL config file):
+Then, you should create your CA using the previous config file. To do so, you can execute the following line (replace `<PATH_TO_SSL_CONFIG_FILE>` by the real path of your OpenSSL config file):
 
 ```
 $ openssl req -config <PATH_TO_SSL_CONFIG_FILE> -newkey rsa:2048 -nodes -keyform PEM -keyout ca.key -x509 -days 3650 -extensions certauth -outform PEM -out ca.cer
 ```
 
-Afterwards, you will need to filter the notification callback to be callable only by those entities that use a valid certificate (the one signed by the CA created previously). To achieve this, edit the file `/etc/apache2/sites-available/ckan_default` and add the following lines inmediatly after the SSL configuration (replace `<PATH_TO_SSL_CONFIG_FILE>` by the real path of your OpenSSL config file):
+Afterwards, you will need to filter the notification callback to be callable only by those entities that use a valid certificate (the one signed by the CA created previously). To achieve this, edit the file `/etc/apache2/sites-available/ckan_default` and add the following lines immediately after the SSL configuration (replace `<PATH_TO_SSL_CONFIG_FILE>` by the real path of your OpenSSL config file):
 
 ```
     <Location /api/action/dataset_acquired>
@@ -119,17 +130,12 @@ $ openssl x509 -req -in client.req -CA ca.cer -CAkey ca.key -set_serial 101 -ext
 $ openssl pkcs12 -export -inkey client.key -in client.cer -out client.p12
 ```
 
-That's all! You notification callback is completly secure now! Enjoy it :)
+That's all! You notification callback is completely secure now! Enjoy it :)
 
 Tests
 -----
 This sofware contains a set of test to detect errors and failures. You can run this tests by running the following command:
 ```
-nosetests --ckan --with-pylons=test.ini ckanext/privatedatasets/tests/
+python setup.py nosetests
 ```
 **Note:** The `test.ini` file contains a link to the CKAN `test-core.ini` file. You will need to change that link to the real path of the file in your system (generally `/usr/lib/ckan/default/src/ckan/test-core.ini`).
-
-You can also generate coverage reports by running:
-```
-nosetests --ckan --with-xunit --with-pylons=test.ini ckanext/privatedatasets/tests/ --with-coverage --cover-package=ckanext.privatedatasets --cover-inclusive --cover-erase . --cover-xml
-```
