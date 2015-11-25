@@ -136,7 +136,7 @@ That's all! You notification callback is completely secure now! Enjoy it :)
 
 Tests
 -----
-This sofware contains a set of test to detect errors and failures. You can run this tests by running the following command:
+This sofware contains a set of test to detect errors and failures. You can run this tests by running the following command (this command will generate coverage reports):
 ```
 python setup.py nosetests
 ```
