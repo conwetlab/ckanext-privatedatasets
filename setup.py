@@ -48,7 +48,7 @@ setup(
     ],
     tests_require=[
         'nose_parameterized==0.3.3',
-        'selenium==2.46.0'
+        'selenium==2.52.0'
     ],
     test_suite='nosetests',
     entry_points='''
