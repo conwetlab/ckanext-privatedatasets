@@ -66,10 +66,15 @@ class TestSelenium(unittest.TestCase):
     def setUp(self):
         self.clearBBDD()
 
-        self.driver = webdriver.Firefox()
+        if 'WEB_DRIVER_URL' in os.environ and 'CKAN_SERVER_URL' in os.environ:
+            self.driver = webdriver.Remote(os.environ['WEB_DRIVER_URL'], webdriver.DesiredCapabilities.FIREFOX.copy())
+            self.base_url = os.environ['CKAN_SERVER_URL']
+        else:
+            self.driver = webdriver.Firefox()
+            self.base_url = 'http://127.0.0.1:5000/'
+
         self.driver.implicitly_wait(5)
         self.driver.set_window_size(1024, 768)
-        self.base_url = 'http://127.0.0.1:5000/'
 
     def tearDown(self):
         self.clearBBDD()
@@ -177,7 +182,7 @@ class TestSelenium(unittest.TestCase):
         driver.find_element_by_id('field-description').clear()
         driver.find_element_by_id('field-description').send_keys(resource_description)
         driver.find_element_by_id('s2id_autogen1').clear()
-        driver.find_element_by_id('s2id_autogen1').send_keys(resource_format)
+        driver.find_element_by_id('s2id_autogen1').send_keys(resource_format + '\n')
         driver.find_element_by_css_selector('button.btn.btn-primary').click()
 
     def modify_ds(self, url, name, description, tags, private, searchable, allowed_users, acquire_url):
