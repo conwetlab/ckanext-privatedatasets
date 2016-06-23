@@ -137,3 +137,7 @@ def package_acquired(context, data_dict):
 def acquisitions_list(context, data_dict):
     # Users can get only their acquisitions list
     return {'success': context['user'] == data_dict['user']}
+
+def  package_deleted(context, data_dict):
+    # TODO: Check functionality and improve security(if needed)
+    return {'success': True}

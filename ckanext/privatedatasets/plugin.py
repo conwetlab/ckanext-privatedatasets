@@ -112,7 +112,8 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
                           'package_update': auth.package_update,
                           # 'resource_show': auth.resource_show,
                           constants.PACKAGE_ACQUIRED: auth.package_acquired,
-                          constants.ACQUISITIONS_LIST: auth.acquisitions_list}
+                          constants.ACQUISITIONS_LIST: auth.acquisitions_list,
+                          constants.PACKAGE_DELETED: auth.package_deleted}
 
         # resource_show is not required in CKAN 2.3 because it delegates to
         # package_show
@@ -152,7 +153,8 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
     def get_actions(self):
         return {
             constants.PACKAGE_ACQUIRED: actions.package_acquired,
-            constants.ACQUISITIONS_LIST: actions.acquisitions_list
+            constants.ACQUISITIONS_LIST: actions.acquisitions_list,
+            constants.PACKAGE_DELETED: actions.package_deleted
         }
 
     ######################################################################

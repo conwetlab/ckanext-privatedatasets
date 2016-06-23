@@ -194,3 +194,110 @@ def acquisitions_list(context, data_dict):
             pass
 
     return result
+def package_deleted(context, request_data):
+    '''
+    API action to be called every time a user deletes a dataset in an external service.
+
+    This API should be called to delete the user from the list of allowed users.
+
+    Since each service can provide a different way of pushing the data, the received
+    data will be forwarded to the parser set in the preferences. This parser should
+    return a dict similar to the following one:
+        {'errors': ["...", "...", ...]
+         'users_datasets': [{'user': 'user_name', 'datasets': ['ds1', 'ds2', ...]}, ...]}
+    1) 'errors' contains the list of errors. It should be empty if no errors arised
+       while the notification is parsed
+    2) 'users_datasets' is the lists of datasets available for each user (each element
+       of this list is a dictionary with two fields: user and datasets).
+
+    :parameter request_data: Depends on the parser
+    :type request_data: dict
+
+    :return: A list of warnings or None if the list of warnings is empty
+    :rtype: dict
+
+    '''
+    log.info('Notification received: %s' % request_data)
+
+    # Check access
+    plugins.toolkit.check_access(constants.PACKAGE_DELETED, context, request_data)
+
+    # Get the parser from the configuration
+    class_path = config.get(PARSER_CONFIG_PROP, '')
+
+    if class_path != '':
+        try:
+            cls = class_path.split(':')
+            class_package = cls[0]
+            class_name = cls[1]
+            parser_cls = getattr(importlib.import_module(class_package), class_name)
+            parser = parser_cls()
+        except Exception as e:
+            raise plugins.toolkit.ValidationError({'message': '%s: %s' % (type(e).__name__, str(e))})
+    else:
+        raise plugins.toolkit.ValidationError({'message': '%s not configured' % PARSER_CONFIG_PROP})
+
+    # Parse the result using the parser set in the configuration
+    # Expected result: {'errors': ["...", "...", ...]
+    #                   'users_datasets': [{'user': 'user_name', 'datasets': ['ds1', 'ds2', ...]}, ...]}
+    result = parser.parse_notification(request_data)
+
+    warns = []
+
+    for user_info in result['users_datasets']:
+        for dataset_id in user_info['datasets']:
+            
+            try:
+                context_pkg_show = context.copy()
+                context_pkg_show['ignore_auth'] = True
+                context_pkg_show[constants.CONTEXT_CALLBACK] = True
+                dataset = plugins.toolkit.get_action('package_show')(context_pkg_show, {'id': dataset_id})
+
+                # This operation can only be performed with private datasets
+                # This check is redundant since the package_update function will throw an exception
+                # if a list of allowed users is included in a public dataset. However, this check
+                # should be performed in order to avoid strange future exceptions
+                if dataset.get('private', None) is True:
+
+                    # Create the array if it does not exist
+                    if constants.ALLOWED_USERS not in dataset or dataset[constants.ALLOWED_USERS] is None:
+                        dataset[constants.ALLOWED_USERS] = []
+
+                    # Deletes the user only if it is in the list
+                    if user_info['user'] in dataset[constants.ALLOWED_USERS]:
+                        dataset[constants.ALLOWED_USERS].remove(user_info['user'])
+                        context_pkg_update = context.copy()
+                        context_pkg_update['ignore_auth'] = True
+
+                        # Set creator as the user who is performing the changes
+                        user_show = plugins.toolkit.get_action('user_show')
+                        creator_user_id = dataset.get('creator_user_id', '')
+                        user_show_context = {'ignore_auth': True}
+                        user = user_show(user_show_context, {'id': creator_user_id})
+                        context_pkg_update['user'] = user.get('name', '')
+
+                        plugins.toolkit.get_action('package_update')(context_pkg_update, dataset)
+                        log.info('Allowed Users deleted correctly')
+                    else:
+                        log.warn('The user %s is already deleted from accessing the %s dataset' % (user_info['user'], dataset_id))
+                else:
+                    log.warn('Dataset %s is public. Allowed Users cannot be deleted')
+                    warns.append('Unable to upload the dataset %s: It\'s a public dataset' % dataset_id)
+
+            except plugins.toolkit.ObjectNotFound:
+                # If a dataset does not exist in the instance, an error message will be returned to the user.
+                # However the process won't stop and the process will continue with the remaining datasets.
+                log.warn('Dataset %s was not found in this instance' % dataset_id)
+                warns.append('Dataset %s was not found in this instance' % dataset_id)
+            except plugins.toolkit.ValidationError as e:
+                # Some datasets does not allow to introduce the list of allowed users since this property is
+                # only valid for private datasets outside an organization. In this case, a wanr will return
+                # but the process will continue
+                # WARN: This exception should not be risen anymore since public datasets are not updated.
+                message = '%s(%s): %s' % (dataset_id, constants.ALLOWED_USERS, e.error_dict[constants.ALLOWED_USERS][0])
+                log.warn(message)
+                warns.append(message)
+
+    # Return warnings that inform about non-existing datasets
+    if len(warns) > 0:
+        return {'warns': warns}
