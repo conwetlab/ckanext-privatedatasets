@@ -251,6 +251,9 @@ class AuthTest(unittest.TestCase):
     def test_package_acquired(self):
         self.assertTrue(auth.package_acquired({}, {})['success'])
 
+    def test_package_deleted(self):
+        self.assertTrue(auth.package_deleted({},{})['success'])
+
     @parameterized.expand([
         ({'user': 'user_1'}, {'user': 'user_1'}, True),
         ({'user': 'user_2'}, {'user': 'user_1'}, False),

@@ -22,6 +22,7 @@ from selenium import webdriver
 from selenium.webdriver.support.ui import Select
 from subprocess import Popen
 
+
 import ckan.lib.search.index as search_index
 import ckan.model as model
 import ckanext.privatedatasets.db as db
@@ -70,6 +71,7 @@ class TestSelenium(unittest.TestCase):
             self.driver = webdriver.Remote(os.environ['WEB_DRIVER_URL'], webdriver.DesiredCapabilities.FIREFOX.copy())
             self.base_url = os.environ['CKAN_SERVER_URL']
         else:
+
             self.driver = webdriver.Firefox()
             self.base_url = 'http://127.0.0.1:5000/'
 
@@ -80,6 +82,7 @@ class TestSelenium(unittest.TestCase):
         self.clearBBDD()
         self.driver.quit()
 
+        
     def assert_fields_disabled(self, fields):
         for field in fields:
             self.assertFalse(self.driver.find_element_by_id(field).is_enabled())

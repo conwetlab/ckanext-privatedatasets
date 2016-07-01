@@ -84,10 +84,22 @@ class ActionsTest(unittest.TestCase):
         if expected_error:
             with self.assertRaises(actions.plugins.toolkit.ValidationError) as cm:
                 actions.package_acquired({}, {})
+                actions.package_deleted({},{})
             self.assertEqual(cm.exception.error_dict['message'], expected_error)
         else:
             # Exception is not risen
             self.assertEquals(None, actions.package_acquired({}, {}))
+
+        # Checks
+        self.assertEquals(0, actions.plugins.toolkit.get_action.call_count)
+
+        if expected_error:
+            with self.assertRaises(actions.plugins.toolkit.ValidationError) as cm:
+                actions.package_deleted({},{})
+            self.assertEqual(cm.exception.error_dict['message'], expected_error)
+        else:
+            # Exception is not risen
+            self.assertEquals(None, actions.package_deleted({},{}))
 
         # Checks
         self.assertEquals(0, actions.plugins.toolkit.get_action.call_count)
@@ -163,12 +175,8 @@ class ActionsTest(unittest.TestCase):
     ])
     def test_add_users(self, users_info, datasets_not_found, not_updatable_datasets, allowed_users=[]):
 
-        parse_result = {'users_datasets': []}
+        parse_result = {'users_datasets': [{'user': user, 'datasets': users_info[user]} for user in users_info]}
         creator_user = {'name': 'ckan', 'id': '1234'}
-
-        # Transform user_info
-        for user in users_info:
-            parse_result['users_datasets'].append({'user': user, 'datasets': users_info[user]})
 
         parse_notification, package_show, package_update, user_show = self.configure_mocks(parse_result,
                 datasets_not_found, not_updatable_datasets, allowed_users, creator_user)
@@ -295,3 +303,80 @@ class ActionsTest(unittest.TestCase):
                 expected_acquired_datasets.append(pkg)
 
         self.assertEquals(expected_acquired_datasets, result)
+    
+    @parameterized.expand([
+        # Simple Test: one user and one dataset
+        ({'user1': ['ds1']}, [],      [],      None), #Test with and non-existing list of allowed users
+        ({'user2': ['ds1']}, [],      [],      []), #Test remove a non-existing user
+        ({'user3': ['ds1']}, [],      [],      ['user3']), #Test remove an existing user
+        ({'user4': ['ds1']}, [],      [],      ['another_user']), #Test remove non-existing from an already populated list
+        ({'user5': ['ds1']}, [],      [],      ['another_user', 'user5']),
+        ({'user6': ['ds1']}, ['ds1'], [],      None), #Test remove from an unknown place
+        ({'user61': ['ds1']}, ['ds1'], [],     []),
+        ({'user62': ['ds1']}, ['ds1'], [],     ['user6']),
+        ({'user7': ['ds1']}, [],      ['ds1'], []), #Tests deleting from a public dataset
+        ({'user8': ['ds1']}, [],      ['ds1'], ['another_user']),
+        ({'user9': ['ds1']}, [],      ['ds1'], ['another_user', 'another_one']),
+        ({'user91': ['ds1']}, ['ds1'],      ['ds1'], ['another_user', 'another_one']), # Checking the behaviour when the unknown dataset is public
+        ({'user92': ['ds1']}, ['ds1'],      ['ds1'], ['another_user', 'another_one','user92']),
+
+        # # Complex test: some users and some datasets
+        ({'user1': ['ds1', 'ds2', 'ds3', 'ds4'], 'user2': ['ds5', 'ds6', 'ds7']}, ['ds3', 'ds6'], ['ds4', 'ds7'], []),
+        ({'user3': ['ds1', 'ds2', 'ds3', 'ds4'], 'user4': ['ds5', 'ds6', 'ds7']}, ['ds3', 'ds6'], ['ds4', 'ds7'], ['another_user']),
+        ({'user5': ['ds1', 'ds2', 'ds3', 'ds4'], 'user6': ['ds5', 'ds6', 'ds7']}, ['ds3', 'ds6'], ['ds4', 'ds7'], ['another_user', 'another_one']),
+        ({'user7': ['ds1', 'ds2', 'ds3', 'ds4'], 'user8': ['ds5', 'ds6', 'ds7']}, ['ds3', 'ds6'], ['ds4', 'ds7'], ['another_user', 'another_one', 'user7'])
+    ])
+    def test_delete_users(self, users_info, datasets_not_found, not_updatable_datasets, allowed_users=[]):
+        parse_result = {'users_datasets': []}
+        creator_user = {'name': 'ckan', 'id': '1234'}
+
+        # Transform user_info
+        for user in users_info:
+            parse_result['users_datasets'].append({'user': user, 'datasets': users_info[user]})
+
+        parse_delete, package_show, package_update, user_show = self.configure_mocks(parse_result,
+                datasets_not_found, not_updatable_datasets, allowed_users, creator_user)
+
+        # Call the function
+        context = {'user': 'user1', 'model': 'model', 'auth_obj': {'id': 1}}
+        result = actions.package_deleted(context, users_info)
+
+        # Calculate the list of warns
+        warns = []
+        for user_datasets in parse_result['users_datasets']:
+            for dataset_id in user_datasets['datasets']:
+                if dataset_id in datasets_not_found:
+                    warns.append('Dataset %s was not found in this instance' % dataset_id)
+                elif dataset_id in not_updatable_datasets:
+                    # warns.append('%s(%s): %s' % (dataset_id, 'allowed_users', ADD_USERS_ERROR))
+                    warns.append('Unable to upload the dataset %s: It\'s a public dataset' % dataset_id)
+
+        expected_result = {'warns': warns} if len(warns) > 0 else None
+
+        # Check that the returned result is as expected
+        self.assertEquals(expected_result, result)
+
+        # Check that the initial functions (check_access and parse_notification) has been called properly
+        parse_delete.assert_called_once_with(users_info)
+        actions.plugins.toolkit.check_access.assert_called_once_with('package_deleted', context, users_info)
+
+        for user_datasets in parse_result['users_datasets']:
+            for dataset_id in user_datasets['datasets']:
+                # The show function is always called
+                context_show = context.copy()
+                context_show['ignore_auth'] = True
+                context_show['updating_via_cb'] = True
+                package_show.assert_any_call(context_show, {'id': dataset_id})
+
+                # The update function is called only when the show function does not throw an exception and
+                # when the user is not in the list of allowed users.
+                if dataset_id not in datasets_not_found and allowed_users is not None and user_datasets['user'] in allowed_users and dataset_id not in not_updatable_datasets:
+                    # Calculate the list of allowed_users
+                    expected_allowed_users = list(allowed_users)
+                    expected_allowed_users.remove(user_datasets['user'])
+
+                    context_update = context.copy()
+                    context_update['ignore_auth'] = True
+                    context_update['user'] = creator_user['name']
+
+                    package_update.assert_any_call(context_update, {'id': dataset_id, 'allowed_users': expected_allowed_users, 'private': True, 'creator_user_id': creator_user['id']})
