@@ -20,7 +20,10 @@
 import ckan.lib.helpers as helpers
 import ckan.logic.auth as logic_auth
 import ckan.plugins.toolkit as tk
-import ckan.new_authz as new_authz
+try:
+    import ckan.authz as authz
+except ImportError:
+    import ckan.new_authz as authz
 import db
 
 from ckan.common import _, request
@@ -44,7 +47,7 @@ def package_show(context, data_dict):
 
         # if the user has rights to read in the organization or in the group
         if package.owner_org:
-            authorized = new_authz.has_user_permission_for_group_or_org(
+            authorized = authz.has_user_permission_for_group_or_org(
                 package.owner_org, user, 'read')
         else:
             authorized = False
@@ -89,7 +92,7 @@ def package_update(context, data_dict):
 
     # if the user has rights to update a dataset in the organization or in the group
     if package and package.owner_org:
-        authorized = new_authz.has_user_permission_for_group_or_org(
+        authorized = authz.has_user_permission_for_group_or_org(
             package.owner_org, user, 'update_dataset')
     else:
         authorized = False
