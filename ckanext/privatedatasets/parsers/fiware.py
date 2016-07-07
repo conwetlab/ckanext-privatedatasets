@@ -61,3 +61,4 @@ class FiWareNotificationParser(object):
                 raise tk.ValidationError({'message': 'Invalid resource format'})
 
         return {'users_datasets': [{'user': user_name, 'datasets': datasets}]}
+        

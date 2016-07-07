@@ -64,7 +64,6 @@ class ActionsTest(unittest.TestCase):
 
     ])
     def test_class_cannot_be_loaded(self, class_path, class_name, path_exist, class_exist, expected_error):
-
         class_package = class_path
         class_package += ':' + class_name if class_name else ''
         actions.config = {PARSER_CONFIG_PROP: class_package}
@@ -79,27 +78,14 @@ class ActionsTest(unittest.TestCase):
 
         actions.importlib.import_module = MagicMock(side_effect=ImportError(IMPORT_ERROR_MSG) if not path_exist else None,
                                                     return_value=package if path_exist else None)
-
-        # Call the function
+        
         if expected_error:
             with self.assertRaises(actions.plugins.toolkit.ValidationError) as cm:
                 actions.package_acquired({}, {})
-                actions.package_deleted({},{})
             self.assertEqual(cm.exception.error_dict['message'], expected_error)
         else:
             # Exception is not risen
             self.assertEquals(None, actions.package_acquired({}, {}))
-
-        # Checks
-        self.assertEquals(0, actions.plugins.toolkit.get_action.call_count)
-
-        if expected_error:
-            with self.assertRaises(actions.plugins.toolkit.ValidationError) as cm:
-                actions.package_deleted({},{})
-            self.assertEqual(cm.exception.error_dict['message'], expected_error)
-        else:
-            # Exception is not risen
-            self.assertEquals(None, actions.package_deleted({},{}))
 
         # Checks
         self.assertEquals(0, actions.plugins.toolkit.get_action.call_count)
@@ -182,7 +168,7 @@ class ActionsTest(unittest.TestCase):
                 datasets_not_found, not_updatable_datasets, allowed_users, creator_user)
 
         # Call the function
-        context = {'user': 'user1', 'model': 'model', 'auth_obj': {'id': 1}}
+        context = {'user': 'user1', 'model': 'model', 'auth_obj': {'id': 1}, 'method': 'grant'}
         result = actions.package_acquired(context, users_info)
 
         # Calculate the list of warns
@@ -338,7 +324,7 @@ class ActionsTest(unittest.TestCase):
                 datasets_not_found, not_updatable_datasets, allowed_users, creator_user)
 
         # Call the function
-        context = {'user': 'user1', 'model': 'model', 'auth_obj': {'id': 1}}
+        context = {'user': 'user1', 'model': 'model', 'auth_obj': {'id': 1}, 'method': 'revoke'}
         result = actions.package_deleted(context, users_info)
 
         # Calculate the list of warns
