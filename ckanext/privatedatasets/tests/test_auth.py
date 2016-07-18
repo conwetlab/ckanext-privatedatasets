@@ -37,8 +37,8 @@ class AuthTest(unittest.TestCase):
         self._helpers = auth.helpers
         auth.helpers = MagicMock()
 
-        self._new_authz = auth.new_authz
-        auth.new_authz = MagicMock()
+        self._authz = auth.authz
+        auth.authz = MagicMock()
 
         self._tk = auth.tk
         auth.tk = MagicMock()
@@ -50,7 +50,7 @@ class AuthTest(unittest.TestCase):
         auth.logic_auth = self._logic_auth
         auth.request = self._request
         auth.helpers = self._helpers
-        auth.new_authz = self._new_authz
+        auth.authz = self._authz
         auth.tk = self._tk
         auth.db = self._db
 
@@ -123,8 +123,8 @@ class AuthTest(unittest.TestCase):
             returned_package.extras['acquire_url'] = acquire_url
 
         auth.logic_auth.get_package_object = MagicMock(return_value=returned_package)
-        auth.new_authz.has_user_permission_for_group_or_org = MagicMock(return_value=owner_member)
-        auth.request.path = MagicMock(return_value=request_path)
+        auth.authz.has_user_permission_for_group_or_org = MagicMock(return_value=owner_member)
+        auth.request.path = request_path
 
         # Prepare the context
         context = {'model': MagicMock()}
@@ -143,9 +143,9 @@ class AuthTest(unittest.TestCase):
         # Premissions for organization are checked when the dataset is private, it belongs to an organization
         # and when the dataset has not been created by the user who is asking for it
         if private and owner_org and state == 'active' and creator_user_id != user_obj_id:
-            auth.new_authz.has_user_permission_for_group_or_org.assert_called_once_with(owner_org, user, 'read')
+            auth.authz.has_user_permission_for_group_or_org.assert_called_once_with(owner_org, user, 'read')
         else:
-            self.assertEquals(0, auth.new_authz.has_user_permission_for_group_or_org.call_count)
+            self.assertEquals(0, auth.authz.has_user_permission_for_group_or_org.call_count)
 
         # The databse is only initialized when:
         # * the dataset is private AND
@@ -159,10 +159,10 @@ class AuthTest(unittest.TestCase):
             self.assertEquals(0, auth.db.init_db.call_count)
 
         # Conditions to buy a dataset; It should be private, active and should not belong to any organization
-        if not authorized and state == 'active' and not owner_org and request_path.startswith('/dataset/'):
-            auth.helpers.flash_error.assert_called_once()
+        if not authorized and state == 'active' and request_path and request_path.startswith('/dataset/') and acquire_url:
+            auth.helpers.flash_notice.assert_called_once()
         else:
-            self.assertEquals(0, auth.helpers.flash_error.call_count)
+            self.assertEquals(0, auth.helpers.flash_notice.call_count)
 
     @parameterized.expand([
         (None, None, None,   None,     None,  False),   # Anonymous user
@@ -179,7 +179,7 @@ class AuthTest(unittest.TestCase):
         returned_package.owner_org = owner_org
 
         auth.logic_auth.get_package_object = MagicMock(return_value=returned_package)
-        auth.new_authz.has_user_permission_for_group_or_org = MagicMock(return_value=owner_member)
+        auth.authz.has_user_permission_for_group_or_org = MagicMock(return_value=owner_member)
 
         # Prepare the context
         context = {}
@@ -198,9 +198,9 @@ class AuthTest(unittest.TestCase):
         # Permissions for organization are checked when the user asking to update the dataset is not the creator
         # and when the dataset has organization
         if creator_user_id != user_obj_id and owner_org:
-            auth.new_authz.has_user_permission_for_group_or_org.assert_called_once_with(owner_org, user, 'update_dataset')
+            auth.authz.has_user_permission_for_group_or_org.assert_called_once_with(owner_org, user, 'update_dataset')
         else:
-            self.assertEquals(0, auth.new_authz.has_user_permission_for_group_or_org.call_count)
+            self.assertEquals(0, auth.authz.has_user_permission_for_group_or_org.call_count)
 
     @parameterized.expand([
         (True,  True),
