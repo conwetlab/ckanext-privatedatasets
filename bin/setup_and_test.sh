@@ -57,6 +57,7 @@ echo "Setting up virtualenv..."
 virtualenv --no-site-packages virtualenv
 source virtualenv/bin/activate
 pip install --upgrade pip
+pip install --upgrade setuptools
 
 
 echo "Installing CKAN dependencies..."
