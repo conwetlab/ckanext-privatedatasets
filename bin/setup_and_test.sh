@@ -57,7 +57,9 @@ echo "Setting up virtualenv..."
 virtualenv --no-site-packages virtualenv
 source virtualenv/bin/activate
 pip install --upgrade pip
-pip install setuptools==18.5
+
+# Force html5lib version to be used
+pip install html5lib==0.9999999
 
 
 echo "Installing CKAN dependencies..."
