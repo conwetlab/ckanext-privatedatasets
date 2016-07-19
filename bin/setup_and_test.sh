@@ -60,7 +60,7 @@ pip install --upgrade pip
 pip install --upgrade setuptools
 
 # Reload virtenv
-source virtualenv/bin/deactivate
+deactivate
 source virtualenv/bin/activate
 
 
