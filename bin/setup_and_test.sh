@@ -59,6 +59,10 @@ source virtualenv/bin/activate
 pip install --upgrade pip
 pip install --upgrade setuptools
 
+# Reload virtenv
+source virtualenv/bin/deactivate
+source virtualenv/bin/activate
+
 
 echo "Installing CKAN dependencies..."
 cd ckan
