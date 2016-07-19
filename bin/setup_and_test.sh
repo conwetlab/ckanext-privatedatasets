@@ -57,11 +57,7 @@ echo "Setting up virtualenv..."
 virtualenv --no-site-packages virtualenv
 source virtualenv/bin/activate
 pip install --upgrade pip
-pip install --upgrade setuptools
-
-# Reload virtenv
-deactivate
-source virtualenv/bin/activate
+pip install setuptools==18.5
 
 
 echo "Installing CKAN dependencies..."
