@@ -111,7 +111,8 @@ def acquisitions_list(context, data_dict):
 
     return result
 
-def package_deleted(context, request_data):
+
+def revoke_access(context, request_data):
     '''
     API action to be called in order to revoke access grants of an user.
 
@@ -189,7 +190,7 @@ def _process_package(context, request_data):
                     present = user_info['user'] in dataset[constants.ALLOWED_USERS]
                     # Deletes the user only if it is in the list
                     if (not method and present) or (method and not present):
-                        if method: 
+                        if method:
                             dataset[constants.ALLOWED_USERS].append(user_info['user'])
                         else:
                             dataset[constants.ALLOWED_USERS].remove(user_info['user'])
@@ -209,7 +210,7 @@ def _process_package(context, request_data):
                     else:
                         log.warn('Action -%s access to user- not completed. The dataset %s already %s access to the user %s' % (context['method'], dataset_id, context['method'], user_info['user']))
                 else:
-                    log.warn('Dataset %s is public. Cannot %s access to users' % (dataset_id, context['method'])) 
+                    log.warn('Dataset %s is public. Cannot %s access to users' % (dataset_id, context['method']))
                     warns.append('Unable to upload the dataset %s: It\'s a public dataset' % dataset_id)
 
             except plugins.toolkit.ObjectNotFound:

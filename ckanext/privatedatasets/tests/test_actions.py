@@ -306,7 +306,7 @@ class ActionsTest(unittest.TestCase):
         ({'user91': ['ds1']}, ['ds1'],      ['ds1'], ['another_user', 'another_one']), # Checking the behaviour when the unknown dataset is public
         ({'user92': ['ds1']}, ['ds1'],      ['ds1'], ['another_user', 'another_one','user92']),
 
-        # # Complex test: some users and some datasets
+        # Complex test: some users and some datasets
         ({'user1': ['ds1', 'ds2', 'ds3', 'ds4'], 'user2': ['ds5', 'ds6', 'ds7']}, ['ds3', 'ds6'], ['ds4', 'ds7'], []),
         ({'user3': ['ds1', 'ds2', 'ds3', 'ds4'], 'user4': ['ds5', 'ds6', 'ds7']}, ['ds3', 'ds6'], ['ds4', 'ds7'], ['another_user']),
         ({'user5': ['ds1', 'ds2', 'ds3', 'ds4'], 'user6': ['ds5', 'ds6', 'ds7']}, ['ds3', 'ds6'], ['ds4', 'ds7'], ['another_user', 'another_one']),
@@ -325,7 +325,7 @@ class ActionsTest(unittest.TestCase):
 
         # Call the function
         context = {'user': 'user1', 'model': 'model', 'auth_obj': {'id': 1}, 'method': 'revoke'}
-        result = actions.package_deleted(context, users_info)
+        result = actions.revoke_access(context, users_info)
 
         # Calculate the list of warns
         warns = []
@@ -344,7 +344,7 @@ class ActionsTest(unittest.TestCase):
 
         # Check that the initial functions (check_access and parse_notification) has been called properly
         parse_delete.assert_called_once_with(users_info)
-        actions.plugins.toolkit.check_access.assert_called_once_with('package_deleted', context, users_info)
+        actions.plugins.toolkit.check_access.assert_called_once_with('revoke_access', context, users_info)
 
         for user_datasets in parse_result['users_datasets']:
             for dataset_id in user_datasets['datasets']:
