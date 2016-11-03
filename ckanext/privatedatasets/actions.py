@@ -206,9 +206,9 @@ def _process_package(context, request_data):
                         context_pkg_update['user'] = user.get('name', '')
 
                         plugins.toolkit.get_action('package_update')(context_pkg_update, dataset)
-                        log.info('Action -%s access to user- ended successfully' % context['method'])
+                        log.info('Action %s access to database ended successfully' % context['method'])
                     else:
-                        log.warn('Action -%s access to user- not completed. The dataset %s already %s access to the user %s' % (context['method'], dataset_id, context['method'], user_info['user']))
+                        log.warn('Action %s access to database not completed. The dataset %s already %s access to the user %s' % (context['method'], dataset_id, context['method'], user_info['user']))
                 else:
                     log.warn('Dataset %s is public. Cannot %s access to users' % (dataset_id, context['method']))
                     warns.append('Unable to upload the dataset %s: It\'s a public dataset' % dataset_id)
