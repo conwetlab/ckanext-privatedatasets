@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2014 CoNWeT Lab., Universidad Politécnica de Madrid
+# Copyright (c) 2014 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
 
 # This file is part of CKAN Private Dataset Extension.
 
@@ -66,7 +66,7 @@ class PluginTest(unittest.TestCase):
         ('resource_show',     plugin.auth.resource_show,     True,  False),
         ('package_acquired',  plugin.auth.package_acquired),
         ('acquisitions_list', plugin.auth.acquisitions_list),
-        ('package_deleted',   plugin.auth.package_deleted)
+        ('revoke_access',   plugin.auth.revoke_access)
     ])
     def test_auth_function(self, function_name, expected_function, is_ckan_23=False, expected=True):
         plugin.tk.check_ckan_version = MagicMock(return_value=is_ckan_23)
@@ -99,7 +99,7 @@ class PluginTest(unittest.TestCase):
     @parameterized.expand([
         ('package_acquired',  plugin.actions.package_acquired),
         ('acquisitions_list', plugin.actions.acquisitions_list),
-        ('package_deleted',   plugin.actions.package_deleted)
+        ('revoke_access',   plugin.actions.revoke_access)
     ])
     def test_actions_function(self, function_name, expected_function):
         actions = self.privateDatasets.get_actions()

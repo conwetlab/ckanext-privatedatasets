@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2014 CoNWeT Lab., Universidad Politécnica de Madrid
+# Copyright (c) 2014 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
 
 # This file is part of CKAN Private Dataset Extension.
 
@@ -252,7 +252,7 @@ class AuthTest(unittest.TestCase):
         self.assertTrue(auth.package_acquired({}, {})['success'])
 
     def test_package_deleted(self):
-        self.assertTrue(auth.package_deleted({},{})['success'])
+        self.assertTrue(auth.revoke_access({},{})['success'])
 
     @parameterized.expand([
         ({'user': 'user_1'}, {'user': 'user_1'}, True),
