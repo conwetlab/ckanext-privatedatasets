@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2014 CoNWeT Lab., Universidad Politécnica de Madrid
+# Copyright (c) 2014 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
 
 # This file is part of CKAN Private Dataset Extension.
 
@@ -113,7 +113,7 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
                           # 'resource_show': auth.resource_show,
                           constants.PACKAGE_ACQUIRED: auth.package_acquired,
                           constants.ACQUISITIONS_LIST: auth.acquisitions_list,
-                          constants.PACKAGE_DELETED: auth.package_deleted}
+                          constants.PACKAGE_DELETED: auth.revoke_access}
 
         # resource_show is not required in CKAN 2.3 because it delegates to
         # package_show
@@ -156,7 +156,7 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
         return {
             constants.PACKAGE_ACQUIRED: actions.package_acquired,
             constants.ACQUISITIONS_LIST: actions.acquisitions_list,
-            constants.PACKAGE_DELETED: actions.package_deleted
+            constants.PACKAGE_DELETED: actions.revoke_access
         }
 
     ######################################################################
