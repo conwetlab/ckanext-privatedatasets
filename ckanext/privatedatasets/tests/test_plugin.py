@@ -65,7 +65,8 @@ class PluginTest(unittest.TestCase):
         ('resource_show',     plugin.auth.resource_show),
         ('resource_show',     plugin.auth.resource_show,     True,  False),
         ('package_acquired',  plugin.auth.package_acquired),
-        ('acquisitions_list', plugin.auth.acquisitions_list)
+        ('acquisitions_list', plugin.auth.acquisitions_list),
+        ('package_deleted',   plugin.auth.package_deleted)
     ])
     def test_auth_function(self, function_name, expected_function, is_ckan_23=False, expected=True):
         plugin.tk.check_ckan_version = MagicMock(return_value=is_ckan_23)
@@ -97,7 +98,8 @@ class PluginTest(unittest.TestCase):
 
     @parameterized.expand([
         ('package_acquired',  plugin.actions.package_acquired),
-        ('acquisitions_list', plugin.actions.acquisitions_list)
+        ('acquisitions_list', plugin.actions.acquisitions_list),
+        ('package_deleted',   plugin.actions.package_deleted)
     ])
     def test_actions_function(self, function_name, expected_function):
         actions = self.privateDatasets.get_actions()
