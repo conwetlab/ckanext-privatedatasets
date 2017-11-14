@@ -28,19 +28,19 @@ Example:
       <h3 class="dataset-heading">
         {% if package.private and not h.can_read(package) %}
           <span class="dataset-private label label-inverse">
-            <i class="icon-lock"></i>
+            <i class="icon-lock fa fa-lock"></i>
             {{ _('Private') }}
           </span>
         {% endif %}
         {% if acquired and not owner %}
           <span class="dataset-private label label-acquired">
-            <i class="icon-shopping-cart"></i>
+            <i class="icon-shopping-cart fa fa-shopping-cart"></i>
             {{ _('Acquired') }}
           </span>
         {% endif %}
         {% if owner %}
           <span class="dataset-private label label-owner">
-            <i class="icon-user"></i>
+            <i class="icon-user fa fa-user"></i>
             {{ _('Owner') }}
           </span>
         {% endif %}
