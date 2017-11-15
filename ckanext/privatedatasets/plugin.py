@@ -20,6 +20,7 @@
 import ckan.lib.search as search
 import ckan.model as model
 import ckan.plugins as p
+from ckan.lib.plugins import DefaultPermissionLabels
 import ckan.plugins.toolkit as tk
 import auth
 import actions
@@ -32,7 +33,7 @@ import helpers as helpers
 HIDDEN_FIELDS = [constants.ALLOWED_USERS, constants.SEARCHABLE]
 
 
-class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
+class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm, DefaultPermissionLabels):
 
     p.implements(p.IDatasetForm)
     p.implements(p.IAuthFunctions)
@@ -41,6 +42,7 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
     p.implements(p.IActions)
     p.implements(p.IPackageController, inherit=True)
     p.implements(p.ITemplateHelpers)
+    p.implements(p.IPermissionLabels)
 
     ######################################################################
     ############################ DATASET FORM ############################
@@ -290,6 +292,24 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
             self._delete_pkg_atts(result, attrs)
 
         return search_results
+
+    ####
+
+    def get_dataset_labels(self, dataset_obj):
+        labels = super(PrivateDatasets, self).get_dataset_labels(
+            dataset_obj)
+
+        if getattr(dataset_obj, 'searchable', False):
+            labels.append('searchable')
+
+        return labels
+
+    def get_user_dataset_labels(self, user_obj):
+        labels = super(PrivateDatasets, self).get_user_dataset_labels(
+            user_obj)
+
+        labels.append('searchable')
+        return labels
 
     ######################################################################
     ######################### ITEMPLATESHELPER ###########################
