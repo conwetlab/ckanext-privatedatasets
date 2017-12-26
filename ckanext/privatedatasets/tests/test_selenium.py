@@ -246,18 +246,11 @@ class TestSelenium(unittest.TestCase):
         driver.get(self.base_url + 'dataset/' + dataset_url)
 
         if not acquired and private and not in_org:
-            xpath = '//div[@id=\'content\']/div/div'
-            buy_msg = 'This private dataset can be acquired. To do so, please click here'
-            if acquire_url is not None:
-                self.assertTrue(driver.find_element_by_xpath(xpath).text.startswith(buy_msg))
-                self.assertEquals(acquire_url, driver.find_element_by_link_text('here').get_attribute('href'))
-                xpath += '[2]'  # The unauthorized message is in a different Path
-            else:
-                src = driver.page_source
-                self.assertEquals(None, re.search(buy_msg, src))
+            # If the user has not access to the dataset the 404 error page is displayed
+            xpath = '//*[@id="content"]/div[2]/article/div/h1'
+            msg = '404 Not Found'
 
-            self.assertTrue('/user/login' in driver.current_url)
-            self.assertTrue(driver.find_element_by_xpath(xpath).text.startswith('Unauthorized to read package %s' % dataset_url))
+            self.assertEquals(driver.find_element_by_xpath(xpath).text, msg)
 
         else:
             self.assertEquals(self.base_url + 'dataset/%s' % dataset_url, driver.current_url)
@@ -283,10 +276,6 @@ class TestSelenium(unittest.TestCase):
         self.register(user, user, '%s@conwet.com' % user, user)
 
     @parameterized.expand([
-        # (['user1', 'user2', 'user3'],          True,  True,  ['user2'],          'http://store.conwet.com/'),
-        # (['user1', 'user2', 'user3'],          True,  True,  ['user3']),
-        # (['user1', 'user2', 'user3'],          False, True,  ['user3']),
-        # (['user1', 'user2', 'user3'],          True,  False, ['user2']),
         (['user1', 'user2', 'user3'],          True,  True,  [],                 'http://store.conwet.com/'),
         (['user1', 'user2', 'user3'],          True,  True,  []),
         (['user1', 'user2', 'user3'],          False, True,  []),
@@ -307,7 +296,9 @@ class TestSelenium(unittest.TestCase):
         url = get_dataset_url(pkg_name)
         self.create_ds(pkg_name, 'Example description', ['tag1', 'tag2', 'tag3'], private, searchable,
                        allowed_users, acquire_url, 'http://upm.es', 'UPM Main', 'Example Description', 'CSV')
+
         self.check_ds_values(url, private, searchable, allowed_users, acquire_url)
+
         self.check_user_access(pkg_name, url, True, True, False, private, searchable, acquire_url)
         self.check_acquired(pkg_name, url, False, private)
 
