@@ -20,9 +20,10 @@
 import ckan.lib.search as search
 import ckan.model as model
 import ckan.plugins as p
+import ckan.plugins.toolkit as tk
+
 from ckan.lib.plugins import DefaultPermissionLabels
 
-import ckan.plugins.toolkit as tk
 import auth
 import actions
 import constants

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2014 CoNWeT Lab., Universidad Politécnica de Madrid
+# Copyright (c) 2014 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
 
 # This file is part of CKAN Private Dataset Extension.
 
@@ -17,11 +17,14 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with CKAN Private Dataset Extension.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import unicode_literals
+
 from nose_parameterized import parameterized
 from selenium import webdriver
-from selenium.webdriver.support.ui import Select
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import Select, WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from subprocess import Popen
-
 
 import ckan.lib.search.index as search_index
 import ckan.model as model
@@ -82,7 +85,6 @@ class TestSelenium(unittest.TestCase):
         self.clearBBDD()
         self.driver.quit()
 
-        
     def assert_fields_disabled(self, fields):
         for field in fields:
             self.assertFalse(self.driver.find_element_by_id(field).is_enabled())
@@ -111,7 +113,11 @@ class TestSelenium(unittest.TestCase):
     def login(self, username, password):
         driver = self.driver
         driver.get(self.base_url)
-        driver.find_element_by_link_text('Log in').click()
+        login_btn = WebDriverWait(driver, 15).until(
+            EC.element_to_be_clickable((By.LINK_TEXT, 'Log in'))
+        )
+        login_btn.click()
+
         driver.find_element_by_id('field-login').clear()
         driver.find_element_by_id('field-login').send_keys(username)
         driver.find_element_by_id('field-password').clear()
