@@ -226,20 +226,20 @@ class TestSelenium(unittest.TestCase):
         driver = self.driver
         driver.find_element_by_link_text('Datasets').click()
 
-        if searchable:
+        if searchable or owner:
             xpath = '//div[@id=\'content\']/div[3]/div/section/div/ul/li/div/h3/span'
 
             # Check the label
+            if owner:
+                self.assertEqual('OWNER', driver.find_element_by_xpath(xpath).text)
             if not acquired and private and not in_org:
                 self.assertEqual('PRIVATE', driver.find_element_by_xpath(xpath).text)
             elif acquired and not owner and private:
                 self.assertEqual('ACQUIRED', driver.find_element_by_xpath(xpath).text)
-            elif owner:
-                self.assertEqual('OWNER', driver.find_element_by_xpath(xpath).text)
 
             # When a user cannot access a dataset, the link is no longer provided
         else:
-            # If the dataset is not searchable, a link to it could not be found in the dataset search page
+            # If the dataset is not searchable and the user is not the owner, a link to it could not be found in the dataset search page
             self.assertEquals(None, re.search(dataset_url, driver.page_source))
 
         # Access the dataset
