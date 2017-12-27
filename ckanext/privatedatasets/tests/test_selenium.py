@@ -310,11 +310,6 @@ class TestSelenium(unittest.TestCase):
             acquired = user in allowed_users
             self.check_user_access(pkg_name, url, False, acquired, False, private, searchable, acquire_url)
 
-            # The user is logged out when they try to access a private dataset and they are not included
-            # in the list of allowed users.
-            if not acquired and private:
-                self.login(user, user)
-
             self.check_acquired(pkg_name, url, acquired, private)
 
     @parameterized.expand([
