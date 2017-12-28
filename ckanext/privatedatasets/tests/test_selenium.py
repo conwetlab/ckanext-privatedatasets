@@ -226,7 +226,7 @@ class TestSelenium(unittest.TestCase):
         driver = self.driver
         driver.find_element_by_link_text('Datasets').click()
 
-        if searchable or owner:
+        if searchable or owner or in_org:
             xpath = '//div[@id=\'content\']/div[3]/div/section/div/ul/li/div/h3/span'
 
             # Check the label
@@ -313,20 +313,14 @@ class TestSelenium(unittest.TestCase):
             self.check_acquired(pkg_name, url, acquired, private)
 
     @parameterized.expand([
-        # (['a']  ,          'http://upm.es',      'Allowed users: Name must be at least 2 characters long'),
-        # (['a a'],          'http://upm.es',      'Allowed users: Url must be purely lowercase alphanumeric (ascii) characters and these symbols: -_'),
         (['upm', 'a'],     'http://upm.es',      'Allowed users: Must be at least 2 characters long'),
         (['upm', 'a a a'], 'http://upm.es',      'Allowed users: Must be purely lowercase alphanumeric (ascii) characters and these symbols: -_'),
         (['upm', 'a?-vz'], 'http://upm.es',      'Allowed users: Must be purely lowercase alphanumeric (ascii) characters and these symbols: -_'),
         (['thisisaveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryverylongname'],
                            'http://upm.es',      'Allowed users: Name must be a maximum of 100 characters long'),
         (['conwet'],       'ftp://google.es',    'Acquire URL: The URL "ftp://google.es" is not valid.'),
-        # (['conwet'],       'http://google*.com', 'Acquire URL: The URL "http://google*.com" is not valid.'),
-        # (['conwet'],       'http://google+.com', 'Acquire URL: The URL "http://google+.com" is not valid.'),
-        # (['conwet'],       'http://google/.com', 'Acquire URL: The URL "http://google/.com" is not valid.'),
         (['conwet'],       'google',             'Acquire URL: The URL "google" is not valid.'),
         (['conwet'],       'http://google',      'Acquire URL: The URL "http://google" is not valid.'),
-        # (['conwet'],       'http://google:es',   'Acquire URL: The URL "http://google:es" is not valid.'),
         (['conwet'],       'www.google.es',      'Acquire URL: The URL "www.google.es" is not valid.')
 
     ])
