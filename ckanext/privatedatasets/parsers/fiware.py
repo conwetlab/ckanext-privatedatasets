@@ -27,7 +27,6 @@ from ckan.common import request
 class FiWareNotificationParser(object):
 
     def parse_notification(self, request_data):
-
         my_host = request.host
 
         fields = ['customer_name', 'resources']
@@ -62,3 +61,4 @@ class FiWareNotificationParser(object):
                 raise tk.ValidationError({'message': 'Invalid resource format'})
 
         return {'users_datasets': [{'user': user_name, 'datasets': datasets}]}
+        

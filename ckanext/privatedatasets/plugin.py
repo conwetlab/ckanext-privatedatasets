@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2014 CoNWeT Lab., Universidad Politécnica de Madrid
+# Copyright (c) 2014 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
 
 # This file is part of CKAN Private Dataset Extension.
 
@@ -21,6 +21,9 @@ import ckan.lib.search as search
 import ckan.model as model
 import ckan.plugins as p
 import ckan.plugins.toolkit as tk
+
+from ckan.lib.plugins import DefaultPermissionLabels
+
 import auth
 import actions
 import constants
@@ -32,7 +35,7 @@ import helpers as helpers
 HIDDEN_FIELDS = [constants.ALLOWED_USERS, constants.SEARCHABLE]
 
 
-class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
+class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm, DefaultPermissionLabels):
 
     p.implements(p.IDatasetForm)
     p.implements(p.IAuthFunctions)
@@ -41,6 +44,7 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
     p.implements(p.IActions)
     p.implements(p.IPackageController, inherit=True)
     p.implements(p.ITemplateHelpers)
+    p.implements(p.IPermissionLabels)
 
     ######################################################################
     ############################ DATASET FORM ############################
@@ -112,7 +116,8 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
                           'package_update': auth.package_update,
                           # 'resource_show': auth.resource_show,
                           constants.PACKAGE_ACQUIRED: auth.package_acquired,
-                          constants.ACQUISITIONS_LIST: auth.acquisitions_list}
+                          constants.ACQUISITIONS_LIST: auth.acquisitions_list,
+                          constants.PACKAGE_DELETED: auth.revoke_access}
 
         # resource_show is not required in CKAN 2.3 because it delegates to
         # package_show
@@ -145,6 +150,8 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
 
         return m
 
+    
+
     ######################################################################
     ############################## IACTIONS ##############################
     ######################################################################
@@ -152,7 +159,8 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
     def get_actions(self):
         return {
             constants.PACKAGE_ACQUIRED: actions.package_acquired,
-            constants.ACQUISITIONS_LIST: actions.acquisitions_list
+            constants.ACQUISITIONS_LIST: actions.acquisitions_list,
+            constants.PACKAGE_DELETED: actions.revoke_access
         }
 
     ######################################################################
@@ -286,6 +294,24 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm):
             self._delete_pkg_atts(result, attrs)
 
         return search_results
+
+    ####
+
+    def get_dataset_labels(self, dataset_obj):
+        labels = super(PrivateDatasets, self).get_dataset_labels(
+            dataset_obj)
+
+        if getattr(dataset_obj, 'searchable', False):
+            labels.append('searchable')
+
+        return labels
+
+    def get_user_dataset_labels(self, user_obj):
+        labels = super(PrivateDatasets, self).get_user_dataset_labels(
+            user_obj)
+
+        labels.append('searchable')
+        return labels
 
     ######################################################################
     ######################### ITEMPLATESHELPER ###########################

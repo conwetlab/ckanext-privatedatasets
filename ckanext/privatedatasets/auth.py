@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2014 CoNWeT Lab., Universidad Politécnica de Madrid
+# Copyright (c) 2014 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
 
 # This file is part of CKAN Private Dataset Extension.
 
@@ -140,3 +140,8 @@ def package_acquired(context, data_dict):
 def acquisitions_list(context, data_dict):
     # Users can get only their acquisitions list
     return {'success': context['user'] == data_dict['user']}
+
+@tk.auth_allow_anonymous_access
+def revoke_access(context, data_dict):
+    # TODO: Check functionality and improve security(if needed)
+    return {'success': True}

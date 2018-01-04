@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2014 CoNWeT Lab., Universidad Politécnica de Madrid
+# Copyright (c) 2014 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
 
 # This file is part of CKAN Private Dataset Extension.
 
@@ -17,9 +17,13 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with CKAN Private Dataset Extension.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import unicode_literals
+
 from nose_parameterized import parameterized
 from selenium import webdriver
-from selenium.webdriver.support.ui import Select
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import Select, WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from subprocess import Popen
 
 import ckan.lib.search.index as search_index
@@ -70,6 +74,7 @@ class TestSelenium(unittest.TestCase):
             self.driver = webdriver.Remote(os.environ['WEB_DRIVER_URL'], webdriver.DesiredCapabilities.FIREFOX.copy())
             self.base_url = os.environ['CKAN_SERVER_URL']
         else:
+
             self.driver = webdriver.Firefox()
             self.base_url = 'http://127.0.0.1:5000/'
 
@@ -108,7 +113,11 @@ class TestSelenium(unittest.TestCase):
     def login(self, username, password):
         driver = self.driver
         driver.get(self.base_url)
-        driver.find_element_by_link_text('Log in').click()
+        login_btn = WebDriverWait(driver, 15).until(
+            EC.element_to_be_clickable((By.LINK_TEXT, 'Log in'))
+        )
+        login_btn.click()
+
         driver.find_element_by_id('field-login').clear()
         driver.find_element_by_id('field-login').send_keys(username)
         driver.find_element_by_id('field-password').clear()
@@ -217,38 +226,31 @@ class TestSelenium(unittest.TestCase):
         driver = self.driver
         driver.find_element_by_link_text('Datasets').click()
 
-        if searchable:
+        if searchable or owner or in_org:
             xpath = '//div[@id=\'content\']/div[3]/div/section/div/ul/li/div/h3/span'
 
             # Check the label
+            if owner:
+                self.assertEqual('OWNER', driver.find_element_by_xpath(xpath).text)
             if not acquired and private and not in_org:
                 self.assertEqual('PRIVATE', driver.find_element_by_xpath(xpath).text)
             elif acquired and not owner and private:
                 self.assertEqual('ACQUIRED', driver.find_element_by_xpath(xpath).text)
-            elif owner:
-                self.assertEqual('OWNER', driver.find_element_by_xpath(xpath).text)
 
             # When a user cannot access a dataset, the link is no longer provided
         else:
-            # If the dataset is not searchable, a link to it could not be found in the dataset search page
+            # If the dataset is not searchable and the user is not the owner, a link to it could not be found in the dataset search page
             self.assertEquals(None, re.search(dataset_url, driver.page_source))
 
         # Access the dataset
         driver.get(self.base_url + 'dataset/' + dataset_url)
 
         if not acquired and private and not in_org:
-            xpath = '//div[@id=\'content\']/div/div'
-            buy_msg = 'This private dataset can be acquired. To do so, please click here'
-            if acquire_url is not None:
-                self.assertTrue(driver.find_element_by_xpath(xpath).text.startswith(buy_msg))
-                self.assertEquals(acquire_url, driver.find_element_by_link_text('here').get_attribute('href'))
-                xpath += '[2]'  # The unauthorized message is in a different Path
-            else:
-                src = driver.page_source
-                self.assertEquals(None, re.search(buy_msg, src))
+            # If the user has not access to the dataset the 404 error page is displayed
+            xpath = '//*[@id="content"]/div[2]/article/div/h1'
+            msg = '404 Not Found'
 
-            self.assertTrue('/user/login' in driver.current_url)
-            self.assertTrue(driver.find_element_by_xpath(xpath).text.startswith('Unauthorized to read package %s' % dataset_url))
+            self.assertEquals(driver.find_element_by_xpath(xpath).text, msg)
 
         else:
             self.assertEquals(self.base_url + 'dataset/%s' % dataset_url, driver.current_url)
@@ -274,10 +276,6 @@ class TestSelenium(unittest.TestCase):
         self.register(user, user, '%s@conwet.com' % user, user)
 
     @parameterized.expand([
-        # (['user1', 'user2', 'user3'],          True,  True,  ['user2'],          'http://store.conwet.com/'),
-        # (['user1', 'user2', 'user3'],          True,  True,  ['user3']),
-        # (['user1', 'user2', 'user3'],          False, True,  ['user3']),
-        # (['user1', 'user2', 'user3'],          True,  False, ['user2']),
         (['user1', 'user2', 'user3'],          True,  True,  [],                 'http://store.conwet.com/'),
         (['user1', 'user2', 'user3'],          True,  True,  []),
         (['user1', 'user2', 'user3'],          False, True,  []),
@@ -298,7 +296,9 @@ class TestSelenium(unittest.TestCase):
         url = get_dataset_url(pkg_name)
         self.create_ds(pkg_name, 'Example description', ['tag1', 'tag2', 'tag3'], private, searchable,
                        allowed_users, acquire_url, 'http://upm.es', 'UPM Main', 'Example Description', 'CSV')
+
         self.check_ds_values(url, private, searchable, allowed_users, acquire_url)
+
         self.check_user_access(pkg_name, url, True, True, False, private, searchable, acquire_url)
         self.check_acquired(pkg_name, url, False, private)
 
@@ -310,28 +310,17 @@ class TestSelenium(unittest.TestCase):
             acquired = user in allowed_users
             self.check_user_access(pkg_name, url, False, acquired, False, private, searchable, acquire_url)
 
-            # The user is logged out when they try to access a private dataset and they are not included
-            # in the list of allowed users.
-            if not acquired and private:
-                self.login(user, user)
-
             self.check_acquired(pkg_name, url, acquired, private)
 
     @parameterized.expand([
-        # (['a']  ,          'http://upm.es',      'Allowed users: Name must be at least 2 characters long'),
-        # (['a a'],          'http://upm.es',      'Allowed users: Url must be purely lowercase alphanumeric (ascii) characters and these symbols: -_'),
         (['upm', 'a'],     'http://upm.es',      'Allowed users: Must be at least 2 characters long'),
         (['upm', 'a a a'], 'http://upm.es',      'Allowed users: Must be purely lowercase alphanumeric (ascii) characters and these symbols: -_'),
         (['upm', 'a?-vz'], 'http://upm.es',      'Allowed users: Must be purely lowercase alphanumeric (ascii) characters and these symbols: -_'),
         (['thisisaveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryverylongname'],
                            'http://upm.es',      'Allowed users: Name must be a maximum of 100 characters long'),
         (['conwet'],       'ftp://google.es',    'Acquire URL: The URL "ftp://google.es" is not valid.'),
-        # (['conwet'],       'http://google*.com', 'Acquire URL: The URL "http://google*.com" is not valid.'),
-        # (['conwet'],       'http://google+.com', 'Acquire URL: The URL "http://google+.com" is not valid.'),
-        # (['conwet'],       'http://google/.com', 'Acquire URL: The URL "http://google/.com" is not valid.'),
         (['conwet'],       'google',             'Acquire URL: The URL "google" is not valid.'),
         (['conwet'],       'http://google',      'Acquire URL: The URL "http://google" is not valid.'),
-        # (['conwet'],       'http://google:es',   'Acquire URL: The URL "http://google:es" is not valid.'),
         (['conwet'],       'www.google.es',      'Acquire URL: The URL "www.google.es" is not valid.')
 
     ])
@@ -449,21 +438,6 @@ class TestSelenium(unittest.TestCase):
             self.check_ds_values(url_path, dataset['private'], dataset['searchable'], final_users, acquire_url)
 
     @parameterized.expand([
-        # (['user1', 'user2', 'user3'], [{'name': 'CoNWeT', 'users': ['user2']}], True,  True,  [],        'http://store.conwet.com/'),
-        # (['user1', 'user2', 'user3'], [{'name': 'CoNWeT', 'users': ['user2']}], True,  True,  []),
-        # (['user1', 'user2', 'user3'], [{'name': 'CoNWeT', 'users': ['user2']}], False, True,  []),
-        # (['user1', 'user2', 'user3'], [{'name': 'CoNWeT', 'users': ['user2']}], True,  False, []),
-        # (['user1', 'user2', 'user3'], [{'name': 'CoNWeT', 'users': ['user2']}], True,  True,  ['user3'], 'http://store.conwet.com/'),
-        # (['user1', 'user2', 'user3'], [{'name': 'CoNWeT', 'users': ['user2']}], True,  True,  ['user3']),
-        # (['user1', 'user2', 'user3'], [{'name': 'CoNWeT', 'users': ['user2']}], False, True,  ['user3']),
-        # (['user1', 'user2', 'user3'], [{'name': 'CoNWeT', 'users': ['user2']}], True,  False, ['user3']),
-
-        # More complex
-        # (['user1', 'user2', 'user3', 'user4', 'user5', 'user6'], [{'name': 'CoNWeT', 'users': ['user2', 'user3']}], True,  True,  ['user4', 'user5'], 'http://store.conwet.com/'),
-        # (['user1', 'user2', 'user3', 'user4', 'user5', 'user6'], [{'name': 'CoNWeT', 'users': ['user2', 'user3']}], True,  True,  ['user4', 'user5']),
-        # (['user1', 'user2', 'user3', 'user4', 'user5', 'user6'], [{'name': 'CoNWeT', 'users': ['user2', 'user3']}], False, True,  ['user4', 'user5']),
-        # (['user1', 'user2', 'user3', 'user4', 'user5', 'user6'], [{'name': 'CoNWeT', 'users': ['user2', 'user3']}], True,  False, ['user4', 'user5']),
-
         # Even if user6 is in another organization, he/she won't be able to access the dataset
         (['user1', 'user2', 'user3', 'user4', 'user5', 'user6'], [{'name': 'CoNWeT', 'users': ['user2', 'user3']}, 
                                                                   {'name': 'UPM',    'users': ['user6']}],            True,  True,  ['user4', 'user5'], 'http://store.conwet.com/'),
@@ -502,11 +476,6 @@ class TestSelenium(unittest.TestCase):
             acquired = user in adquiring_users
             in_org = user in orgs[0]['users']
             self.check_user_access(pkg_name, url, False, acquired, in_org, private, searchable, acquire_url)
-
-            # The user is logged out when they try to access a private dataset and they are not included
-            # in the list of allowed users.
-            if not acquired and private and not in_org:
-                self.login(user, user)
 
             self.check_acquired(pkg_name, url, acquired, private)
 
