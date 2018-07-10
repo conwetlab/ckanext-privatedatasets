@@ -33,7 +33,7 @@ ckan.plugins = privatedatasets <OTHER_PLUGINS>
   * To show the Acquire URL when the user is **creating** a dataset, you should set the following preference: `ckan.privatedatasets.show_acquire_url_on_create = True`. By default, the value of this preference is set to `False`.
   * To show the Acquire URL when the user is **editing** a dataset, you should set the following preference: `ckan.privatedatasets.show_acquire_url_on_edit = True`. By default, the value of this preference is set to `False`.
 * In some cases you will want to secure the notification callback in order to filter the entities (user, machines...) that can send them. To do so, you can follow the instructions in the section [Securing the Notification Callback](#securing-the-notification-callback).
-* Restart your apache2 reserver
+* Restart your apache2 server
 ```
 sudo service apache2 restart
 ```
