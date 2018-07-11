@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # Copyright (c) 2014 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
+# Copyright (c) 2018 Future Internet Consulting and Development Solutions S.L.
 
 # This file is part of CKAN Private Dataset Extension.
 
@@ -21,6 +22,7 @@ from __future__ import absolute_import
 
 import importlib
 import logging
+import os
 
 import ckan.plugins as plugins
 
@@ -151,7 +153,7 @@ def _process_package(context, request_data):
     plugins.toolkit.check_access(method, context, request_data)
 
     # Get the parser from the configuration
-    class_path = plugins.toolkit.config.get(PARSER_CONFIG_PROP, '')
+    class_path = os.environ.get(PARSER_CONFIG_PROP.upper().replace('.', '_'), plugins.toolkit.config.get(PARSER_CONFIG_PROP, ''))
 
     if class_path != '':
         try:
