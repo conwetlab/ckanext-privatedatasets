@@ -21,8 +21,6 @@ import ckan.model as model
 import ckan.plugins.toolkit as tk
 import db
 
-from pylons import config
-
 from ckan.common import request
 
 import logging
@@ -62,7 +60,7 @@ def can_read(pkg_dict):
 
 
 def get_config_bool_value(config_name, default_value=False):
-    value = config.get(config_name, default_value)
+    value = tk.config.get(config_name, default_value)
     value = value if type(value) == bool else value != 'False'
     return value
 

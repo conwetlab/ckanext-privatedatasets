@@ -22,7 +22,6 @@ import ckanext.privatedatasets.constants as constants
 import db
 import importlib
 import logging
-import pylons.config as config
 
 log = logging.getLogger(__name__)
 
@@ -146,7 +145,7 @@ def _process_package(context, request_data):
     plugins.toolkit.check_access(method, context, request_data)
 
     # Get the parser from the configuration
-    class_path = config.get(PARSER_CONFIG_PROP, '')
+    class_path = plugins.toolkit.config.get(PARSER_CONFIG_PROP, '')
 
     if class_path != '':
         try:
