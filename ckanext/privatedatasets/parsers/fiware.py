@@ -17,11 +17,12 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with CKAN Private Dataset Extension.  If not, see <http://www.gnu.org/licenses/>.
 
-import ckan.plugins.toolkit as tk
 import re
-
 from urlparse import urlparse
+
 from ckan.common import request
+import ckan.plugins.toolkit as tk
+import six
 
 
 class FiWareNotificationParser(object):
@@ -32,7 +33,7 @@ class FiWareNotificationParser(object):
         fields = ['customer_name', 'resources']
 
         for field in fields:
-            if not field in request_data:
+            if field not in request_data:
                 raise tk.ValidationError({'message': '%s not found in the request' % field})
 
         # Parse the body
@@ -40,7 +41,7 @@ class FiWareNotificationParser(object):
         user_name = request_data['customer_name']
         datasets = []
 
-        if not isinstance(user_name, basestring):
+        if not isinstance(user_name, six.string_types):
             raise tk.ValidationError({'message': 'Invalid customer_name format'})
 
         if not isinstance(resources, list):
@@ -61,4 +62,3 @@ class FiWareNotificationParser(object):
                 raise tk.ValidationError({'message': 'Invalid resource format'})
 
         return {'users_datasets': [{'user': user_name, 'datasets': datasets}]}
-        

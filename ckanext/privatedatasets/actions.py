@@ -17,11 +17,15 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with CKAN Private Dataset Extension.  If not, see <http://www.gnu.org/licenses/>.
 
-import ckan.plugins as plugins
-import ckanext.privatedatasets.constants as constants
-import db
+from __future__ import absolute_import
+
 import importlib
 import logging
+
+import ckan.plugins as plugins
+
+from ckanext.privatedatasets import constants, db
+
 
 log = logging.getLogger(__name__)
 
@@ -53,6 +57,7 @@ def package_acquired(context, request_data):
     '''
     context['method'] = 'grant'
     return _process_package(context, request_data)
+
 
 def acquisitions_list(context, data_dict):
     '''
@@ -137,6 +142,7 @@ def revoke_access(context, request_data):
     context['method'] = 'revoke'
     return _process_package(context, request_data)
 
+
 def _process_package(context, request_data):
     log.info('Notification received: %s' % request_data)
 
@@ -168,7 +174,7 @@ def _process_package(context, request_data):
 
     for user_info in result['users_datasets']:
         for dataset_id in user_info['datasets']:
-            
+
             try:
                 context_pkg_show = context.copy()
                 context_pkg_show['ignore_auth'] = True

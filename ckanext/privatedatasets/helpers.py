@@ -17,13 +17,17 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with CKAN Private Dataset Extension.  If not, see <http://www.gnu.org/licenses/>.
 
-import ckan.model as model
-import ckan.plugins.toolkit as tk
-import db
-
-from ckan.common import request
+from __future__ import absolute_import
 
 import logging
+
+from ckan.common import request
+import ckan.model as model
+import ckan.plugins.toolkit as tk
+
+from ckanext.privatedatasets import db
+
+
 log = logging.getLogger(__name__)
 
 

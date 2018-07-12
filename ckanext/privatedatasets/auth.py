@@ -17,16 +17,15 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with CKAN Private Dataset Extension.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import absolute_import
+
+import ckan.authz as authz
+from ckan.common import _, request
 import ckan.lib.helpers as helpers
 import ckan.logic.auth as logic_auth
 import ckan.plugins.toolkit as tk
-try:
-    import ckan.authz as authz
-except ImportError:
-    import ckan.new_authz as authz
-import db
 
-from ckan.common import _, request
+from ckanext.privatedatasets import db
 
 
 @tk.auth_allow_anonymous_access
@@ -137,9 +136,11 @@ def package_acquired(context, data_dict):
     # TODO: Improve security
     return {'success': True}
 
+
 def acquisitions_list(context, data_dict):
     # Users can get only their acquisitions list
     return {'success': context['user'] == data_dict['user']}
+
 
 @tk.auth_allow_anonymous_access
 def revoke_access(context, data_dict):

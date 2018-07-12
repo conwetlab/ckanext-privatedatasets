@@ -17,19 +17,14 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with CKAN Private Dataset Extension.  If not, see <http://www.gnu.org/licenses/>.
 
-import ckan.lib.search as search
-import ckan.model as model
-import ckan.plugins as p
-import ckan.plugins.toolkit as tk
+from __future__ import absolute_import
 
+from ckan import model, plugins as p
+from ckan.lib import search
 from ckan.lib.plugins import DefaultPermissionLabels
+from ckan.plugins import toolkit as tk
 
-import auth
-import actions
-import constants
-import converters_validators as conv_val
-import db
-import helpers as helpers
+from ckanext.privatedatasets import auth, actions, constants, converters_validators as conv_val, db, helpers
 
 
 HIDDEN_FIELDS = [constants.ALLOWED_USERS, constants.SEARCHABLE]
@@ -150,8 +145,6 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm, DefaultPermissio
 
         return m
 
-    
-
     ######################################################################
     ############################## IACTIONS ##############################
     ######################################################################
@@ -270,7 +263,7 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm, DefaultPermissio
 
     def after_search(self, search_results, search_params):
         for result in search_results['results']:
-            # Extra fields should not be returned 
+            # Extra fields should not be returned
             # The original list cannot be modified
             attrs = list(HIDDEN_FIELDS)
 
