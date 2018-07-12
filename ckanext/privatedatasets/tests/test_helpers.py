@@ -33,12 +33,11 @@ class HelpersTest(unittest.TestCase):
 
         self._tk = helpers.tk
         helpers.tk = MagicMock()
+        helpers.tk.config = {}
 
         self._db = helpers.db
         helpers.db = MagicMock()
 
-        self._config = helpers.config
-        helpers.config = {}
 
         self._request = helpers.request
         helpers.request = MagicMock()
@@ -47,7 +46,6 @@ class HelpersTest(unittest.TestCase):
         helpers.model = self._model
         helpers.tk = self._tk
         helpers.db = self._db
-        helpers.config = self._config
         helpers.request = self._request
 
     @parameterized.expand([
@@ -135,7 +133,7 @@ class HelpersTest(unittest.TestCase):
     ])
     def test_show_acquire_url_on_create(self, config_value, expected_value):
         if config_value is not None:
-            helpers.config['ckan.privatedatasets.show_acquire_url_on_create'] = config_value
+            helpers.tk.config['ckan.privatedatasets.show_acquire_url_on_create'] = config_value
 
         # Call the function
         self.assertEquals(expected_value, helpers.show_acquire_url_on_create())
@@ -147,7 +145,7 @@ class HelpersTest(unittest.TestCase):
     ])
     def test_show_acquire_url_on_edit(self, config_value, expected_value):
         if config_value is not None:
-            helpers.config['ckan.privatedatasets.show_acquire_url_on_edit'] = config_value
+            helpers.tk.config['ckan.privatedatasets.show_acquire_url_on_edit'] = config_value
 
         # Call the function
         self.assertEquals(expected_value, helpers.show_acquire_url_on_edit())

@@ -34,9 +34,6 @@ class ActionsTest(unittest.TestCase):
     def setUp(self):
 
         # Load the mocks
-        self._config = actions.config
-        actions.config = MagicMock()
-
         self._importlib = actions.importlib
         actions.importlib = MagicMock()
 
@@ -48,7 +45,6 @@ class ActionsTest(unittest.TestCase):
 
     def tearDown(self):
         # Unmock
-        actions.config = self._config
         actions.importlib = self._importlib
         actions.plugins = self._plugins
         actions.db = self._db
@@ -66,7 +62,7 @@ class ActionsTest(unittest.TestCase):
     def test_class_cannot_be_loaded(self, class_path, class_name, path_exist, class_exist, expected_error):
         class_package = class_path
         class_package += ':' + class_name if class_name else ''
-        actions.config = {PARSER_CONFIG_PROP: class_package}
+        actions.plugins.toolkit.config = {PARSER_CONFIG_PROP: class_package}
 
         # Recover exception
         actions.plugins.toolkit.ValidationError = self._plugins.toolkit.ValidationError
@@ -93,7 +89,7 @@ class ActionsTest(unittest.TestCase):
     def configure_mocks(self, parse_result, datasets_not_found=[], not_updatable_datasets=[],
             allowed_users=None, creator_user={'id': '1234', 'name': 'ckan'}):
 
-        actions.config = {PARSER_CONFIG_PROP: 'valid.path:%s' % CLASS_NAME}
+        actions.plugins.toolkit.config = {PARSER_CONFIG_PROP: 'valid.path:%s' % CLASS_NAME}
 
         # Configure mocks
         parser_instance = MagicMock()
