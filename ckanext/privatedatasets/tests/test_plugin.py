@@ -22,7 +22,7 @@ import copy
 import ckanext.privatedatasets.plugin as plugin
 
 from mock import MagicMock
-from nose_parameterized import parameterized
+from parameterized import parameterized
 
 
 class PluginTest(unittest.TestCase):

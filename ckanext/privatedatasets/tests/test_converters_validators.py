@@ -21,7 +21,7 @@ import unittest
 import ckanext.privatedatasets.converters_validators as conv_val
 
 from mock import MagicMock
-from nose_parameterized import parameterized
+from parameterized import parameterized
 
 
 class ConvertersValidatorsTest(unittest.TestCase):

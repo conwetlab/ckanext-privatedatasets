@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # Copyright (c) 2014 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
+# Copyright (c) 2018 Future Internet Consulting and Development Solutions S.L.
 
 # This file is part of CKAN Private Dataset Extension.
 
@@ -17,23 +18,24 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with CKAN Private Dataset Extension.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import unicode_literals
+from __future__ import unicode_literals, print_function
 
-from nose_parameterized import parameterized
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import Select, WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from subprocess import Popen
-
-import ckan.lib.search.index as search_index
-import ckan.model as model
-import ckanext.privatedatasets.db as db
 import json
 import os
 import unittest
 import re
+from subprocess import Popen
+
+import ckan.lib.search.index as search_index
+import ckan.model as model
+from parameterized import parameterized
 import requests
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import Select, WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
+import ckanext.privatedatasets.db as db
 
 
 def get_dataset_url(dataset_name):
@@ -46,7 +48,6 @@ class TestSelenium(unittest.TestCase):
     def setUpClass(cls):
         env = os.environ.copy()
         env['DEBUG'] = 'True'
-        env['OAUTHLIB_INSECURE_TRANSPORT'] = 'True'
         cls._process = Popen(['paster', 'serve', 'test.ini'], env=env)
 
     @classmethod
@@ -76,9 +77,8 @@ class TestSelenium(unittest.TestCase):
         else:
 
             self.driver = webdriver.Firefox()
-            self.base_url = 'http://127.0.0.1:5000/'
+            self.base_url = 'http://localhost:5000/'
 
-        self.driver.implicitly_wait(5)
         self.driver.set_window_size(1024, 768)
 
     def tearDown(self):
@@ -97,7 +97,7 @@ class TestSelenium(unittest.TestCase):
         driver = self.driver
         driver.get(self.base_url)
         driver.find_element_by_link_text('Register').click()
-        driver.find_element_by_id('field-username').clear()
+        WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.ID, "field-username"))).clear()
         driver.find_element_by_id('field-username').send_keys(username)
         driver.find_element_by_id('field-fullname').clear()
         driver.find_element_by_id('field-fullname').send_keys(fullname)
@@ -118,7 +118,7 @@ class TestSelenium(unittest.TestCase):
         )
         login_btn.click()
 
-        driver.find_element_by_id('field-login').clear()
+        WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.ID, "field-login"))).clear()
         driver.find_element_by_id('field-login').send_keys(username)
         driver.find_element_by_id('field-password').clear()
         driver.find_element_by_id('field-password').send_keys(password)
@@ -128,17 +128,17 @@ class TestSelenium(unittest.TestCase):
     def create_organization(self, name, description, users):
         driver = self.driver
         driver.get(self.base_url)
-        driver.find_element_by_link_text('Organizations').click()
-        driver.find_element_by_link_text('Add Organization').click()
-        driver.find_element_by_id('field-name').clear()
+        WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable((By.LINK_TEXT, 'Organizations'))).click()
+        WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable((By.LINK_TEXT, 'Add Organization'))).click()
+        WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.ID, 'field-name'))).clear()
         driver.find_element_by_id('field-name').send_keys(name)
         driver.find_element_by_id('field-description').clear()
         driver.find_element_by_id('field-description').send_keys(description)
         driver.find_element_by_name('save').click()
 
         # Add users
-        driver.find_element_by_link_text('Manage').click()
-        driver.find_element_by_link_text('Members').click()
+        WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable((By.LINK_TEXT, 'Manage'))).click()
+        WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable((By.LINK_TEXT, 'Members'))).click()
         for user in users:
             driver.find_element_by_link_text('Add Member').click()
             driver.find_element_by_id('username').send_keys(user)
@@ -147,7 +147,7 @@ class TestSelenium(unittest.TestCase):
     def fill_ds_general_info(self, name, description, tags, private, searchable, allowed_users, acquire_url):
         # FIRST PAGE: Dataset properties
         driver = self.driver
-        driver.find_element_by_id('field-title').clear()
+        WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.ID, "field-title"))).clear()
         driver.find_element_by_id('field-title').send_keys(name)
         driver.find_element_by_id('field-notes').clear()
         driver.find_element_by_id('field-notes').send_keys(description)
@@ -173,11 +173,13 @@ class TestSelenium(unittest.TestCase):
     def create_ds(self, name, description, tags, private, searchable, allowed_users, acquire_url, resource_url, resource_name, resource_description, resource_format):
         driver = self.driver
         driver.get(self.base_url)
-        driver.find_element_by_link_text('Datasets').click()
-        driver.find_element_by_link_text('Add Dataset').click()
+        WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable((By.LINK_TEXT, 'Datasets'))).click()
+        WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable((By.LINK_TEXT, 'Add Dataset'))).click()
         self.fill_ds_general_info(name, description, tags, private, searchable, allowed_users, acquire_url)
 
         # SECOND PAGE: Add Resources
+        WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.ID, "field-name")))
+
         try:
             # The link button is only clicked if it's present
             driver.find_element_by_link_text('Link').click()
@@ -316,8 +318,11 @@ class TestSelenium(unittest.TestCase):
         (['upm', 'a'],     'http://upm.es',      'Allowed users: Must be at least 2 characters long'),
         (['upm', 'a a a'], 'http://upm.es',      'Allowed users: Must be purely lowercase alphanumeric (ascii) characters and these symbols: -_'),
         (['upm', 'a?-vz'], 'http://upm.es',      'Allowed users: Must be purely lowercase alphanumeric (ascii) characters and these symbols: -_'),
-        (['thisisaveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryverylongname'],
-                           'http://upm.es',      'Allowed users: Name must be a maximum of 100 characters long'),
+        (
+            ['thisisaveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryverylongname'],
+            'http://upm.es',
+            'Allowed users: Name must be a maximum of 100 characters long'
+        ),
         (['conwet'],       'ftp://google.es',    'Acquire URL: The URL "ftp://google.es" is not valid.'),
         (['conwet'],       'google',             'Acquire URL: The URL "google" is not valid.'),
         (['conwet'],       'http://google',      'Acquire URL: The URL "http://google" is not valid.'),
@@ -337,14 +342,14 @@ class TestSelenium(unittest.TestCase):
         # Go the page to create the dataset
         driver = self.driver
         driver.get(self.base_url)
-        driver.find_element_by_link_text('Datasets').click()
-        driver.find_element_by_link_text('Add Dataset').click()
+        WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable((By.LINK_TEXT, 'Datasets'))).click()
+        WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable((By.LINK_TEXT, 'Add Dataset'))).click()
 
         # Fill the requested information
         self.fill_ds_general_info(pkg_name, 'Example description', ['tag1'], True, True, allowed_users, acquire_url)
 
         # Check the error message
-        msg_error = self.driver.find_element_by_xpath('//div[@id=\'content\']/div[3]/div/section/div/form/div/ul/li').text
+        msg_error = WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.XPATH, '//div[@id=\'content\']/div[3]/div/section/div/form/div/ul/li'))).text
         self.assertEquals(expected_msg, msg_error)
 
     @parameterized.expand([
@@ -360,7 +365,7 @@ class TestSelenium(unittest.TestCase):
         # Enter the acquired dataset tab
         driver = self.driver
         driver.get(self.base_url + 'dashboard/acquired')
-        driver.find_element_by_link_text(link).click()
+        WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable((By.LINK_TEXT, link))).click()
         self.assertEquals(self.base_url + 'dataset', self.base_url + expected_url)
 
     @parameterized.expand([
@@ -439,13 +444,13 @@ class TestSelenium(unittest.TestCase):
 
     @parameterized.expand([
         # Even if user6 is in another organization, he/she won't be able to access the dataset
-        (['user1', 'user2', 'user3', 'user4', 'user5', 'user6'], [{'name': 'CoNWeT', 'users': ['user2', 'user3']}, 
+        (['user1', 'user2', 'user3', 'user4', 'user5', 'user6'], [{'name': 'CoNWeT', 'users': ['user2', 'user3']},
                                                                   {'name': 'UPM',    'users': ['user6']}],            True,  True,  ['user4', 'user5'], 'http://store.conwet.com/'),
-        (['user1', 'user2', 'user3', 'user4', 'user5', 'user6'], [{'name': 'CoNWeT', 'users': ['user2', 'user3']}, 
+        (['user1', 'user2', 'user3', 'user4', 'user5', 'user6'], [{'name': 'CoNWeT', 'users': ['user2', 'user3']},
                                                                   {'name': 'UPM',    'users': ['user6']}],            True,  True,  ['user4', 'user5']),
-        (['user1', 'user2', 'user3', 'user4', 'user5', 'user6'], [{'name': 'CoNWeT', 'users': ['user2', 'user3']}, 
+        (['user1', 'user2', 'user3', 'user4', 'user5', 'user6'], [{'name': 'CoNWeT', 'users': ['user2', 'user3']},
                                                                   {'name': 'UPM',    'users': ['user6']}],            True,  False, ['user4', 'user5']),
-        (['user1', 'user2', 'user3', 'user4', 'user5', 'user6'], [{'name': 'CoNWeT', 'users': ['user2', 'user3']}, 
+        (['user1', 'user2', 'user3', 'user4', 'user5', 'user6'], [{'name': 'CoNWeT', 'users': ['user2', 'user3']},
                                                                   {'name': 'UPM',    'users': ['user6']}],            False, True,  ['user4', 'user5']),
     ])
     def test_organization(self, users, orgs, private, searchable, adquiring_users, acquire_url=None):
@@ -497,5 +502,4 @@ class TestSelenium(unittest.TestCase):
 
         self.modify_ds(url, pkg_name, description, tags, False, None, None, None)
         expected_url = 'dataset/%s' % url
-        current_url = self.driver.current_url
-        self.assertIn(expected_url, current_url)    # Maybe the current URL include some parameters
+        WebDriverWait(self.driver, 20).until(lambda driver: expected_url in driver.current_url)

@@ -21,7 +21,7 @@ import ckanext.privatedatasets.controllers.ui_controller as controller
 import unittest
 
 from mock import MagicMock, ANY
-from nose_parameterized import parameterized
+from parameterized import parameterized
 
 
 class UIControllerTest(unittest.TestCase):
