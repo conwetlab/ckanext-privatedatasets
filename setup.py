@@ -47,7 +47,7 @@ setup(
         # -*- Extra requirements: -*-
     ],
     tests_require=[
-        'nose_parameterized==0.3.3',
+        'parameterized',
         'selenium==2.52.0'
     ],
     test_suite='nosetests',

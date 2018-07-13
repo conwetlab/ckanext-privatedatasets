@@ -21,7 +21,7 @@ import unittest
 import ckanext.privatedatasets.auth as auth
 
 from mock import MagicMock
-from nose_parameterized import parameterized
+from parameterized import parameterized
 
 
 class AuthTest(unittest.TestCase):

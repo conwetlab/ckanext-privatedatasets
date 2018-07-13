@@ -21,7 +21,7 @@ import ckanext.privatedatasets.actions as actions
 import unittest
 
 from mock import MagicMock
-from nose_parameterized import parameterized
+from parameterized import parameterized
 
 PARSER_CONFIG_PROP = 'ckan.privatedatasets.parser'
 IMPORT_ERROR_MSG = 'Unable to load the module'

@@ -21,7 +21,7 @@ import unittest
 import ckanext.privatedatasets.parsers.fiware as fiware
 
 from mock import MagicMock
-from nose_parameterized import parameterized
+from parameterized import parameterized
 
 
 TEST_CASES = {
