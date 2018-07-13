@@ -17,13 +17,16 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with CKAN Private Dataset Extension.  If not, see <http://www.gnu.org/licenses/>.
 
-import constants
-import db
+from __future__ import absolute_import
+
+from itertools import count
 import re
 
 from ckan.plugins import toolkit
 from ckan.common import _
-from itertools import count
+import six
+
+from ckanext.privatedatasets import constants, db
 
 
 def private_datasets_metadata_checker(key, data, errors, context):
@@ -33,7 +36,7 @@ def private_datasets_metadata_checker(key, data, errors, context):
 
     # Avoid missing value
     # "if not private_val:" is not valid because private_val can be False
-    if not isinstance(private_val, basestring) and not isinstance(private_val, bool):
+    if not isinstance(private_val, six.string_types) and not isinstance(private_val, bool):
         private_val = None
 
     # If the private field is not included in the data dict, we must check the current value
@@ -57,7 +60,7 @@ def allowed_users_convert(key, data, errors, context):
     # Get the allowed user list
     if (constants.ALLOWED_USERS,) in data and isinstance(data[(constants.ALLOWED_USERS,)], list):
         allowed_users = data[(constants.ALLOWED_USERS,)]
-    elif (constants.ALLOWED_USERS_STR,) in data and isinstance(data[(constants.ALLOWED_USERS_STR,)], basestring):
+    elif (constants.ALLOWED_USERS_STR,) in data and isinstance(data[(constants.ALLOWED_USERS_STR,)], six.string_types):
         allowed_users_str = data[(constants.ALLOWED_USERS_STR,)].strip()
         allowed_users = [allowed_user for allowed_user in allowed_users_str.split(',') if allowed_user.strip() != '']
     else:

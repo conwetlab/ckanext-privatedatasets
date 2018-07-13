@@ -17,6 +17,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with CKAN Private Dataset Extension.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import absolute_import
+
 import sqlalchemy as sa
 
 AllowedUser = None
@@ -38,7 +40,9 @@ def init_db(model):
         AllowedUser = _AllowedUser
 
         # FIXME: Maybe a default value should not be included...
-        package_allowed_users_table = sa.Table('package_allowed_users', model.meta.metadata,
+        package_allowed_users_table = sa.Table(
+            'package_allowed_users',
+            model.meta.metadata,
             sa.Column('package_id', sa.types.UnicodeText, primary_key=True, default=u''),
             sa.Column('user_name', sa.types.UnicodeText, primary_key=True, default=u''),
         )
