@@ -1,0 +1,107 @@
+{% ckan_extends %}
+
+{% block package_basic_fields_org %}
+
+  {% resource 'privatedatasets/allowed_users.js' %}
+
+  {# if we have a default group then this wants remembering #}
+  {% if data.group_id %}
+    <input type="hidden" name="groups__0__id" value="{{ data.group_id }}" />
+  {% endif %}
+
+  {% set dataset_is_draft = data.get('state', 'draft').startswith('draft') or data.get('state', 'none') ==  'none' %}
+  {% set dataset_has_organization = data.owner_org or data.group_id %}
+  {% set organizations_available = h.organizations_available('create_dataset') %}
+  {% set user_is_sysadmin = h.check_access('sysadmin') %}
+  {% set show_organizations_selector = organizations_available and (user_is_sysadmin or dataset_is_draft) %}
+  {% set editing =  'id' in data %}
+
+  {% if show_organizations_selector and show_visibility_selector %}
+    <div>
+  {% endif %}
+
+  {% if show_organizations_selector %}
+    {% set existing_org = data.owner_org or data.group_id %}
+    <div class="control-group">
+      <label for="field-organizations" class="control-label">{{ _('Organization') }}</label>
+      <div class="controls">
+        <select id="field-organizations" name="owner_org" data-module="autocomplete">
+          {% if h.check_config_permission('create_unowned_dataset') %}
+             <option value="" {% if not selected_org and data.id %} selected="selected" {% endif %}>{{ _('No organization') }}</option>
+          {% endif %}
+          {% for organization in organizations_available %}
+            {# get out first org from users list only if there is not an existing org #}
+            {% set selected_org = (existing_org and existing_org == organization.id) or (not existing_org and not data.id and organization.id == organizations_available[0].id) %}
+            <option value="{{ organization.id }}" {% if selected_org %} selected="selected" {% endif %}>{{ organization.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+  {% endif %}
+
+  {% block package_metadata_fields_visibility %}
+    <div class="control-group">
+      <label for="field-private" class="control-label">{{ _('Visibility') }}</label>
+      <div class="controls">
+        <select id="field-private" name="private" data-module="allowed-users">
+          {% for option in [('True', _('Private')), ('False', _('Public'))] %}
+          <option value="{{ option[0] }}" {% if option[0] == data.private|trim %}selected="selected"{% endif %}>{{ option[1] }}</option>
+          {% endfor %}
+        </select>
+        <span class="info-block info-inline">
+          <i class="icon-info-sign fa fa-info-circle"></i>
+          {% trans %}
+            Private datasets can only be accessed by certain users, while public datasets can be accessed by anyone. 
+          {% endtrans %}
+        </span>
+      </div>
+    </div>
+  {% endblock %}
+
+  {% block package_metadata_fields_protected %}
+    <div class="control-group">
+      <label for="field-searchable" class="control-label">{{ _('Searchable') }}</label>
+      <div class="controls">
+        <select id="field-searchable" name="searchable">
+          {% for option in [('True', _('True')), ('False', _('False'))] %}
+          <option value="{{ option[0] }}" {% if option[0] == data.searchable|trim %}selected="selected"{% endif %}>{{ option[1] }}</option>
+          {% endfor %}
+        </select>
+        <span class="info-block info-inline">
+          <i class="icon-info-sign fa fa-info-circle"></i>
+          {% trans %}
+            Searchable datasets can be searched by anyone, while not-searchable datasets can only be accessed by entering directly its URL.
+          {% endtrans %}
+        </span>
+      </div>
+    </div>
+  {% endblock %}
+
+
+  {% if show_organizations_selector and show_visibility_selector %}
+    </div>
+  {% endif %}
+
+  {% set users_attrs = {'data-module': 'autocomplete', 'data-module-tags': '', 'data-module-source': '/api/2/util/user/autocomplete?q=?'} %}
+  {{ form.input('allowed_users_str', label=_('Allowed Users'), id='field-allowed_users_str', placeholder=_('Allowed Users'), value=h.get_allowed_users_str(data.allowed_users), error=errors.custom_text, classes=['control-full'], attrs=users_attrs) }}
+
+  
+  {% if editing and h.show_acquire_url_on_edit() or not editing and h.show_acquire_url_on_create()  %}
+    {{ form.input('acquire_url', label=_('Acquire URL'), id='field-acquire_url', placeholder=_('http://example.com/acquire/'), value=data.acquire_url, error=errors.custom_text, classes=['control-medium']) }}
+  {% else %}
+      <input type="hidden" name="acquire_url" id="acquire_url" value="{{ data.acquire_url }}" />
+  {% endif %}
+
+  {% if data.id and h.check_access('package_delete', {'id': data.id}) and data.state != 'active' %}
+    <div class="control-group">
+      <label for="field-state" class="control-label">{{ _('State') }}</label>
+      <div class="controls">
+        <select id="field-state" name="state">
+          <option value="active" {% if data.get('state', 'none') == 'active' %} selected="selected" {% endif %}>{{ _('Active') }}</option>
+          <option value="deleted" {% if data.get('state', 'none') == 'deleted' %} selected="selected" {% endif %}>{{ _('Deleted') }}</option>
+        </select>
+      </div>
+    </div>
+  {% endif %}
+
+{% endblock %}

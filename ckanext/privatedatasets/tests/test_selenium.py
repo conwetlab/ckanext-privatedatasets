@@ -47,7 +47,7 @@ class TestSelenium(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         env = os.environ.copy()
-        env['DEBUG'] = 'True'
+        env['DEBUG'] = 'False'
         cls._process = Popen(['paster', 'serve', 'test.ini'], env=env)
 
     @classmethod
@@ -260,7 +260,7 @@ class TestSelenium(unittest.TestCase):
     def check_acquired(self, dataset, dataset_url, acquired, private):
         driver = self.driver
         driver.get(self.base_url + 'dashboard')
-        driver.find_element_by_link_text('Acquired Datasets').click()
+        WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable((By.LINK_TEXT, 'Acquired Datasets'))).click()
 
         if acquired and private:
             # This message could not be shown when the user has acquired at least one dataset
