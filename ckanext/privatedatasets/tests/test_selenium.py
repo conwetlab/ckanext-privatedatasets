@@ -93,7 +93,7 @@ class TestSelenium(unittest.TestCase):
         self.driver.delete_all_cookies()
         self.driver.get(self.base_url)
 
-    def register(self, username, fullname, mail, password):
+    def register(self, username, fullname, mail):
         driver = self.driver
         driver.get(self.base_url)
         driver.find_element_by_link_text('Register').click()
@@ -104,13 +104,13 @@ class TestSelenium(unittest.TestCase):
         driver.find_element_by_id('field-email').clear()
         driver.find_element_by_id('field-email').send_keys(mail)
         driver.find_element_by_id('field-password').clear()
-        driver.find_element_by_id('field-password').send_keys(password)
+        driver.find_element_by_id('field-password').send_keys("1234" + username)
         driver.find_element_by_id('field-confirm-password').clear()
-        driver.find_element_by_id('field-confirm-password').send_keys(password)
+        driver.find_element_by_id('field-confirm-password').send_keys("1234" + username)
         driver.find_element_by_name('save').click()
         self.logout()
 
-    def login(self, username, password):
+    def login(self, username):
         driver = self.driver
         driver.get(self.base_url)
         login_btn = WebDriverWait(driver, 15).until(
@@ -121,7 +121,7 @@ class TestSelenium(unittest.TestCase):
         WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.ID, "field-login"))).clear()
         driver.find_element_by_id('field-login').send_keys(username)
         driver.find_element_by_id('field-password').clear()
-        driver.find_element_by_id('field-password').send_keys(password)
+        driver.find_element_by_id('field-password').send_keys("1234" + username)
         driver.find_element_by_id('field-remember').click()
         driver.find_element_by_css_selector('button.btn.btn-primary').click()
 
@@ -275,7 +275,7 @@ class TestSelenium(unittest.TestCase):
             self.assertNotEquals(None, re.search('You haven\'t acquired any datasets.', driver.page_source))
 
     def default_register(self, user):
-        self.register(user, user, '%s@conwet.com' % user, user)
+        self.register(user, user, '%s@conwet.com' % user)
 
     @parameterized.expand([
         (['user1', 'user2', 'user3'],          True,  True,  [],                 'http://store.conwet.com/'),
@@ -293,7 +293,7 @@ class TestSelenium(unittest.TestCase):
             self.default_register(user)
 
         # The first user creates a dataset
-        self.login(users[0], users[0])
+        self.login(users[0])
         pkg_name = 'Dataset 1'
         url = get_dataset_url(pkg_name)
         self.create_ds(pkg_name, 'Example description', ['tag1', 'tag2', 'tag3'], private, searchable,
@@ -308,7 +308,7 @@ class TestSelenium(unittest.TestCase):
         rest_users = users[1:]
         for user in rest_users:
             self.logout()
-            self.login(user, user)
+            self.login(user)
             acquired = user in allowed_users
             self.check_user_access(pkg_name, url, False, acquired, False, private, searchable, acquire_url)
 
@@ -336,7 +336,7 @@ class TestSelenium(unittest.TestCase):
         self.default_register(user)
 
         # Create the dataset
-        self.login(user, user)
+        self.login(user)
         pkg_name = 'Dataset 2'
 
         # Go the page to create the dataset
@@ -360,7 +360,7 @@ class TestSelenium(unittest.TestCase):
         # Create a default user
         user = 'user1'
         self.default_register(user)
-        self.login(user, user)
+        self.login(user)
 
         # Enter the acquired dataset tab
         driver = self.driver
@@ -402,7 +402,7 @@ class TestSelenium(unittest.TestCase):
         # Create a default user
         user = 'user1'
         self.default_register(user)
-        self.login(user, user)
+        self.login(user)
 
         acquire_url = 'http://upm.es'
         dataset_default_name = 'Dataset %d'
@@ -458,7 +458,7 @@ class TestSelenium(unittest.TestCase):
         for user in users:
             self.default_register(user)
 
-        self.login(users[0], users[0])
+        self.login(users[0])
 
         # Create the organizations
         for org in orgs:
@@ -477,7 +477,7 @@ class TestSelenium(unittest.TestCase):
         rest_users = users[1:]
         for user in rest_users:
             self.logout()
-            self.login(user, user)
+            self.login(user)
             acquired = user in adquiring_users
             in_org = user in orgs[0]['users']
             self.check_user_access(pkg_name, url, False, acquired, in_org, private, searchable, acquire_url)
@@ -492,7 +492,7 @@ class TestSelenium(unittest.TestCase):
         self.default_register(user)
 
         # The user creates a dataset
-        self.login(user, user)
+        self.login(user)
         pkg_name = 'Dataset 1'
         description = 'Example Description'
         tags = ['tag1', 'tag2', 'tag3']
