@@ -25,6 +25,7 @@ import os
 import unittest
 import re
 from subprocess import Popen
+import time
 
 import ckan.lib.search.index as search_index
 import ckan.model as model
@@ -32,6 +33,7 @@ from parameterized import parameterized
 import requests
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import Select, WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
@@ -130,7 +132,12 @@ class TestSelenium(unittest.TestCase):
         driver.get(self.base_url)
         WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable((By.LINK_TEXT, 'Organizations'))).click()
         WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable((By.LINK_TEXT, 'Add Organization'))).click()
-        WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.ID, 'field-name'))).clear()
+        WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.ID, 'field-name')))
+
+        # Wait a bit to let ckan add javascript hooks
+        time.sleep(0.2)
+
+        driver.find_element_by_id('field-name').clear()
         driver.find_element_by_id('field-name').send_keys(name)
         driver.find_element_by_id('field-description').clear()
         driver.find_element_by_id('field-description').send_keys(description)
@@ -140,19 +147,26 @@ class TestSelenium(unittest.TestCase):
         WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable((By.LINK_TEXT, 'Manage'))).click()
         WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable((By.LINK_TEXT, 'Members'))).click()
         for user in users:
-            driver.find_element_by_link_text('Add Member').click()
-            driver.find_element_by_id('username').send_keys(user)
+            WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable((By.LINK_TEXT, 'Add Member'))).click()
+            WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.ID, "s2id_autogen1"))).send_keys(user + Keys.RETURN)
             driver.find_element_by_name('submit').click()
 
     def fill_ds_general_info(self, name, description, tags, private, searchable, allowed_users, acquire_url):
         # FIRST PAGE: Dataset properties
         driver = self.driver
-        WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.ID, "field-title"))).clear()
+        WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.ID, "field-title")))
+
+        # Wait a bit to let ckan add javascript hooks
+        time.sleep(0.2)
+
+        driver.find_element_by_id('field-title').clear()
         driver.find_element_by_id('field-title').send_keys(name)
         driver.find_element_by_id('field-notes').clear()
         driver.find_element_by_id('field-notes').send_keys(description)
-        driver.find_element_by_id('field-tags').clear()
-        driver.find_element_by_id('field-tags').send_keys(','.join(tags))
+        # field-tags
+        for tag in tags:
+            driver.find_element_by_id('s2id_autogen1').send_keys(tag)
+            driver.find_element_by_id('s2id_autogen1').send_keys(Keys.RETURN)
         Select(driver.find_element_by_id('field-private')).select_by_visible_text('Private' if private else 'Public')
         # WARN: The organization is set by default
 
@@ -160,8 +174,10 @@ class TestSelenium(unittest.TestCase):
         # If the dataset is public, these fields will be disabled (we'll check it)
         if private:
             Select(driver.find_element_by_id('field-searchable')).select_by_visible_text('True' if searchable else 'False')
-            driver.find_element_by_id('field-allowed_users_str').clear()
-            driver.find_element_by_id('field-allowed_users_str').send_keys(','.join(allowed_users))
+            # field-allowed_users
+            for user in allowed_users:
+                driver.find_element_by_id('s2id_autogen4').send_keys(user)
+                driver.find_element_by_id('s2id_autogen4').send_keys(Keys.RETURN)
             driver.find_element_by_id('field-acquire_url').clear()
             if acquire_url:
                 driver.find_element_by_id('field-acquire_url').send_keys(acquire_url)
