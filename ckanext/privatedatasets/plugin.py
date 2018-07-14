@@ -38,6 +38,7 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm, DefaultPermissio
     p.implements(p.IAuthFunctions)
     p.implements(p.IConfigurer)
     p.implements(p.IBlueprint)
+    p.implements(p.IRoutes, inherit=True)
     p.implements(p.IActions)
     p.implements(p.IPackageController, inherit=True)
     p.implements(p.ITemplateHelpers)
@@ -142,9 +143,18 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm, DefaultPermissio
     ############################# IBLUEPRINT #############################
     ######################################################################
 
+    # Deprecated but Required for CKAN 2.7
+    def before_map(self, m):
+        if p.toolkit.check_ckan_version(max_version='2.7.99'):
+            m.connect('user_acquired_datasets', '/dashboard/acquired', ckan_icon='shopping-cart',
+                controller='ckanext.privatedatasets.views:AcquiredDatasetsControllerUI',
+                action='acquired_datasets', conditions=dict(method=['GET']))
+        return m
+
     def get_blueprint(self):
         blueprint = Blueprint('privatedatasets', self.__module__)
-        blueprint.add_url_rule('/dashboard/acquired', 'acquired_datasets', acquired_datasets)
+        if p.toolkit.check_ckan_version(min_version='2.8'):
+            blueprint.add_url_rule('/dashboard/acquired', 'acquired_datasets', acquired_datasets)
         return blueprint
 
     ######################################################################

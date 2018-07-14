@@ -19,7 +19,7 @@
 
 from __future__ import absolute_import, unicode_literals
 
-from ckan import logic
+from ckan import logic, model
 from ckan.common import _, g
 from ckan.lib import base
 from ckan.plugins import toolkit
@@ -28,7 +28,7 @@ from ckanext.privatedatasets import constants
 
 
 def acquired_datasets():
-    context = {'for_view': True, 'user': g.user, 'auth_user_obj': g.userobj}
+    context = {'auth_user_obj': g.userobj, 'for_view': True, 'model': model, 'session': model.Session, 'user': g.user}
     data_dict = {'user_obj': g.userobj}
     try:
         user_dict = logic.get_action('user_show')(context, data_dict)
@@ -43,3 +43,9 @@ def acquired_datasets():
         'acquired_datasets': acquired_datasets,
     }
     return base.render('user/dashboard_acquired.html', extra_vars)
+
+
+class AcquiredDatasetsControllerUI(base.BaseController):
+
+    def acquired_datasets(self):
+        return acquired_datasets()
