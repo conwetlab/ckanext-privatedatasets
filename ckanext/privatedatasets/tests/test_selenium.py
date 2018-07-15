@@ -34,8 +34,8 @@ import requests
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.support.ui import Select, WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import Select, WebDriverWait
 
 import ckanext.privatedatasets.db as db
 
@@ -48,13 +48,20 @@ class TestSelenium(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        # Run CKAN
         env = os.environ.copy()
         env['DEBUG'] = 'False'
         cls._process = Popen(['paster', 'serve', 'test.ini'], env=env)
 
+        # Init Selenium
+        cls.driver = webdriver.Firefox()
+        cls.base_url = 'http://localhost:5000/'
+        cls.driver.set_window_size(1024, 768)
+
     @classmethod
     def tearDownClass(cls):
         cls._process.terminate()
+        #cls.driver.quit()
 
     def clearBBDD(self):
         # Clean Solr
@@ -73,19 +80,8 @@ class TestSelenium(unittest.TestCase):
     def setUp(self):
         self.clearBBDD()
 
-        if 'WEB_DRIVER_URL' in os.environ and 'CKAN_SERVER_URL' in os.environ:
-            self.driver = webdriver.Remote(os.environ['WEB_DRIVER_URL'], webdriver.DesiredCapabilities.FIREFOX.copy())
-            self.base_url = os.environ['CKAN_SERVER_URL']
-        else:
-
-            self.driver = webdriver.Firefox()
-            self.base_url = 'http://localhost:5000/'
-
-        self.driver.set_window_size(1024, 768)
-
     def tearDown(self):
         self.clearBBDD()
-        self.driver.quit()
 
     def assert_fields_disabled(self, fields):
         for field in fields:
