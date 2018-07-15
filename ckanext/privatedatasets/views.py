@@ -31,7 +31,7 @@ def acquired_datasets():
     context = {'auth_user_obj': g.userobj, 'for_view': True, 'model': model, 'session': model.Session, 'user': g.user}
     data_dict = {'user_obj': g.userobj}
     try:
-        user_dict = logic.get_action('user_show')(context, data_dict)
+        user_dict = toolkit.get_action('user_show')(context, data_dict)
         acquired_datasets = toolkit.get_action(constants.ACQUISITIONS_LIST)(context, None)
     except logic.NotFound:
         base.abort(404, _('User not found'))
