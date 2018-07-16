@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # Copyright (c) 2014 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
+# Copyright (c) 2018 Future Internet Consulting and Development Solutions S.L.
 
 # This file is part of CKAN Private Dataset Extension.
 
@@ -17,15 +18,16 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with CKAN Private Dataset Extension.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import absolute_import
+from __future__ import absolute_import, unicode_literals
 
 from ckan import model, plugins as p
 from ckan.lib import search
 from ckan.lib.plugins import DefaultPermissionLabels
 from ckan.plugins import toolkit as tk
+from flask import Blueprint
 
 from ckanext.privatedatasets import auth, actions, constants, converters_validators as conv_val, db, helpers
-
+from ckanext.privatedatasets.views import acquired_datasets
 
 HIDDEN_FIELDS = [constants.ALLOWED_USERS, constants.SEARCHABLE]
 
@@ -35,6 +37,7 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm, DefaultPermissio
     p.implements(p.IDatasetForm)
     p.implements(p.IAuthFunctions)
     p.implements(p.IConfigurer)
+    p.implements(p.IBlueprint)
     p.implements(p.IRoutes, inherit=True)
     p.implements(p.IActions)
     p.implements(p.IPackageController, inherit=True)
@@ -128,22 +131,31 @@ class PrivateDatasets(p.SingletonPlugin, tk.DefaultDatasetForm, DefaultPermissio
     def update_config(self, config):
         # Add this plugin's templates dir to CKAN's extra_template_paths, so
         # that CKAN will use this plugin's custom templates.
-        tk.add_template_directory(config, 'templates')
+        if p.toolkit.check_ckan_version(min_version='2.8'):
+            tk.add_template_directory(config, 'templates_2.8')
+        else:
+            tk.add_template_directory(config, 'templates')
 
         # Register this plugin's fanstatic directory with CKAN.
-        tk.add_resource('fanstatic', 'privatedatasets')
+        tk.add_resource(b'fanstatic', b'privatedatasets')
 
     ######################################################################
-    ############################## IROUTES ###############################
+    ############################# IBLUEPRINT #############################
     ######################################################################
 
+    # Deprecated but Required for CKAN 2.7
     def before_map(self, m):
-        # DataSet acquired notification
-        m.connect('user_acquired_datasets', '/dashboard/acquired', ckan_icon='shopping-cart',
-                  controller='ckanext.privatedatasets.controllers.ui_controller:AcquiredDatasetsControllerUI',
-                  action='user_acquired_datasets', conditions=dict(method=['GET']))
-
+        if p.toolkit.check_ckan_version(max_version='2.7.99'):
+            m.connect('user_acquired_datasets', '/dashboard/acquired', ckan_icon='shopping-cart',
+                controller='ckanext.privatedatasets.views:AcquiredDatasetsControllerUI',
+                action='acquired_datasets', conditions=dict(method=['GET']))
         return m
+
+    def get_blueprint(self):
+        blueprint = Blueprint('privatedatasets', self.__module__)
+        if p.toolkit.check_ckan_version(min_version='2.8'):
+            blueprint.add_url_rule('/dashboard/acquired', 'acquired_datasets', acquired_datasets)
+        return blueprint
 
     ######################################################################
     ############################## IACTIONS ##############################

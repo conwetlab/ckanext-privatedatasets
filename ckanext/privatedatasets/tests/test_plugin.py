@@ -19,10 +19,12 @@
 
 import unittest
 import copy
-import ckanext.privatedatasets.plugin as plugin
 
+from flask import Blueprint
 from mock import MagicMock
 from parameterized import parameterized
+
+import ckanext.privatedatasets.plugin as plugin
 
 
 class PluginTest(unittest.TestCase):
@@ -51,7 +53,7 @@ class PluginTest(unittest.TestCase):
         (plugin.p.IDatasetForm,),
         (plugin.p.IAuthFunctions,),
         (plugin.p.IConfigurer,),
-        (plugin.p.IRoutes,),
+        (plugin.p.IBlueprint,),
         (plugin.p.IActions,),
         (plugin.p.IPackageController,),
         (plugin.p.ITemplateHelpers,)
@@ -83,18 +85,15 @@ class PluginTest(unittest.TestCase):
         self.privateDatasets.update_config(config)
 
         # Test that functions are called as expected
-        plugin.tk.add_template_directory.assert_called_once_with(config, 'templates')
+        if self._tk.check_ckan_version(min_version='2.8'):
+            plugin.tk.add_template_directory.assert_called_once_with(config, 'templates_2.8')
+        else:
+            plugin.tk.add_template_directory.assert_called_once_with(config, 'templates')
         plugin.tk.add_resource('fanstatic', 'privatedatasets')
 
-    def test_map(self):
+    def test_get_blueprint(self):
         # Call the method
-        m = MagicMock()
-        self.privateDatasets.before_map(m)
-
-        # Test that the connect method has been called
-        m.connect.assert_any_call('user_acquired_datasets', '/dashboard/acquired', ckan_icon='shopping-cart',
-                                  controller='ckanext.privatedatasets.controllers.ui_controller:AcquiredDatasetsControllerUI',
-                                  action='user_acquired_datasets', conditions=dict(method=['GET']))
+        self.assertIsInstance(self.privateDatasets.get_blueprint(), Blueprint)
 
     @parameterized.expand([
         ('package_acquired',  plugin.actions.package_acquired),

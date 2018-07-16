@@ -25,15 +25,18 @@ import os
 import unittest
 import re
 from subprocess import Popen
+import time
 
 import ckan.lib.search.index as search_index
 import ckan.model as model
 from parameterized import parameterized
 import requests
 from selenium import webdriver
+from selenium.common.exceptions import NoAlertPresentException
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import Select, WebDriverWait
+from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import Select, WebDriverWait
 
 import ckanext.privatedatasets.db as db
 
@@ -46,13 +49,20 @@ class TestSelenium(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        # Run CKAN
         env = os.environ.copy()
-        env['DEBUG'] = 'True'
+        env['DEBUG'] = 'False'
         cls._process = Popen(['paster', 'serve', 'test.ini'], env=env)
+
+        # Init Selenium
+        cls.driver = webdriver.Firefox()
+        cls.base_url = 'http://localhost:5000/'
+        cls.driver.set_window_size(1024, 768)
 
     @classmethod
     def tearDownClass(cls):
         cls._process.terminate()
+        cls.driver.quit()
 
     def clearBBDD(self):
         # Clean Solr
@@ -71,19 +81,17 @@ class TestSelenium(unittest.TestCase):
     def setUp(self):
         self.clearBBDD()
 
-        if 'WEB_DRIVER_URL' in os.environ and 'CKAN_SERVER_URL' in os.environ:
-            self.driver = webdriver.Remote(os.environ['WEB_DRIVER_URL'], webdriver.DesiredCapabilities.FIREFOX.copy())
-            self.base_url = os.environ['CKAN_SERVER_URL']
-        else:
-
-            self.driver = webdriver.Firefox()
-            self.base_url = 'http://localhost:5000/'
-
-        self.driver.set_window_size(1024, 768)
-
     def tearDown(self):
+        self.driver.get(self.base_url)
+        try:  # pragma: no cover
+            # Accept any "Are you sure to leave?" alert
+            self.driver.switch_to.alert.accept()
+            self.driver.switch_to.default_content()
+        except NoAlertPresentException:
+            pass
+        WebDriverWait(self.driver, 10).until(lambda driver: self.base_url == driver.current_url)
+        self.driver.delete_all_cookies()
         self.clearBBDD()
-        self.driver.quit()
 
     def assert_fields_disabled(self, fields):
         for field in fields:
@@ -93,7 +101,7 @@ class TestSelenium(unittest.TestCase):
         self.driver.delete_all_cookies()
         self.driver.get(self.base_url)
 
-    def register(self, username, fullname, mail, password):
+    def register(self, username, fullname, mail):
         driver = self.driver
         driver.get(self.base_url)
         driver.find_element_by_link_text('Register').click()
@@ -104,13 +112,13 @@ class TestSelenium(unittest.TestCase):
         driver.find_element_by_id('field-email').clear()
         driver.find_element_by_id('field-email').send_keys(mail)
         driver.find_element_by_id('field-password').clear()
-        driver.find_element_by_id('field-password').send_keys(password)
+        driver.find_element_by_id('field-password').send_keys("1234" + username)
         driver.find_element_by_id('field-confirm-password').clear()
-        driver.find_element_by_id('field-confirm-password').send_keys(password)
+        driver.find_element_by_id('field-confirm-password').send_keys("1234" + username)
         driver.find_element_by_name('save').click()
         self.logout()
 
-    def login(self, username, password):
+    def login(self, username):
         driver = self.driver
         driver.get(self.base_url)
         login_btn = WebDriverWait(driver, 15).until(
@@ -121,7 +129,7 @@ class TestSelenium(unittest.TestCase):
         WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.ID, "field-login"))).clear()
         driver.find_element_by_id('field-login').send_keys(username)
         driver.find_element_by_id('field-password').clear()
-        driver.find_element_by_id('field-password').send_keys(password)
+        driver.find_element_by_id('field-password').send_keys("1234" + username)
         driver.find_element_by_id('field-remember').click()
         driver.find_element_by_css_selector('button.btn.btn-primary').click()
 
@@ -130,7 +138,12 @@ class TestSelenium(unittest.TestCase):
         driver.get(self.base_url)
         WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable((By.LINK_TEXT, 'Organizations'))).click()
         WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable((By.LINK_TEXT, 'Add Organization'))).click()
-        WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.ID, 'field-name'))).clear()
+        WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.ID, 'field-name')))
+
+        # Wait a bit to let ckan add javascript hooks
+        time.sleep(0.2)
+
+        driver.find_element_by_id('field-name').clear()
         driver.find_element_by_id('field-name').send_keys(name)
         driver.find_element_by_id('field-description').clear()
         driver.find_element_by_id('field-description').send_keys(description)
@@ -140,19 +153,25 @@ class TestSelenium(unittest.TestCase):
         WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable((By.LINK_TEXT, 'Manage'))).click()
         WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable((By.LINK_TEXT, 'Members'))).click()
         for user in users:
-            driver.find_element_by_link_text('Add Member').click()
-            driver.find_element_by_id('username').send_keys(user)
+            WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable((By.LINK_TEXT, 'Add Member'))).click()
+            WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.ID, "s2id_autogen1"))).send_keys(user + Keys.RETURN)
             driver.find_element_by_name('submit').click()
 
     def fill_ds_general_info(self, name, description, tags, private, searchable, allowed_users, acquire_url):
         # FIRST PAGE: Dataset properties
         driver = self.driver
-        WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.ID, "field-title"))).clear()
+        WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.ID, "field-title")))
+
+        # Wait a bit to let ckan add javascript hooks
+        time.sleep(0.2)
+
+        driver.find_element_by_id('field-title').clear()
         driver.find_element_by_id('field-title').send_keys(name)
         driver.find_element_by_id('field-notes').clear()
         driver.find_element_by_id('field-notes').send_keys(description)
-        driver.find_element_by_id('field-tags').clear()
-        driver.find_element_by_id('field-tags').send_keys(','.join(tags))
+        # field-tags
+        for tag in tags:
+            driver.find_element_by_id('s2id_autogen1').send_keys(tag + Keys.RETURN)
         Select(driver.find_element_by_id('field-private')).select_by_visible_text('Private' if private else 'Public')
         # WARN: The organization is set by default
 
@@ -160,8 +179,9 @@ class TestSelenium(unittest.TestCase):
         # If the dataset is public, these fields will be disabled (we'll check it)
         if private:
             Select(driver.find_element_by_id('field-searchable')).select_by_visible_text('True' if searchable else 'False')
-            driver.find_element_by_id('field-allowed_users_str').clear()
-            driver.find_element_by_id('field-allowed_users_str').send_keys(','.join(allowed_users))
+            # field-allowed_users
+            for user in allowed_users:
+                driver.find_element_by_css_selector('#s2id_field-allowed_users_str .select2-input').send_keys(user + Keys.RETURN)
             driver.find_element_by_id('field-acquire_url').clear()
             if acquire_url:
                 driver.find_element_by_id('field-acquire_url').send_keys(acquire_url)
@@ -180,10 +200,13 @@ class TestSelenium(unittest.TestCase):
         # SECOND PAGE: Add Resources
         WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.ID, "field-name")))
 
+        # Wait a bit to let ckan add javascript hooks
+        time.sleep(0.2)
+
         try:
             # The link button is only clicked if it's present
             driver.find_element_by_link_text('Link').click()
-        except Exception:
+        except Exception:  # pragma: no cover
             pass
 
         driver.find_element_by_id('field-image-url').clear()
@@ -192,8 +215,7 @@ class TestSelenium(unittest.TestCase):
         driver.find_element_by_id('field-name').send_keys(resource_name)
         driver.find_element_by_id('field-description').clear()
         driver.find_element_by_id('field-description').send_keys(resource_description)
-        driver.find_element_by_id('s2id_autogen1').clear()
-        driver.find_element_by_id('s2id_autogen1').send_keys(resource_format + '\n')
+        driver.find_element_by_id('s2id_autogen1').send_keys(resource_format + Keys.RETURN)
         driver.find_element_by_css_selector('button.btn.btn-primary').click()
 
     def modify_ds(self, url, name, description, tags, private, searchable, allowed_users, acquire_url):
@@ -218,7 +240,7 @@ class TestSelenium(unittest.TestCase):
             # if len(current_users) == 1 and current_users[0] == '':
             #     current_users = []
             # Check the array
-            self.assertEquals(len(allowed_users), len(current_users))
+            self.assertEqual(len(allowed_users), len(current_users))
             for user in current_users:
                 self.assertIn(user, allowed_users)
         else:
@@ -242,7 +264,7 @@ class TestSelenium(unittest.TestCase):
             # When a user cannot access a dataset, the link is no longer provided
         else:
             # If the dataset is not searchable and the user is not the owner, a link to it could not be found in the dataset search page
-            self.assertEquals(None, re.search(dataset_url, driver.page_source))
+            self.assertEqual(None, re.search(dataset_url, driver.page_source))
 
         # Access the dataset
         driver.get(self.base_url + 'dataset/' + dataset_url)
@@ -252,30 +274,30 @@ class TestSelenium(unittest.TestCase):
             xpath = '//*[@id="content"]/div[2]/article/div/h1'
             msg = '404 Not Found'
 
-            self.assertEquals(driver.find_element_by_xpath(xpath).text, msg)
+            self.assertEqual(driver.find_element_by_xpath(xpath).text, msg)
 
         else:
-            self.assertEquals(self.base_url + 'dataset/%s' % dataset_url, driver.current_url)
+            self.assertEqual(self.base_url + 'dataset/%s' % dataset_url, driver.current_url)
 
     def check_acquired(self, dataset, dataset_url, acquired, private):
         driver = self.driver
         driver.get(self.base_url + 'dashboard')
-        driver.find_element_by_link_text('Acquired Datasets').click()
+        WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable((By.LINK_TEXT, 'Acquired Datasets'))).click()
 
         if acquired and private:
             # This message could not be shown when the user has acquired at least one dataset
-            self.assertEquals(None, re.search('You haven\'t acquired any datasets.', driver.page_source))
+            self.assertEqual(None, re.search('You haven\'t acquired any datasets.', driver.page_source))
             # Access the dataset
             driver.find_element_by_link_text(dataset).click()
-            self.assertEquals(self.base_url + 'dataset/%s' % dataset_url, driver.current_url)
+            self.assertEqual(self.base_url + 'dataset/%s' % dataset_url, driver.current_url)
         else:
             # If the user has not acquired the dataset, a link to this dataset could not be in the acquired dataset list
-            self.assertEquals(None, re.search(dataset_url, driver.page_source))
+            self.assertEqual(None, re.search(dataset_url, driver.page_source))
             # When a user has not acquired any dataset, a message will be shown to inform the user
             self.assertNotEquals(None, re.search('You haven\'t acquired any datasets.', driver.page_source))
 
     def default_register(self, user):
-        self.register(user, user, '%s@conwet.com' % user, user)
+        self.register(user, user, '%s@conwet.com' % user)
 
     @parameterized.expand([
         (['user1', 'user2', 'user3'],          True,  True,  [],                 'http://store.conwet.com/'),
@@ -293,7 +315,7 @@ class TestSelenium(unittest.TestCase):
             self.default_register(user)
 
         # The first user creates a dataset
-        self.login(users[0], users[0])
+        self.login(users[0])
         pkg_name = 'Dataset 1'
         url = get_dataset_url(pkg_name)
         self.create_ds(pkg_name, 'Example description', ['tag1', 'tag2', 'tag3'], private, searchable,
@@ -308,7 +330,7 @@ class TestSelenium(unittest.TestCase):
         rest_users = users[1:]
         for user in rest_users:
             self.logout()
-            self.login(user, user)
+            self.login(user)
             acquired = user in allowed_users
             self.check_user_access(pkg_name, url, False, acquired, False, private, searchable, acquire_url)
 
@@ -336,7 +358,7 @@ class TestSelenium(unittest.TestCase):
         self.default_register(user)
 
         # Create the dataset
-        self.login(user, user)
+        self.login(user)
         pkg_name = 'Dataset 2'
 
         # Go the page to create the dataset
@@ -350,7 +372,7 @@ class TestSelenium(unittest.TestCase):
 
         # Check the error message
         msg_error = WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.XPATH, '//div[@id=\'content\']/div[3]/div/section/div/form/div/ul/li'))).text
-        self.assertEquals(expected_msg, msg_error)
+        self.assertEqual(expected_msg, msg_error)
 
     @parameterized.expand([
         ('Acquire Dataset',  'dataset'),
@@ -360,13 +382,13 @@ class TestSelenium(unittest.TestCase):
         # Create a default user
         user = 'user1'
         self.default_register(user)
-        self.login(user, user)
+        self.login(user)
 
         # Enter the acquired dataset tab
         driver = self.driver
         driver.get(self.base_url + 'dashboard/acquired')
         WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable((By.LINK_TEXT, link))).click()
-        self.assertEquals(self.base_url + 'dataset', self.base_url + expected_url)
+        self.assertEqual(self.base_url + 'dataset', self.base_url + expected_url)
 
     @parameterized.expand([
 
@@ -402,7 +424,7 @@ class TestSelenium(unittest.TestCase):
         # Create a default user
         user = 'user1'
         self.default_register(user)
-        self.login(user, user)
+        self.login(user)
 
         acquire_url = 'http://upm.es'
         dataset_default_name = 'Dataset %d'
@@ -458,7 +480,7 @@ class TestSelenium(unittest.TestCase):
         for user in users:
             self.default_register(user)
 
-        self.login(users[0], users[0])
+        self.login(users[0])
 
         # Create the organizations
         for org in orgs:
@@ -477,7 +499,7 @@ class TestSelenium(unittest.TestCase):
         rest_users = users[1:]
         for user in rest_users:
             self.logout()
-            self.login(user, user)
+            self.login(user)
             acquired = user in adquiring_users
             in_org = user in orgs[0]['users']
             self.check_user_access(pkg_name, url, False, acquired, in_org, private, searchable, acquire_url)
@@ -492,12 +514,12 @@ class TestSelenium(unittest.TestCase):
         self.default_register(user)
 
         # The user creates a dataset
-        self.login(user, user)
+        self.login(user)
         pkg_name = 'Dataset 1'
         description = 'Example Description'
         tags = ['tag1', 'tag2', 'tag3']
         url = get_dataset_url(pkg_name)
-        self.create_ds(pkg_name, 'Example description', ['tag1', 'tag2', 'tag3'], True, True,
+        self.create_ds(pkg_name, 'Example description', [], True, True,
                        [], 'http://example.com', 'http://upm.es', 'UPM Main', 'Example Description', 'CSV')
 
         self.modify_ds(url, pkg_name, description, tags, False, None, None, None)

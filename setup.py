@@ -48,7 +48,7 @@ setup(
     ],
     tests_require=[
         'parameterized',
-        'selenium==2.52.0'
+        'selenium==3.13.0'
     ],
     test_suite='nosetests',
     entry_points='''
