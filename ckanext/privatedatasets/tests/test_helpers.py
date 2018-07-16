@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # Copyright (c) 2014 CoNWeT Lab., Universidad Politécnica de Madrid
+# Copyright (c) 2018 Future Internet Consulting and Development Solutions S.L.
 
 # This file is part of CKAN Private Dataset Extension.
 
@@ -20,7 +21,7 @@
 import unittest
 import ckanext.privatedatasets.helpers as helpers
 
-from mock import MagicMock
+from mock import patch, MagicMock
 from parameterized import parameterized
 
 
@@ -127,25 +128,59 @@ class HelpersTest(unittest.TestCase):
         helpers.tk.check_access.assert_called_once_with('package_show', context, package)
 
     @parameterized.expand([
-        (None,    False),
-        ('True',  True),
-        ('False', False)
+        (None,    False, None),
+        ('True',  True,  None),
+        ('False', False, None),
+        ('afa  ', False, None),
+        (True,    True,  None),
+        (False,   False, None),
+        (False,   True , 'true'),
+        (False,   True , 'on'),
+        (False,   True , '1'),
+        (True,    False, '0'),
+        (True,    False, 'off'),
+        (True,    False, 'fAlsE'),
+        (True,    False, 'fAlsE'),
     ])
-    def test_show_acquire_url_on_create(self, config_value, expected_value):
+    @patch("ckanext.privatedatasets.helpers.os.environ", new={})
+    def test_show_acquire_url_on_create(self, config_value, expected_value, env_val):
+        # {} is shared between tests, so we have clear it each time
+        helpers.os.environ.clear()
+
         if config_value is not None:
             helpers.tk.config['ckan.privatedatasets.show_acquire_url_on_create'] = config_value
+
+        if env_val:
+            helpers.os.environ['CKAN_PRIVATEDATASETS_SHOW_ACQUIRE_URL_ON_CREATE'] = env_val
 
         # Call the function
         self.assertEquals(expected_value, helpers.show_acquire_url_on_create())
 
     @parameterized.expand([
-        (None,    False),
-        ('True',  True),
-        ('False', False)
+        (None,    False, None),
+        ('True',  True,  None),
+        (' tRUe', True,  None),
+        ('False', False, None),
+        (True,    True,  None),
+        (False,   False, None),
+        (False,   True , 'trUe'),
+        (False,   True , 'on'),
+        (False,   True , '1'),
+        (True,    False, '0'),
+        (True,    False, 'off'),
+        (True,    False, 'fAlsE'),
+        (True,    False, 'potato'),
     ])
-    def test_show_acquire_url_on_edit(self, config_value, expected_value):
+    @patch("ckanext.privatedatasets.helpers.os.environ", new={})
+    def test_show_acquire_url_on_edit(self, config_value, expected_value, env_val):
+        # {} is shared between tests, so we have clear it each time
+        helpers.os.environ.clear()
+
         if config_value is not None:
             helpers.tk.config['ckan.privatedatasets.show_acquire_url_on_edit'] = config_value
+
+        if env_val:
+            helpers.os.environ['CKAN_PRIVATEDATASETS_SHOW_ACQUIRE_URL_ON_EDIT'] = env_val
 
         # Call the function
         self.assertEquals(expected_value, helpers.show_acquire_url_on_edit())
