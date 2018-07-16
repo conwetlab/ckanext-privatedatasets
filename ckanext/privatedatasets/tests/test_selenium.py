@@ -83,7 +83,7 @@ class TestSelenium(unittest.TestCase):
 
     def tearDown(self):
         self.driver.get(self.base_url)
-        try:
+        try:  # pragma: no cover
             # Accept any "Are you sure to leave?" alert
             self.driver.switch_to.alert.accept()
             self.driver.switch_to.default_content()
@@ -206,7 +206,7 @@ class TestSelenium(unittest.TestCase):
         try:
             # The link button is only clicked if it's present
             driver.find_element_by_link_text('Link').click()
-        except Exception:
+        except Exception:  # pragma: no cover
             pass
 
         driver.find_element_by_id('field-image-url').clear()

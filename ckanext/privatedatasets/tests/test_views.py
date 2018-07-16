@@ -37,7 +37,7 @@ class ViewsTest(unittest.TestCase):
 
         # Configure the mocks
         setattr(logic, exception, ValueError)
-        toolkit.get_action().side_effect=getattr(logic, exception)
+        toolkit.get_action().side_effect = getattr(logic, exception)
         base.abort.side_effect = TypeError
 
         # Call the function
@@ -84,3 +84,12 @@ class ViewsTest(unittest.TestCase):
         # Check that the render method has been called
         base.render.assert_called_once_with('user/dashboard_acquired.html', {'user_dict': default_user, 'acquired_datasets': acquisitions_list()})
         self.assertEqual(returned, base.render())
+
+    @patch("ckanext.privatedatasets.views.acquired_datasets")
+    def test_there_is_a_controller_for_ckan_27(self, acquired_datasets):
+        controller = views.AcquiredDatasetsControllerUI()
+
+        response = controller.acquired_datasets()
+
+        acquired_datasets.assert_called_once_with()
+        self.assertEqual(response, acquired_datasets())
