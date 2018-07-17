@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # Copyright (c) 2014-2015 CoNWeT Lab., Universidad Politécnica de Madrid
+# Copyright (c) 2018 Future Internet Consulting and Development Solutions S.L.
 
 # This file is part of CKAN Private Dataset Extension.
 
@@ -20,6 +21,7 @@
 from __future__ import absolute_import
 
 import logging
+import os
 
 from ckan.common import request
 import ckan.model as model
@@ -64,9 +66,9 @@ def can_read(pkg_dict):
 
 
 def get_config_bool_value(config_name, default_value=False):
-    value = tk.config.get(config_name, default_value)
-    value = value if type(value) == bool else value != 'False'
-    return value
+    env_name = config_name.upper().replace('.', '_')
+    value = os.environ.get(env_name, tk.config.get(config_name, default_value))
+    return value if type(value) == bool else value.strip().lower() in ('true', '1', 'on')
 
 
 def show_acquire_url_on_create():
