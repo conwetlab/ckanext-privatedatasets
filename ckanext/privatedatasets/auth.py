@@ -41,41 +41,37 @@ def package_show(context, data_dict):
     # Not active packages can only be seen by its owners
     if package.state == 'active':
         # anyone can see a public package
-        if not package.private:
-            return {'success': True}
+        if package.private:
 
-        # if the user has rights to read in the organization or in the group
-        if package.owner_org:
-            authorized = authz.has_user_permission_for_group_or_org(
-                package.owner_org, user, 'read')
-        else:
-            authorized = False
+            acquired = False
 
-        # if the user is not authorized yet, we should check if the
-        # user is in the allowed_users object
-        if not authorized:
-            # Init the model
-            db.init_db(context['model'])
+            if package.owner_org:
+                acquired = authz.has_user_permission_for_group_or_org(
+                    package.owner_org, user, 'read')
 
-            # Branch not executed if the database return an empty list
-            if db.AllowedUser.get(package_id=package.id, user_name=user):
-                authorized = True
+            if not acquired:
+                # Init the model
+                db.init_db(context['model'])
 
-        if not authorized:
-            # Show a flash message with the URL to acquire the dataset
-            # This message only can be shown when the user tries to access the dataset via its URL (/dataset/...)
-            # The message cannot be displayed in other pages that uses the package_show function such as
-            # the user profile page
+                # Branch not executed if the database return an empty list
+                if db.AllowedUser.get(package_id=package.id, user_name=user):
+                    acquired = True
 
-            if hasattr(package, 'extras') and 'acquire_url' in package.extras and request.path.startswith('/dataset/')\
-                    and package.extras['acquire_url'] != '':
-                helpers.flash_notice(_('This private dataset can be acquired. To do so, please click ' +
-                                       '<a target="_blank" href="%s">here</a>') % package.extras['acquire_url'],
-                                     allow_html=True)
+            if not acquired:
 
-            return {'success': False, 'msg': _('User %s not authorized to read package %s') % (user, package.id)}
-        else:
-            return {'success': True}
+                # Show a flash message with the URL to acquire the dataset
+                # This message only can be shown when the user tries to access the dataset via its URL (/dataset/...)
+                # The message cannot be displayed in other pages that uses the package_show function such as
+                # the user profile page
+
+                if hasattr(package, 'extras') and 'acquire_url' in package.extras and request.path.startswith(
+                        '/dataset/') \
+                        and package.extras['acquire_url'] != '':
+                    helpers.flash_notice(_('This private dataset can be acquired. To do so, please click ' +
+                                           '<a target="_blank" href="%s">here</a>') % package.extras['acquire_url'],
+                                         allow_html=True)
+
+        return {'success': True}
     else:
         return {'success': False, 'msg': _('User %s not authorized to read package %s') % (user, package.id)}
 
@@ -104,32 +100,49 @@ def package_update(context, data_dict):
 
 @tk.auth_allow_anonymous_access
 def resource_show(context, data_dict):
-    # This function is needed since CKAN resource_show function uses the default package_show
-    # function instead of the one defined in the plugin.
-    # A bug is openend in order to be able to remove this function
-    # https://github.com/ckan/ckan/issues/1818
-    # It's fixed now, so this function can be deleted when the new version is released.
-    _model = context['model']
-    user = context.get('user')
-    resource = logic_auth.get_resource_object(context, data_dict)
 
+    user = context.get('user')
+    user_obj = context.get('auth_user_obj')
+    resource = logic_auth.get_resource_object(context, data_dict)
     # check authentication against package
-    query = _model.Session.query(_model.Package)\
-        .join(_model.ResourceGroup)\
-        .join(_model.Resource)\
-        .filter(_model.ResourceGroup.id == resource.resource_group_id)
-    pkg = query.first()
-    if not pkg:
+    package_dict = {'id': resource.package_id}
+    package = logic_auth.get_package_object(context, package_dict)
+    if not package:
         raise tk.ObjectNotFound(_('No package found for this resource, cannot check auth.'))
 
-    pkg_dict = {'id': pkg.id}
-    authorized = package_show(context, pkg_dict).get('success')
-
-    if not authorized:
-        return {'success': False, 'msg': _('User %s not authorized to read resource %s') % (user, resource.id)}
-    else:
+    if package and user_obj and package.creator_user_id == user_obj.id:
         return {'success': True}
 
+    # active packages can only be seen by its owners
+    if package.state == 'active':
+
+        # anyone can see a public package
+        if not package.private:
+            return {'success': True}
+
+        # if the user has rights to read in the organization or in the group
+        if package.owner_org:
+            authorized = authz.has_user_permission_for_group_or_org(
+                package.owner_org, user, 'read')
+        else:
+            authorized = False
+
+        if not authorized:
+            # Init the model
+            db.init_db(context['model'])
+
+            # Branch not executed if the database return an empty list
+            if db.AllowedUser.get(package_id=package.id, user_name=user):
+                authorized = True
+
+        if not authorized:
+            return {'success': False, 'msg': _('User %s not authorized to read resource %s') % (user, resource.id)}
+
+        else:
+            return {'success': True}
+
+    else:
+        return {'success': False, 'msg': _('User %s not authorized to read resource %s') % (user, resource.id)}
 
 @tk.auth_allow_anonymous_access
 def package_acquired(context, data_dict):

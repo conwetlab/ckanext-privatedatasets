@@ -39,7 +39,6 @@ class HelpersTest(unittest.TestCase):
         self._db = helpers.db
         helpers.db = MagicMock()
 
-
         self._request = helpers.request
         helpers.request = MagicMock()
 

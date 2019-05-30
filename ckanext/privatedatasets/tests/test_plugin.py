@@ -65,19 +65,13 @@ class PluginTest(unittest.TestCase):
         ('package_show',      plugin.auth.package_show),
         ('package_update',    plugin.auth.package_update),
         ('resource_show',     plugin.auth.resource_show),
-        ('resource_show',     plugin.auth.resource_show,     True,  False),
         ('package_acquired',  plugin.auth.package_acquired),
         ('acquisitions_list', plugin.auth.acquisitions_list),
         ('revoke_access',   plugin.auth.revoke_access)
     ])
-    def test_auth_function(self, function_name, expected_function, is_ckan_23=False, expected=True):
-        plugin.tk.check_ckan_version = MagicMock(return_value=is_ckan_23)
+    def test_auth_function(self, function_name, expected_function):
         auth_functions = self.privateDatasets.get_auth_functions()
-
-        if expected:
-            self.assertEquals(auth_functions[function_name], expected_function)
-        else:
-            self.assertNotIn(function_name, auth_functions)
+        self.assertEquals(auth_functions[function_name], expected_function)
 
     def test_update_config(self):
         # Call the method
@@ -215,41 +209,73 @@ class PluginTest(unittest.TestCase):
             self.assertTrue(found)
 
     @parameterized.expand([
-        (True,  1, 1,    False, True,  True),
-        (True,  1, 2,    False, True,  True),
-        (True,  1, 1,    True,  True,  True),
-        (True,  1, 2,    True,  True,  True),
-        (True,  1, None, None,  True,  True),
-        (True,  1, 1,    None,  True,  True),
-        (True,  1, None, True,  True,  True),
-        (True,  1, None, False, True,  True),
-        (False, 1, 1,    False, True,  True),
-        (False, 1, 2,    False, True,  False),
-        (False, 1, 1,    True,  True,  True),
-        (False, 1, 2,    True,  True,  True),
-        (False, 1, None, None,  True,  False),
-        (False, 1, 1,    None,  True,  True),
-        (False, 1, None, True,  True,  True),
-        (False, 1, None, False, True,  False),
-        (True,  1, 1,    False, False, False),
-        (True,  1, 2,    False, False, False),
-        (True,  1, 1,    True,  False, False),
-        (True,  1, 2,    True,  False, False),
-        (True,  1, None, None,  False, False),
-        (True,  1, 1,    None,  False, False),
-        (True,  1, None, True,  False, False),
-        (True,  1, None, False, False, False),
-        (False, 1, 1,    False, False, False),
-        (False, 1, 2,    False, False, False),
-        (False, 1, 1,    True,  False, False),
-        (False, 1, 2,    True,  False, False),
-        (False, 1, None, None,  False, False),
-        (False, 1, 1,    None,  False, False),
-        (False, 1, None, True,  False, False),
-        (False, 1, None, False, False, False),
+        (True,  1, 1,    False, True,  True, [{'id': 1}, {'id': 2}], True),
+        (True,  1, 2,    False, True,  True, [{'id': 1}, {'id': 2}], True),
+        (True,  1, 1,    True,  True,  True, [{'id': 1}, {'id': 2}], True),
+        (True,  1, 2,    True,  True,  True, [{'id': 1}, {'id': 2}], True),
+        (True,  1, None, None,  True,  True, [{'id': 1}, {'id': 2}], True),
+        (True,  1, 1,    None,  True,  True, [{'id': 1}, {'id': 2}], True),
+        (True,  1, None, True,  True,  True, [{'id': 1}, {'id': 2}], True),
+        (True,  1, None, False, True,  True, [{'id': 1}, {'id': 2}], True),
+        (False, 1, 1,    False, True,  True, [{'id': 1}, {'id': 2}], True),
+        (False, 1, 2,    False, True,  False, [{'id': 1}, {'id': 2}], True),
+        (False, 1, 1,    True,  True,  True, [{'id': 1}, {'id': 2}], True),
+        (False, 1, 2,    True,  True,  True, [{'id': 1}, {'id': 2}], True),
+        (False, 1, None, None,  True,  False, [{'id': 1}, {'id': 2}], True),
+        (False, 1, 1,    None,  True,  True, [{'id': 1}, {'id': 2}], True),
+        (False, 1, None, True,  True,  True, [{'id': 1}, {'id': 2}], True),
+        (False, 1, None, False, True,  False, [{'id': 1}, {'id': 2}], True),
+        (True,  1, 1,    False, False, False, [{'id': 1}, {'id': 2}], True),
+        (True,  1, 2,    False, False, False, [{'id': 1}, {'id': 2}], True),
+        (True,  1, 1,    True,  False, False, [{'id': 1}, {'id': 2}], True),
+        (True,  1, 2,    True,  False, False, [{'id': 1}, {'id': 2}], True),
+        (True,  1, None, None,  False, False, [{'id': 1}, {'id': 2}], True),
+        (True,  1, 1,    None,  False, False, [{'id': 1}, {'id': 2}], True),
+        (True,  1, None, True,  False, False, [{'id': 1}, {'id': 2}], True),
+        (True,  1, None, False, False, False, [{'id': 1}, {'id': 2}], True),
+        (False, 1, 1,    False, False, False, [{'id': 1}, {'id': 2}], True),
+        (False, 1, 2,    False, False, False, [{'id': 1}, {'id': 2}], True),
+        (False, 1, 1,    True,  False, False, [{'id': 1}, {'id': 2}], True),
+        (False, 1, 2,    True,  False, False, [{'id': 1}, {'id': 2}], True),
+        (False, 1, None, None,  False, False, [{'id': 1}, {'id': 2}], True),
+        (False, 1, 1,    None,  False, False, [{'id': 1}, {'id': 2}], True),
+        (False, 1, None, True,  False, False, [{'id': 1}, {'id': 2}], True),
+        (False, 1, None, False, False, False, [{'id': 1}, {'id': 2}], True),
+        (True, 1, 1, False, True, True, [{}, {}], False),
+        (True, 1, 2, False, True, True, [{}, {}], False),
+        (True, 1, 1, True, True, True, [{}, {}], False),
+        (True, 1, 2, True, True, True, [{}, {}], False),
+        (True, 1, None, None, True, True, [{}, {}], False),
+        (True, 1, 1, None, True, True, [{}, {}], False),
+        (True, 1, None, True, True, True, [{}, {}], False),
+        (True, 1, None, False, True, True, [{}, {}], False),
+        (False, 1, 1, False, True, True, [{}, {}], False),
+        (False, 1, 2, False, True, False, [{}, {}], False),
+        (False, 1, 1, True, True, True, [{}, {}], False),
+        (False, 1, 2, True, True, True, [{}, {}], False),
+        (False, 1, None, None, True, False, [{}, {}], False),
+        (False, 1, 1, None, True, True, [{}, {}], False),
+        (False, 1, None, True, True, True, [{}, {}], False),
+        (False, 1, None, False, True, False, [{}, {}], False),
+        (True, 1, 1, False, False, False, [{}, {}], False),
+        (True, 1, 2, False, False, False, [{}, {}], False),
+        (True, 1, 1, True, False, False, [{}, {}], False),
+        (True, 1, 2, True, False, False, [{}, {}], False),
+        (True, 1, None, None, False, False, [{}, {}], False),
+        (True, 1, 1, None, False, False, [{}, {}], False),
+        (True, 1, None, True, False, False, [{}, {}], False),
+        (True, 1, None, False, False, False, [{}, {}], False),
+        (False, 1, 1, False, False, False, [{}, {}], False),
+        (False, 1, 2, False, False, False, [{}, {}], False),
+        (False, 1, 1, True, False, False, [{}, {}], False),
+        (False, 1, 2, True, False, False, [{}, {}], False),
+        (False, 1, None, None, False, False, [{}, {}], False),
+        (False, 1, 1, None, False, False, [{}, {}], False),
+        (False, 1, None, True, False, False, [{}, {}], False),
+        (False, 1, None, False, False, False, [{}, {}], False),
     ])
-    def test_packagecontroller_after_show(self, update_via_api, creator_id, user_id, sysadmin, private, fields_expected):
-        
+    def test_packagecontroller_after_show(self, update_via_api, creator_id, user_id, sysadmin, private, fields_expected, resources, resources_fields):
+
         context = {'updating_via_cb': update_via_api}
 
         if creator_id is not None or sysadmin is not None:
@@ -258,7 +284,7 @@ class PluginTest(unittest.TestCase):
             user.sysadmin = sysadmin
             context['auth_user_obj'] = user
 
-        pkg_dict = {'creator_user_id': creator_id, 'allowed_users': ['a', 'b', 'c'], 'searchable': True, 'acquire_url': 'http://google.es', 'private': private}
+        pkg_dict = {'creator_user_id': creator_id, 'allowed_users': ['a', 'b', 'c'], 'searchable': True, 'acquire_url': 'http://google.es', 'private': private, 'resources': resources, 'num_resources': 2}
 
         # Call the function
         result = self.privateDatasets.after_show(context, pkg_dict)    # Call the function
@@ -270,6 +296,14 @@ class PluginTest(unittest.TestCase):
                 self.assertTrue(field in result)
             else:
                 self.assertFalse(field in result)
+
+        fields = ['resources', 'num_resources']
+        for field in fields:
+            if resources_fields:
+                self.assertTrue(field in result)
+            else:
+                self.assertFalse(field in result)
+
 
     @parameterized.expand([
         ('public',  None,    'public'),
@@ -449,3 +483,40 @@ class PluginTest(unittest.TestCase):
 
         self.assertEquals(final_search_results['facets'], search_results['facets'])
         self.assertEquals(final_search_results['elements'], search_results['elements'])
+
+    @parameterized.expand([
+        (True,),
+        (False,)
+    ])
+    def test_package_controller_before_view(self, user_allowed):
+
+        pkg_dict = {'resources': [{'id': 1}, {'id': 2}, {'id': 3}]}
+        pkg_dict_not_allowed = {'resources': []}
+
+        plugin.tk.check_access.side_effect = None if user_allowed else plugin.tk.NotAuthorized
+
+        result = self.privateDatasets.before_view(pkg_dict)
+
+        if user_allowed:
+            self.assertEquals(result['resources'], pkg_dict['resources'])
+        else:
+            self.assertEquals(result['resources'], pkg_dict_not_allowed['resources'])
+
+    @parameterized.expand([
+        (True,),
+        (False,)
+    ])
+    def test_resource_controller_before_show(self, user_allowed):
+
+        resource_dict = {'id': 1, 'resource_name': 'resource_test'}
+
+        plugin.tk.check_access.side_effect = None if user_allowed else plugin.tk.NotAuthorized
+
+        result = self.privateDatasets.before_show(resource_dict)
+
+        if user_allowed:
+            self.assertEquals(result['id'], resource_dict['id'])
+            self.assertEquals(result['resource_name'], resource_dict['resource_name'])
+        else:
+            self.assertNotIn('id', result)
+            self.assertNotIn('resource_name', result)

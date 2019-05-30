@@ -270,13 +270,13 @@ class TestSelenium(unittest.TestCase):
         driver.get(self.base_url + 'dataset/' + dataset_url)
 
         if not acquired and private and not in_org:
-            # If the user has not access to the dataset the 404 error page is displayed
-            xpath = '//*[@id="content"]/div[2]/article/div/h1'
-            msg = '404 Not Found'
+            # If the dataset is private and the user hasnt access to the resources, the field resources dont appear
 
-            self.assertEqual(driver.find_element_by_xpath(xpath).text, msg)
+            self.assertEquals('empty', driver.find_element_by_class_name('empty').get_attribute('class'))
+            self.assertEqual(self.base_url + 'dataset/%s' % dataset_url, driver.current_url)
 
         else:
+            self.assertEquals('resource-list', driver.find_element_by_class_name('resource-list').get_attribute('class'))
             self.assertEqual(self.base_url + 'dataset/%s' % dataset_url, driver.current_url)
 
     def check_acquired(self, dataset, dataset_url, acquired, private):
