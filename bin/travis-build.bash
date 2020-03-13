@@ -16,18 +16,21 @@ python setup.py develop
 
 sed -i "s|psycopg2==2.4.5|psycopg2==2.7.1|g" requirements.txt
 
-pip install -r requirements.txt --allow-all-external
-pip install -r dev-requirements.txt --allow-all-external
+pip install -r requirements.txt
+pip install -r dev-requirements.txt
 cd -
+
+echo "Checking solr"
+ls -la /etc/
 
 echo "Setting up Solr..."
 # solr is multicore for tests on ckan master now, but it's easier to run tests
 # on Travis single-core still.
 # see https://github.com/ckan/ckan/issues/2972
-sed -i -e 's/solr_url.*/solr_url = http:\/\/127.0.0.1:8983\/solr/' ckan/test-core.ini
-printf "NO_START=0\nJETTY_HOST=127.0.0.1\nJETTY_PORT=8983\nJAVA_HOME=$JAVA_HOME" | sudo tee /etc/default/jetty
+sed -i -e 's/solr_url.*/solr_url = http:\/\/127.0.0.1:8080\/solr/' ckan/test-core.ini
+printf "NO_START=0\nJETTY_HOST=127.0.0.1\nJETTY_PORT=8080\nJAVA_HOME=$JAVA_HOME" | sudo tee /etc/default/jetty
 sudo cp ckan/ckan/config/solr/schema.xml /etc/solr/conf/schema.xml
-sudo service jetty restart
+sudo service jetty8 restart
 
 echo "Creating the PostgreSQL user and database..."
 sudo -u postgres psql -c "CREATE USER ckan_default WITH PASSWORD 'pass';"

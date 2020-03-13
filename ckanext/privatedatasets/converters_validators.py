@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # Copyright (c) 2014 CoNWeT Lab., Universidad Politécnica de Madrid
+# Copyright (c) 2019 Future Internet Consulting and Development Solutions S.L.
 
 # This file is part of CKAN Private Dataset Extension.
 
@@ -74,7 +75,6 @@ def allowed_users_convert(key, data, errors, context):
         else:
             for num, allowed_user in zip(count(current_index + 1), allowed_users):
                 allowed_user = allowed_user.strip()
-                toolkit.get_validator('name_validator')(allowed_user, context)      # User name should be validated
                 data[(key[0], num)] = allowed_user
 
 

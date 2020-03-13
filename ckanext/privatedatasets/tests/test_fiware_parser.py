@@ -39,26 +39,26 @@ TEST_CASES = {
     'error': {
         'host': 'localhost',
         'json': {"customer_name": "test", "resources": [{"url": "http://localhosta/dataset/ds1"}]},
-        'error': 'Dataset ds1 is associated with the CKAN instance located at localhosta',
+        'error': 'Dataset ds1 is associated with the CKAN instance located at localhosta, expected localhost',
     },
     'error_one_ds': {
         'host': 'localhost',
         'json': {"customer_name": "test", "resources": [{"url": "http://localhosta/dataset/ds1"},
                 {"url": "http://localhost/dataset/ds2"}]},
-        'error': 'Dataset ds1 is associated with the CKAN instance located at localhosta',
+        'error': 'Dataset ds1 is associated with the CKAN instance located at localhosta, expected localhost',
     },
     'two_errors': {
         'host': 'localhost',
         'json': {"customer_name": "test", "resources": [{"url": "http://localhosta/dataset/ds1"},
                 {"url": "http://localhostb/dataset/ds2"}]},
-        'error': 'Dataset ds1 is associated with the CKAN instance located at localhosta',
+        'error': 'Dataset ds1 is associated with the CKAN instance located at localhosta, expected localhost',
     },
     'two_errors_two_ds': {
         'host': 'example.com',
         'json': {"customer_name": "test", "resources": [{"url": "http://localhosta/dataset/ds1"},
                 {"url": "http://example.es/dataset/ds2"}, {"url": "http://example.com/dataset/ds3"},
                 {"url": "http://example.com/dataset/ds4"}]},
-        'error': 'Dataset ds1 is associated with the CKAN instance located at localhosta',
+        'error': 'Dataset ds1 is associated with the CKAN instance located at localhosta, expected example.com',
     },
     'no_customer_name': {
         'host': 'localhost',

@@ -337,14 +337,6 @@ class TestSelenium(unittest.TestCase):
             self.check_acquired(pkg_name, url, acquired, private)
 
     @parameterized.expand([
-        (['upm', 'a'],     'http://upm.es',      'Allowed users: Must be at least 2 characters long'),
-        (['upm', 'a a a'], 'http://upm.es',      'Allowed users: Must be purely lowercase alphanumeric (ascii) characters and these symbols: -_'),
-        (['upm', 'a?-vz'], 'http://upm.es',      'Allowed users: Must be purely lowercase alphanumeric (ascii) characters and these symbols: -_'),
-        (
-            ['thisisaveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryverylongname'],
-            'http://upm.es',
-            'Allowed users: Name must be a maximum of 100 characters long'
-        ),
         (['conwet'],       'ftp://google.es',    'Acquire URL: The URL "ftp://google.es" is not valid.'),
         (['conwet'],       'google',             'Acquire URL: The URL "google" is not valid.'),
         (['conwet'],       'http://google',      'Acquire URL: The URL "http://google" is not valid.'),

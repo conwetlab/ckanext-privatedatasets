@@ -52,12 +52,18 @@ class FiWareNotificationParser(object):
                 parsed_url = urlparse(resource['url'])
                 dataset_name = re.findall('^/dataset/([^/]+).*$', parsed_url.path)
 
+                resource_url = parsed_url.netloc
+                if ':' in my_host and ':' not in resource_url:
+                    # Add the default port depending on the protocol
+                    default_port = '80' if parsed_url.protocol == 'http' else '443'
+                    resource_url = resource_url + default_port
+
                 if len(dataset_name) == 1:
-                    if parsed_url.netloc == my_host:
+                    if resource_url == my_host:
                         datasets.append(dataset_name[0])
                     else:
-                        raise tk.ValidationError({'message': 'Dataset %s is associated with the CKAN instance located at %s'
-                                                 % (dataset_name[0], parsed_url.netloc)})
+                        raise tk.ValidationError({'message': 'Dataset %s is associated with the CKAN instance located at %s, expected %s'
+                                                 % (dataset_name[0], resource_url, my_host)})
             else:
                 raise tk.ValidationError({'message': 'Invalid resource format'})
 

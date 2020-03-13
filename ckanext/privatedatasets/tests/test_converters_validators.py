@@ -127,10 +127,6 @@ class ConvertersValidatorsTest(unittest.TestCase):
     def test_allowed_user_convert(self, users, previous_users, expected_users):
         key_str = 'allowed_users_str'
         key = 'allowed_users'
-
-        # Configure mock
-        name_validator = MagicMock()
-        conv_val.toolkit.get_validator = MagicMock(return_value=name_validator)
         
         # Fullfill the data dictionary
         # * list should be included in the allowed_users filed
@@ -151,7 +147,6 @@ class ConvertersValidatorsTest(unittest.TestCase):
 
         # Check that the users are set properly
         for i in range(previous_users, previous_users + len(expected_users)):
-            name_validator.assert_any_call(expected_users[i - previous_users], context)
             self.assertEquals(expected_users[i - previous_users], data[(key, i)])
 
     @parameterized.expand([
